@@ -3,6 +3,7 @@ import { Save, AlertCircle, BookOpen } from 'lucide-react';
 import { useAcademicYears, useClassrooms } from '../hooks/useClassrooms';
 import { useSubjects, useGrades, useSubmitGrades, GradeEntry } from '../hooks/useGrades';
 import { useEnrollments } from '../hooks/useEnrollments';
+import { toast } from '../../../store/toastStore';
 
 export function GradesPage() {
     const { data: academicYears } = useAcademicYears();
@@ -76,7 +77,7 @@ export function GradesPage() {
         }
 
         if (gradesToSubmit.length === 0) {
-            alert("Veuillez saisir au moins une note valide.");
+            toast.warning('Veuillez saisir au moins une note valide.');
             return;
         }
 
@@ -89,9 +90,9 @@ export function GradesPage() {
                 maxScore,
                 grades: gradesToSubmit
             });
-            alert("Notes enregistrées avec succès !");
+            toast.success('Notes enregistrées avec succès !');
         } catch (error) {
-            alert("Erreur lors de l'enregistrement des notes.");
+            toast.error("Erreur lors de l'enregistrement des notes.");
         }
     };
 

@@ -7,6 +7,7 @@ import { useEnrollments } from '../hooks/useEnrollments';
 import { X, Check, Download } from 'lucide-react';
 import { exportToExcel } from '../../../lib/excelExport';
 import { apiClient } from '../../../lib/apiClient';
+import { toast } from '../../../store/toastStore';
 
 export function StudentsPage() {
     const navigate = useNavigate();
@@ -47,7 +48,7 @@ export function StudentsPage() {
 
     const handleExportExcellence = async () => {
         if (!selectedExportClassId) {
-            alert("Veuillez d'abord sélectionner une classe dans la liste ou dans le filtre.");
+            toast.warning("Veuillez d'abord sélectionner une classe dans le filtre Export.");
             return;
         }
         try {
@@ -63,7 +64,7 @@ export function StudentsPage() {
             link.click();
             document.body.removeChild(link);
         } catch (e) {
-            alert("Erreur lors de l'exportation.");
+            toast.error("Erreur lors de l'exportation.");
         }
     };
 
@@ -83,7 +84,7 @@ export function StudentsPage() {
             }));
             exportToExcel(students, 'Liste_Globale_Eleves', 'Students');
         } catch (e) {
-            alert("Erreur lors de l'exportation.");
+            toast.error("Erreur lors de l'exportation.");
         }
     };
 
@@ -95,7 +96,7 @@ export function StudentsPage() {
         if (!file) return;
 
         if (!importSettings.classroomId || !importSettings.academicYearId) {
-            alert("Veuillez sélectionner une classe et une année pour l'import.");
+            toast.warning("Veuillez sélectionner une classe et une année pour l'import.");
             return;
         }
 
@@ -110,10 +111,10 @@ export function StudentsPage() {
                 formData,
                 { headers: { 'Content-Type': 'multipart/form-data' } }
             );
-            alert("Importation réussie !");
+            toast.success('Importation réussie !');
             e.target.value = ''; // Reset input
         } catch (err) {
-            alert("Erreur d'importation. Vérifiez le format du fichier.");
+            toast.error("Erreur d'importation. Vérifiez le format du fichier.");
         } finally {
             setIsImporting(false);
         }
@@ -146,8 +147,9 @@ export function StudentsPage() {
                 parentRelationship: 'Father'
             });
             setEnrollData({ academicYearId: '', classroomId: '' });
+            toast.success('Élève créé et inscrit avec succès !');
         } catch (err: any) {
-            alert(`Erreur lors de la création de l'élève: ${err?.response?.data || err.message}`);
+            toast.error(`Erreur lors de la création de l'élève: ${err?.response?.data || err.message}`);
         }
     };
 

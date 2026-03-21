@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { toast } from '../../../store/toastStore';
 
 interface SubjectGrade {
   subjectName: string;
@@ -45,7 +46,7 @@ export function StudentDetailPage() {
     // Clean phone number (remove spaces, etc)
     let phone = bulletin.parentPhone?.replace(/[\s\-\+\(\)]/g, '') || '';
     if (!phone) {
-      alert("Aucun numéro de téléphone n'est enregistré pour ce parent.");
+      toast.warning("Aucun numéro de téléphone n'est enregistré pour ce parent.");
       return;
     }
 

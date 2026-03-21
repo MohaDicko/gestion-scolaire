@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Calendar, UserCheck, UserX, Clock, AlertCircle } from 'lucide-react';
 import { useStaffAttendance, StaffAttendanceStatus, StaffAttendance } from '../hooks/useAttendance';
+import { toast } from '../../../store/toastStore';
 
 export function StaffAttendancePage() {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -27,9 +28,9 @@ export function StaffAttendancePage() {
                 date: selectedDate,
                 entries: localAttendance
             });
-            alert("Présences enregistrées avec succès !");
+            toast.success('Présences enregistrées avec succès !');
         } catch (error) {
-            alert("Erreur lors de l'enregistrement des présences.");
+            toast.error("Erreur lors de l'enregistrement des présences.");
         }
     };
 

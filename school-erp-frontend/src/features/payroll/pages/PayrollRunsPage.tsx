@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DollarSign, Calendar, Settings, Play, Check } from 'lucide-react';
 import { usePayrollRuns, useGeneratePayroll } from '../hooks/usePayroll';
 import { Link } from 'react-router-dom';
+import { toast } from '../../../store/toastStore';
 
 export function PayrollRunsPage() {
     const { data: runs, isLoading } = usePayrollRuns();
@@ -27,9 +28,9 @@ export function PayrollRunsPage() {
         try {
             await generateRuns.mutateAsync({ month: formData.month, year: formData.year });
             setShowModal(false);
-            alert("Traitement de la paie lancé avec succès !");
+            toast.success('Traitement de la paie lancé avec succès !');
         } catch (err: any) {
-            alert("Erreur: " + (err.response?.data?.message || err.message));
+            toast.error('Erreur: ' + (err.response?.data?.message || err.message));
         }
     };
 

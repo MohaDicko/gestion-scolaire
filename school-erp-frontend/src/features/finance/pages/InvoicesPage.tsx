@@ -3,6 +3,7 @@ import { Receipt, Search, Plus, Filter, CreditCard, Clock, X, Check } from 'luci
 import { useInvoices, useGenerateClassInvoices, usePayInvoice, Invoice } from '../hooks/useInvoices';
 import { useAcademicYears, useClassrooms } from '../../academic/hooks/useClassrooms';
 import { exportToExcel } from '../../../lib/excelExport';
+import { toast } from '../../../store/toastStore';
 
 export function InvoicesPage() {
     const { data: invoices, isLoading } = useInvoices();
@@ -34,10 +35,10 @@ export function InvoicesPage() {
         e.preventDefault();
         try {
             const res = await generateInvoices.mutateAsync(genData);
-            alert(`${res.invoicesGenerated} factures générées avec succès !`);
+            toast.success(`${res.invoicesGenerated} facture(s) générée(s) avec succès !`);
             setShowGenModal(false);
         } catch (err: any) {
-            alert("Erreur lors de la génération: " + (err.response?.data?.message || err.message));
+            toast.error('Erreur lors de la génération: ' + (err.response?.data?.message || err.message));
         }
     };
 
@@ -49,10 +50,10 @@ export function InvoicesPage() {
                 invoiceId: payModal.invoice.id,
                 ...payData
             });
-            alert("Paiement enregistré avec succès");
+            toast.success('Paiement enregistré avec succès !');
             setPayModal({ isOpen: false, invoice: null });
         } catch (err: any) {
-            alert("Erreur lors du paiement: " + (err.response?.data?.message || err.message));
+            toast.error('Erreur lors du paiement: ' + (err.response?.data?.message || err.message));
         }
     };
 

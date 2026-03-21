@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Bell, Send, Users } from 'lucide-react';
 import { useSendNotification } from '../../../hooks/useNotifications';
+import { toast } from '../../../store/toastStore';
 
 const NOTIFICATION_TYPES = [
     { id: 5, label: '📢 Annonce générale' },
@@ -24,7 +25,7 @@ export function SendNotificationPage() {
             setForm({ title: '', body: '', typeId: 5, linkUrl: '' });
             setTimeout(() => setSent(false), 3000);
         } catch (err: any) {
-            alert('Erreur : ' + (err.response?.data?.message || err.message));
+            toast.error('Erreur : ' + (err.response?.data?.message || err.message));
         }
     };
 

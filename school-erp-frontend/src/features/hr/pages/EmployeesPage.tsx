@@ -3,6 +3,8 @@ import { Briefcase, Plus, Search, Mail, Phone, UserCheck, UserMinus, X, Check } 
 import { useEmployees, useCreateEmployee, useActivateEmployee, useDeactivateEmployee } from '../hooks/useEmployees';
 import { exportToExcel } from '../../../lib/excelExport';
 import { Download } from 'lucide-react';
+import { toast } from '../../../store/toastStore';
+import { dialog } from '../../../store/confirmStore';
 
 export function EmployeesPage() {
     const [search, setSearch] = useState('');
@@ -18,12 +20,21 @@ export function EmployeesPage() {
     });
 
     const handleToggleStatus = async (id: string, currentStatus: boolean) => {
-        if (!window.confirm(`Voulez-vous vraiment ${currentStatus ? 'désactiver' : 'activer'} cet employé ?`)) return;
+        const ok = await dialog.confirm({
+            title: currentStatus ? 'Désactiver cet employé' : 'Activer cet employé',
+            message: currentStatus
+                ? 'Cet employé ne pourra plus se connecter ni recevoir de paie. Continuer ?'
+                : 'L’employé retrouvera l’accès complet au système. Continuer ?',
+            variant: currentStatus ? 'danger' : 'info',
+            confirmLabel: currentStatus ? 'Désactiver' : 'Activer',
+        });
+        if (!ok) return;
         try {
             if (currentStatus) await deactivateEmployee.mutateAsync(id);
             else await activateEmployee.mutateAsync(id);
+            toast.success(`Employé ${currentStatus ? 'désactivé' : 'activé'} avec succès.`);
         } catch (err) {
-            alert("Erreur lors de la modification du statut.");
+            toast.error('Erreur lors de la modification du statut.');
         }
     };
 
@@ -47,8 +58,9 @@ export function EmployeesPage() {
             await createEmployee.mutateAsync(formData);
             setShowModal(false);
             setFormData({ firstName: '', lastName: '', email: '', phoneNumber: '', employeeType: 'Teacher' });
+            toast.success('Employé ajouté avec succès !');
         } catch (err: any) {
-            alert("Erreur: " + (err.response?.data?.message || err.message));
+            toast.error('Erreur: ' + (err.response?.data?.message || err.message));
         }
     };
 

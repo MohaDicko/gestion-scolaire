@@ -5,6 +5,7 @@ import { useAuthStore } from '../../../store/authStore';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { exportToExcel } from '../../../lib/excelExport';
+import { toast } from '../../../store/toastStore';
 
 type QueryType = 'arrears' | 'low_salary' | 'none';
 
@@ -28,7 +29,7 @@ export function SmartQueriesPage() {
             }
         } catch (err) {
             console.error(err);
-            alert("Erreur lors de l'exécution de la requête.");
+            toast.error("Erreur lors de l'exécution de la requête.");
         } finally {
             setIsLoading(false);
         }

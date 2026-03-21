@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../../store/authStore';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import { FinancialChart } from '../components/FinancialChart';
@@ -93,13 +94,13 @@ export function DashboardPage() {
                             { label: 'Saisie de Notes', icon: GraduationCap, color: '#f59e0b', path: '/academic/grades' },
                             { label: 'Inscriptions', icon: Users, color: '#10b981', path: '/academic/students' },
                         ].map(action => (
-                            <a key={action.label} href={action.path} className="quick-action-btn">
+                            <Link key={action.label} to={action.path} className="quick-action-btn">
                                 <div className="qa-icon" style={{ background: action.color + '20', color: action.color }}>
                                     <action.icon size={20} />
                                 </div>
                                 <span>{action.label}</span>
                                 <ArrowUpRight size={14} className="qa-arrow" />
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

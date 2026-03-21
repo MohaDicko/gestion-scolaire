@@ -4,6 +4,8 @@ import { useAuthStore } from '../store/authStore';
 import { AiAssistant } from '../components/AiAssistant';
 import { NotificationBell } from '../components/NotificationBell';
 import { GlobalSearch } from '../components/GlobalSearch';
+import { ToastContainer } from '../components/ToastContainer';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import {
     LayoutDashboard, Users, BookOpen, GraduationCap, Briefcase, UserCheck, Clock,
     FileText, Calendar, DollarSign, LogOut, School, ChevronRight, CreditCard,
@@ -114,6 +116,8 @@ export function AppLayout() {
                 <Outlet />
             </main>
             <AiAssistant />
+            <ToastContainer />
+            <ConfirmDialog />
         </div>
     );
 }

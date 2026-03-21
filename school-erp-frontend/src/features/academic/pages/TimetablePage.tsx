@@ -7,6 +7,7 @@ import { useClassSchedule, useSetClassSchedule } from '../hooks/useTimetable';
 import { useSubjects } from '../hooks/useGrades';
 import { useEmployees } from '../../hr/hooks/useEmployees';
 import { useAuthStore } from '../../../store/authStore';
+import { toast } from '../../../store/toastStore';
 
 const DAYS_OF_WEEK = [
     { value: 1, label: 'Lundi' },
@@ -86,7 +87,7 @@ export function TimetablePage() {
 
         // validate
         if (localBlocks.some(b => !b.subjectId || !b.teacherId)) {
-            alert('Veuillez renseigner toutes les matières et les professeurs.');
+            toast.warning('Veuillez renseigner toutes les matières et les professeurs.');
             return;
         }
 
@@ -96,9 +97,9 @@ export function TimetablePage() {
                 schedules: localBlocks
             });
             setIsEditMode(false);
-            alert("Emploi du temps enregistré avec succès.");
+            toast.success('Emploi du temps enregistré avec succès.');
         } catch (error: any) {
-            alert("Erreur lors de l'enregistrement : " + (error.response?.data?.message || error.message));
+            toast.error("Erreur lors de l'enregistrement : " + (error.response?.data?.message || error.message));
         }
     };
 

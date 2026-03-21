@@ -4,6 +4,8 @@ import { useCalendarEvents, useCreateEvent, useDeleteEvent, SchoolEventDto, Crea
 import { useAuthStore } from '../../../store/authStore';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../../lib/apiClient';
+import { toast } from '../../../store/toastStore';
+import { dialog } from '../../../store/confirmStore';
 
 const CATEGORY_META: Record<number, { label: string; color: string; bg: string; emoji: string }> = {
     1: { label: 'Examen', color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)', emoji: '📝' },
@@ -40,10 +42,10 @@ export function CalendarPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['events'] });
-            alert('✅ Calendrier scolaire 2024-2025 généré avec succès !');
+            toast.success('Calendrier scolaire 2024-2025 généré avec succès !');
         },
         onError: (err: any) => {
-            alert('Erreur : ' + (err.response?.data || err.message));
+            toast.error('Erreur : ' + (err.response?.data || err.message));
         }
     });
 
@@ -109,13 +111,20 @@ export function CalendarPage() {
         try {
             await createEvent.mutateAsync(form);
             setShowForm(false);
+            toast.success('Événement créé avec succès !');
         } catch (err: any) {
-            alert('Erreur : ' + (err.response?.data?.message || err.message));
+            toast.error('Erreur : ' + (err.response?.data?.message || err.message));
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Supprimer cet événement ?')) return;
+        const ok = await dialog.confirm({
+            title: 'Supprimer l\'événement',
+            message: 'Êtes-vous sûr de vouloir supprimer cet événement ?',
+            variant: 'danger',
+            confirmLabel: 'Supprimer',
+        });
+        if (!ok) return;
         await deleteEvent.mutateAsync(id);
         setSelectedDay(null);
     };
@@ -140,7 +149,15 @@ export function CalendarPage() {
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                         <button
                             className="btn-secondary"
-                            onClick={() => { if (window.confirm('Régénérer tous les événements du calendrier 2024-2025 ?')) seedEvents.mutate(); }}
+                            onClick={async () => {
+                                const ok = await dialog.confirm({
+                                    title: 'Régénérer le calendrier',
+                                    message: 'Régénérer tous les événements du calendrier 2024-2025 ? Cela remplacera les événements système existants.',
+                                    variant: 'warning',
+                                    confirmLabel: 'Régénérer',
+                                });
+                                if (ok) seedEvents.mutate();
+                            }}
                             disabled={seedEvents.isPending}
                             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                         >

@@ -45,12 +45,23 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // ── DATABASE ─────────────────────────────────────────────────────
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlite => sqlite.MigrationsAssembly("SchoolERP.Infrastructure")
-    )
-);
+{
+    // Détection automatique : PostgreSQL (Docker/Prod) ou SQLite (dev local)
+    if (connectionString.StartsWith("Host=", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseNpgsql(connectionString, npgsql =>
+            npgsql.MigrationsAssembly("SchoolERP.Infrastructure"));
+    }
+    else
+    {
+        options.UseSqlite(connectionString, sqlite =>
+            sqlite.MigrationsAssembly("SchoolERP.Infrastructure"));
+    }
+});
 
 // ── MULTI-TENANT SERVICE ──────────────────────────────────────────
 builder.Services.AddScoped<ITenantService, TenantService>();

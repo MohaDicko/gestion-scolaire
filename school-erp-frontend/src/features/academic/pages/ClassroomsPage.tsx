@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Users, Layout, X, Info, Trash2 } from 'lucide-react';
 import { useClassrooms, useAcademicYears } from '../hooks/useClassrooms';
+import { toast } from '../../../store/toastStore';
+import { dialog } from '../../../store/confirmStore';
 
 export function ClassroomsPage() {
     const { classrooms, isLoading, error, createClassroom, deleteClassroom } = useClassrooms();
@@ -28,18 +30,26 @@ export function ClassroomsPage() {
             setName('');
             setLevel('');
             setYearId('');
+            toast.success('Classe créée avec succès !');
         } catch (err) {
-            alert("Erreur lors de la création de la classe.");
+            toast.error('Erreur lors de la création de la classe.');
         }
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!window.confirm(`Êtes-vous sûr de vouloir supprimer la classe "${name}" ?`)) return;
+        const ok = await dialog.confirm({
+            title: 'Supprimer la classe',
+            message: 'Êtes-vous sûr de vouloir supprimer la classe "' + name + '" ? Cette action est irréversible.',
+            variant: 'danger',
+            confirmLabel: 'Supprimer',
+        });
+        if (!ok) return;
 
         try {
             await deleteClassroom.mutateAsync(id);
+            toast.success(`Classe "${name}" supprimée.`);
         } catch (err: any) {
-            alert(err.response?.data?.Message || "Erreur lors de la suppression. Vérifiez si la classe est liée à des élèves.");
+            toast.error(err.response?.data?.Message || 'Erreur lors de la suppression. Vérifiez si la classe est liée à des élèves.');
         }
     };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, UserCheck, Check, AlertCircle, Save } from 'lucide-react';
 import { useClassrooms } from '../hooks/useClassrooms';
 import { useClassAttendance, useRecordAttendance, AttendanceDto } from '../hooks/useAttendance';
+import { toast } from '../../../store/toastStore';
 
 export function AttendancePage() {
     const { classrooms } = useClassrooms();
@@ -57,9 +58,9 @@ export function AttendancePage() {
             };
             await recordAttendance.mutateAsync(payload);
             setHasChanges(false);
-            alert("Appel enregistré avec succès !");
+            toast.success('Appel enregistré avec succès !');
         } catch (error: any) {
-            alert("Erreur lors de l'enregistrement de l'appel : " + (error.response?.data?.message || error.message));
+            toast.error("Erreur lors de l'enregistrement de l'appel : " + (error.response?.data?.message || error.message));
         }
     };
 

@@ -17,3 +17,4 @@ C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\Schoo
 C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Infrastructure\obj\Debug\net8.0\SchoolERP.Infrastructure.pdb
 C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Infrastructure\obj\Debug\net8.0\SchoolERP.Infrastructure.genruntimeconfig.cache
 C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Infrastructure\obj\Debug\net8.0\ref\SchoolERP.Infrastructure.dll
+C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Infrastructure\obj\Debug\net8.0\SchoolERP.Infrastructure.sourcelink.json

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { FileText, Plus, Search, Filter, Calendar, X, Check } from 'lucide-react';
-import { useContracts, useCreateContract, Contract } from '../hooks/useContracts';
+import { useContracts, useCreateContract } from '../hooks/useContracts';
+
 import { useEmployees } from '../hooks/useEmployees';
+import { toast } from '../../../store/toastStore';
 
 export function ContractsPage() {
     const { data: contracts, isLoading } = useContracts();
@@ -42,9 +44,9 @@ export function ContractsPage() {
             await createContract.mutateAsync(payload);
             setShowModal(false);
             setFormData({ employeeId: '', contractType: 0, startDate: '', endDate: '', baseSalary: 0 });
-            alert("Contrat ajouté avec succès.");
+            toast.success('Contrat ajouté avec succès.');
         } catch (err: any) {
-            alert("Erreur: " + (err.response?.data?.message || err.message));
+            toast.error('Erreur: ' + (err.response?.data?.message || err.message));
         }
     };
 

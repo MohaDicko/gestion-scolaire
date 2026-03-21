@@ -13,3 +13,4 @@ C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\Schoo
 C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Application\obj\Debug\net8.0\refint\SchoolERP.Application.dll
 C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Application\obj\Debug\net8.0\SchoolERP.Application.pdb
 C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Application\obj\Debug\net8.0\ref\SchoolERP.Application.dll
+C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Application\obj\Debug\net8.0\SchoolERP.Application.sourcelink.json

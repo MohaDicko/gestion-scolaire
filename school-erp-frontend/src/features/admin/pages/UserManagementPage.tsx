@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Shield, Search, Plus, CheckCircle, XCircle, Mail, Clock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../../lib/apiClient';
+import { toast } from '../../../store/toastStore';
 
 interface AppUser {
     id: string;
@@ -199,7 +200,7 @@ export function UserManagementPage() {
                         </div>
                         <div className="modal-footer">
                             <button className="btn-ghost" onClick={() => setShowInviteModal(false)}>Annuler</button>
-                            <button className="btn-primary" onClick={() => { alert(`✅ Invitation envoyée à ${inviteForm.email} (démo)`); setShowInviteModal(false); }}>
+                            <button className="btn-primary" onClick={() => { toast.success(`Invitation envoyée à ${inviteForm.email} ! (mode démo)`); setShowInviteModal(false); }}>
                                 <Mail size={16} /> Envoyer l'Invitation
                             </button>
                         </div>

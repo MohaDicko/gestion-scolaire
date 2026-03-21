@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, TrendingDown, Search, Filter, Download } from 'lucide-react';
 import { useExpenses, useRecordExpense, RecordExpensePayload } from '../hooks/useExpenses';
 import { exportToExcel } from '../../../lib/excelExport';
+import { toast } from '../../../store/toastStore';
 
 const CATEGORIES = [
     { id: 1, label: 'Maintenance', color: '#f59e0b' },
@@ -50,9 +51,9 @@ export function ExpensesPage() {
             await recordExpense.mutateAsync(form);
             setShowForm(false);
             setForm({ description: '', amount: 0, dateIncurred: new Date().toISOString().split('T')[0], categoryId: 1, referenceNumber: '' });
-            alert('Dépense enregistrée avec succès.');
+            toast.success('Dépense enregistrée avec succès.');
         } catch (err: any) {
-            alert('Erreur : ' + (err.response?.data?.message || err.message));
+            toast.error('Erreur : ' + (err.response?.data?.message || err.message));
         }
     };
 

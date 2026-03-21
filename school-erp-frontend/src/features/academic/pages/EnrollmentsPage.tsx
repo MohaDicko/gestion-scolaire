@@ -3,6 +3,8 @@ import { UserPlus, Search, GraduationCap, X, CheckCircle } from 'lucide-react';
 import { useEnrollments } from '../hooks/useEnrollments';
 import { useGetStudents } from '../hooks/useStudents';
 import { useClassrooms, useAcademicYears } from '../hooks/useClassrooms';
+import { toast } from '../../../store/toastStore';
+
 
 export function EnrollmentsPage() {
     const { enrollments: allEnrollments, isLoading, enrollStudent } = useEnrollments();
@@ -44,8 +46,9 @@ export function EnrollmentsPage() {
             setShowForm(false);
             setSelectedStudentId('');
             setStudentSearch('');
+            toast.success("Élève inscrit avec succès !");
         } catch (err: any) {
-            alert(err.response?.data?.Message || "Erreur lors de l'inscription.");
+            toast.error(err.response?.data?.Message || "Erreur lors de l'inscription.");
         }
     };
 
@@ -60,9 +63,9 @@ export function EnrollmentsPage() {
                 academicYearId: transferData.academicYearId
             });
             setShowTransferForm(false);
-            alert("Transfert effectué avec succès !");
+            toast.success("Transfert effectué avec succès !");
         } catch (err: any) {
-            alert(err.response?.data?.Message || "Erreur lors du transfert.");
+            toast.error(err.response?.data?.Message || "Erreur lors du transfert.");
         }
     };
 

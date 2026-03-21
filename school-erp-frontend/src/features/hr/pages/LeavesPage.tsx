@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Calendar, Plus, Check, X, FileText, AlertCircle } from 'lucide-react';
 import { useLeaves, useCreateLeaveRequest, useUpdateLeaveStatus } from '../hooks/useLeaves';
 import { useEmployees } from '../hooks/useEmployees';
+import { toast } from '../../../store/toastStore';
+import { dialog } from '../../../store/confirmStore';
 
 export function LeavesPage() {
     const { data: leaves, isLoading } = useLeaves();
@@ -30,26 +32,42 @@ export function LeavesPage() {
             await createLeave.mutateAsync(payload);
             setShowModal(false);
             setFormData({ employeeId: '', leaveType: 0, startDate: '', endDate: '', reason: '' });
-            alert("Demande de congé envoyée.");
+            toast.success('Demande de congé envoyée avec succès.');
         } catch (err: any) {
-            alert("Erreur: " + (err.response?.data?.message || err.message));
+            toast.error('Erreur: ' + (err.response?.data?.message || err.message));
         }
     };
 
     const handleAction = async (id: string, isApproved: boolean) => {
-        let rejectionReason = undefined;
+        let rejectionReason: string | undefined = undefined;
+
         if (!isApproved) {
-            const reason = window.prompt("Motif du refus :");
-            if (reason === null) return; // User cancelled
+            const reason = await dialog.prompt({
+                title: 'Motif du refus',
+                message: 'Veuillez indiquer la raison du refus de cette demande de congé.',
+                inputLabel: 'Motif',
+                inputPlaceholder: 'Ex: Manque d’effectif prévu…',
+                variant: 'warning',
+                confirmLabel: 'Refuser la demande',
+                cancelLabel: 'Annuler',
+            });
+            if (reason === null) return; // annulé
             rejectionReason = reason;
         } else {
-            if (!window.confirm("Approuver cette demande de congé ?")) return;
+            const ok = await dialog.confirm({
+                title: 'Approuver la demande',
+                message: 'Confirmez-vous l’approbation de cette demande de congé ?',
+                variant: 'info',
+                confirmLabel: 'Oui, approuver',
+            });
+            if (!ok) return;
         }
 
         try {
             await updateStatus.mutateAsync({ id, isApproved, rejectionReason });
+            toast.success(isApproved ? 'Congé approuvé avec succès.' : 'Demande refusée.');
         } catch (err) {
-            alert("Erreur lors du traitement de la demande.");
+            toast.error('Erreur lors du traitement de la demande.');
         }
     };
 
