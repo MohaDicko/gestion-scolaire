@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Search, Printer, CreditCard, Filter, User } from 'lucide-react';
 import { useGetStudents } from '../hooks/useStudents';
-import { apiClient } from '../../../lib/apiClient';
 import { useAuthStore } from '../../../store/authStore';
 import { useClassrooms } from '../hooks/useClassrooms';
 import jsPDF from 'jspdf';
