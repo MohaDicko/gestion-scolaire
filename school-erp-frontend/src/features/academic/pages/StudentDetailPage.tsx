@@ -2,7 +2,7 @@
 import { useParams } from 'react-router-dom';
 import { BookOpen, Calendar, MessageCircle, Download } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import { apiClient } from '../../../lib/apiClient';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from '../../../store/toastStore';
@@ -30,10 +30,7 @@ export function StudentDetailPage() {
   const { data: bulletin, isLoading } = useQuery<Bulletin>({
     queryKey: ['bulletin', id],
     queryFn: async () => {
-      const token = localStorage.getItem('school_erp_auth_token');
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/academic/students/${id}/bulletin`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.get(`/academic/students/${id}/bulletin`);
       return response.data;
     }
   });
