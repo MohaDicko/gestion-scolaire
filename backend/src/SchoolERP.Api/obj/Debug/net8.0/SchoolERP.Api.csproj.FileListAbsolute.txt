@@ -154,3 +154,4 @@ C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\Schoo
 C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Api\bin\Debug\net8.0\MiniExcel.dll
 C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Api\obj\Debug\net8.0\SchoolERP.Api.sourcelink.json
 C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Api\bin\Debug\net8.0\BCrypt.Net-Next.dll
+C:\Users\tinkpad\Desktop\Mes Nouveaux Projets\gestion scolaire\backend\src\SchoolERP.Api\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.InMemory.dll
