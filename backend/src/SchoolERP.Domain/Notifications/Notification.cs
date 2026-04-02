@@ -12,9 +12,8 @@ public enum NotificationType
     ContractExpiring = 6
 }
 
-public class Notification : AuditableEntity
+public class Notification : TenantEntity
 {
-    public Guid TenantId { get; private set; }
     public Guid? RecipientUserId { get; private set; } // null = broadcast to all
     public string Title { get; private set; } = string.Empty;
     public string Body { get; private set; } = string.Empty;

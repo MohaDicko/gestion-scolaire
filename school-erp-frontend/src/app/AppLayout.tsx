@@ -110,10 +110,13 @@ export function AppLayout() {
             {/* Main Content */}
             <main className="main-content">
                 {/* Top bar */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 20px 0', marginBottom: '-4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 32px', borderBottom: '1px solid var(--border)', background: 'rgba(24, 24, 27, 0.4)', backdropFilter: 'blur(10px)', position: 'sticky', top: 0, zIndex: 10 }}>
+                    <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text)', alignSelf: 'center' }}>{/* Optional Title Placeholder */}</div>
                     <GlobalSearch />
                 </div>
-                <Outlet />
+                <div style={{ flex: 1, paddingBottom: '20px' }}>
+                    <Outlet />
+                </div>
             </main>
             <AiAssistant />
             <ToastContainer />

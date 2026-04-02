@@ -13,10 +13,8 @@ public enum ExpenseCategory
     Miscellaneous = 99
 }
 
-public class Expense : AuditableEntity
+public class Expense : TenantEntity
 {
-    public Guid TenantId { get; private set; }
-    
     public string Description { get; private set; } = string.Empty;
     public decimal Amount { get; private set; }
     public DateTime DateIncurred { get; private set; }

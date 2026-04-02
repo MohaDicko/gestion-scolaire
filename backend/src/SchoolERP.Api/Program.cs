@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using SchoolERP.Domain.Interfaces;
 using SchoolERP.Infrastructure.Persistence;
 using SchoolERP.Infrastructure.Services;
+using SchoolERP.Application.Common.Interfaces;
 using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -65,6 +66,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // ── MULTI-TENANT SERVICE ──────────────────────────────────────────
 builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<AppDbContext>());
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
@@ -132,21 +134,18 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// ── AUTO-MIGRATE ON STARTUP (development only) ────────────────────
-if (app.Environment.IsDevelopment())
+// ── AUTO-MIGRATE ON STARTUP ────────────────────
+try
 {
-    try
-    {
-        using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await db.Database.MigrateAsync();
-        Console.WriteLine("✅ Database migration applied successfully.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"⚠️  Database migration skipped: {ex.Message}");
-        Console.WriteLine("   Make sure PostgreSQL is running and connection string is correct.");
-    }
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+    Console.WriteLine($"✅ Database migration applied successfully. Environment: {app.Environment.EnvironmentName}");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️  Database migration skipped: {ex.Message}");
+    Console.WriteLine("   Make sure PostgreSQL is running and connection string is correct.");
 }
 
 app.Run();

@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "cHAM2qXeuaA=",
+  "dgSpecHash": "iwOhtwgwoTY=",
   "success": true,
   "projectFilePath": "C:\\Users\\tinkpad\\Desktop\\Mes Nouveaux Projets\\gestion scolaire\\backend\\src\\SchoolERP.Infrastructure\\SchoolERP.Infrastructure.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\tinkpad\\.nuget\\packages\\bcrypt.net-next\\4.1.0\\bcrypt.net-next.4.1.0.nupkg.sha512",
     "C:\\Users\\tinkpad\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
     "C:\\Users\\tinkpad\\.nuget\\packages\\fluentvalidation.dependencyinjectionextensions\\12.1.1\\fluentvalidation.dependencyinjectionextensions.12.1.1.nupkg.sha512",
     "C:\\Users\\tinkpad\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

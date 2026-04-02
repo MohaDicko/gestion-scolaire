@@ -6,6 +6,7 @@ using SchoolERP.Domain.Interfaces;
 using SchoolERP.Domain.Payroll;
 using SchoolERP.Domain.Notifications;
 using SchoolERP.Domain.Events;
+using SchoolERP.Domain.Auth;
 
 namespace SchoolERP.Infrastructure.Persistence;
 
@@ -59,6 +60,9 @@ public class AppDbContext : DbContext, IUnitOfWork
     // ── Events ──────────────────────────────────────────
     public DbSet<SchoolEvent> SchoolEvents => Set<SchoolEvent>();
 
+    // ── Auth & Identity ──────────────────────────────────
+    public DbSet<User> Users => Set<User>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -67,20 +71,37 @@ public class AppDbContext : DbContext, IUnitOfWork
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         // ── GLOBAL QUERY FILTERS (Multi-Tenant isolation) ────
-        // IMPORTANT: The lambda must reference _tenantService directly (not a local variable)
-        // so EF Core evaluates it at QUERY TIME, not at model building time.
-        modelBuilder.Entity<AcademicYear>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<Classroom>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<Student>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<Enrollment>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<Subject>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<Department>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<Employee>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<LeaveRequest>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<StaffAttendance>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<PayrollRun>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<SchoolERP.Domain.Finance.StudentInvoice>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
-        modelBuilder.Entity<SchoolERP.Domain.Finance.StudentPayment>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
+        // Automatically apply tenant filter to all entities deriving from TenantEntity
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(TenantEntity).IsAssignableFrom(entityType.ClrType))
+            {
+                // Apply Global Query Filter
+                var method = typeof(AppDbContext).GetMethod(nameof(ApplyTenantFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    ?.MakeGenericMethod(entityType.ClrType);
+                method?.Invoke(this, new object[] { modelBuilder });
+
+                // Automatic Index for performance
+                modelBuilder.Entity(entityType.ClrType).HasIndex(nameof(TenantEntity.TenantId));
+            }
+        }
+
+        // ── CUSTOM CONFIGURATIONS ─────────────────────────────
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasIndex(u => u.Email).IsUnique();
+            entity.OwnsMany(u => u.RefreshTokens, rt =>
+            {
+                rt.WithOwner().HasForeignKey("UserId");
+                rt.HasKey(t => t.Id);
+                rt.ToTable("RefreshTokens");
+            });
+        });
+    }
+
+    private void ApplyTenantFilter<T>(ModelBuilder modelBuilder) where T : TenantEntity
+    {
+        modelBuilder.Entity<T>().HasQueryFilter(e => e.TenantId == _tenantService.GetCurrentTenantId());
     }
 
     /// <summary>
@@ -89,6 +110,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var currentUserId = _tenantService.GetCurrentUserId();
+        var currentTenantId = _tenantService.GetCurrentTenantId();
 
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {
@@ -96,12 +118,32 @@ public class AppDbContext : DbContext, IUnitOfWork
             {
                 entry.Entity.CreatedAt = DateTime.UtcNow;
                 entry.Entity.CreatedBy = currentUserId;
+
+                // Automatic TenantId injection for new entities
+                if (entry.Entity is TenantEntity tenantEntity && tenantEntity.TenantId == Guid.Empty)
+                {
+                    // Using reflection because TenantId is protected
+                    entry.Property("TenantId").CurrentValue = currentTenantId;
+                }
             }
 
             if (entry.State == EntityState.Modified)
             {
                 entry.Entity.LastModifiedAt = DateTime.UtcNow;
                 entry.Entity.LastModifiedBy = currentUserId;
+            }
+
+            // Global UTC Fix for Npgsql
+            foreach (var prop in entry.Properties)
+            {
+                if ((entry.State == EntityState.Added || entry.State == EntityState.Modified) &&
+                    prop.Metadata.ClrType == typeof(DateTime) && prop.CurrentValue is DateTime dt)
+                {
+                    if (dt.Kind != DateTimeKind.Utc)
+                    {
+                        prop.CurrentValue = DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+                    }
+                }
             }
         }
 

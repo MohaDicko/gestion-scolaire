@@ -58,7 +58,7 @@ public class Student : TenantEntity
         };
 
         // Generate student number: STU-{Year}-{Random5Digits}
-        student.StudentNumber = $"STU-{DateTime.UtcNow.Year}-{new Random().Next(10000, 99999)}";
+        student.StudentNumber = $"STU-{DateTime.UtcNow.Year}-{Random.Shared.Next(10000, 99999)}";
 
         return student;
     }

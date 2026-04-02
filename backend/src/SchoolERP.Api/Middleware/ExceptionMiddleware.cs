@@ -36,6 +36,9 @@ public class ExceptionMiddleware
         
         var statusCode = exception switch
         {
+            SchoolERP.Domain.Exceptions.NotFoundException => (int)HttpStatusCode.NotFound,
+            SchoolERP.Domain.Exceptions.ForbiddenException => (int)HttpStatusCode.Forbidden,
+            SchoolERP.Domain.Exceptions.DomainException => (int)HttpStatusCode.UnprocessableEntity,
             KeyNotFoundException => (int)HttpStatusCode.NotFound,
             UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
             InvalidOperationException or ArgumentException => (int)HttpStatusCode.BadRequest,

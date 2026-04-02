@@ -13,9 +13,8 @@ public enum EventCategory
     Other = 99
 }
 
-public class SchoolEvent : AuditableEntity
+public class SchoolEvent : TenantEntity
 {
-    public Guid TenantId { get; private set; }
     public string Title { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public DateTime StartDate { get; private set; }

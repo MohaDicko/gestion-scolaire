@@ -54,7 +54,7 @@ public class Employee : TenantEntity
             DepartmentId = departmentId
         };
 
-        employee.EmployeeNumber = $"EMP-{DateTime.UtcNow.Year}-{new Random().Next(10000, 99999)}";
+        employee.EmployeeNumber = $"EMP-{DateTime.UtcNow.Year}-{Random.Shared.Next(10000, 99999)}";
         return employee;
     }
 

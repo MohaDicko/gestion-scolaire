@@ -7,9 +7,8 @@ namespace SchoolERP.Domain.Academic;
 /// Represents a student's grade for a specific subject and exam.
 /// This entity is auditable because grades can never be changed without a trace.
 /// </summary>
-public class Grade : AuditableEntity
+public class Grade : TenantEntity
 {
-    public Guid TenantId { get; private set; }
     public Guid StudentId { get; private set; }
     public Guid SubjectId { get; private set; }
     public Guid AcademicYearId { get; private set; }
@@ -36,6 +35,13 @@ public class Grade : AuditableEntity
         ExamType examType,
         string? comment = null)
     {
+        if (maxScore <= 0)
+            throw new SchoolERP.Domain.Exceptions.DomainException("MaxScore must be greater than 0.");
+        if (score < 0 || score > maxScore)
+            throw new SchoolERP.Domain.Exceptions.DomainException($"Score {score} is invalid. Must be between 0 and {maxScore}.");
+        if (semester < 1 || semester > 3)
+            throw new SchoolERP.Domain.Exceptions.DomainException("Semester must be 1, 2, or 3.");
+
         return new Grade
         {
             TenantId = tenantId,

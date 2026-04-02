@@ -8,9 +8,8 @@ namespace SchoolERP.Domain.HR;
 /// Employment contract with temporal logic.
 /// Contracts are auditable — every change is tracked.
 /// </summary>
-public class Contract : AuditableEntity
+public class Contract : TenantEntity
 {
-    public Guid TenantId { get; private set; }
     public Guid EmployeeId { get; private set; }
     public ContractType ContractType { get; private set; }  // CDI, CDD, Temporary, Intern
     public DateTime StartDate { get; private set; }

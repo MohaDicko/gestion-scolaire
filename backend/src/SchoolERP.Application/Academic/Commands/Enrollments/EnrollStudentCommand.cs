@@ -36,11 +36,11 @@ public class EnrollStudentCommandHandler : IRequestHandler<EnrollStudentCommand,
         var classroom = await db.Set<Classroom>().FirstOrDefaultAsync(c => c.Id == request.ClassroomId, cancellationToken);
         if (classroom == null) throw new Exception("Classroom not found");
 
-        var currentEnrollmentCount = await db.Set<Enrollment>()
-            .CountAsync(e => e.ClassroomId == request.ClassroomId, cancellationToken);
+        var activeEnrollmentCount = await db.Set<Enrollment>()
+            .CountAsync(e => e.ClassroomId == request.ClassroomId && e.Status == EnrollmentStatus.Active, cancellationToken);
         
-        if (currentEnrollmentCount >= classroom.MaxCapacity)
-            throw new Exception($"Classroom {classroom.Name} is full ({classroom.MaxCapacity} max).");
+        if (activeEnrollmentCount >= classroom.MaxCapacity)
+            throw new SchoolERP.Domain.Exceptions.DomainException($"Classroom {classroom.Name} is full ({classroom.MaxCapacity} max).");
 
         // 3. Check for existing active enrollment in the same year
         var existing = await db.Set<Enrollment>()

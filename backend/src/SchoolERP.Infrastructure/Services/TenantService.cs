@@ -22,12 +22,16 @@ public class TenantService : ITenantService
     {
         var context = _httpContextAccessor.HttpContext;
 
-        // SuperAdmin can pass a specific tenant via header (for admin operations)
-        var headerTenant = context?.Request.Headers["X-Tenant-ID"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(headerTenant) && Guid.TryParse(headerTenant, out var headerGuid))
-            return headerGuid;
+        // Only SuperAdmin can impersonate a tenant via the X-Tenant-ID header
+        var isSuperAdmin = context?.User?.IsInRole("SuperAdmin") ?? false;
+        if (isSuperAdmin)
+        {
+            var headerTenant = context?.Request.Headers["X-Tenant-ID"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(headerTenant) && Guid.TryParse(headerTenant, out var headerGuid))
+                return headerGuid;
+        }
 
-        // Otherwise extract from JWT claim
+        // Extract TenantId from JWT claim (all other users)
         var tenantClaim = context?.User?.FindFirst("tenantId")?.Value;
         if (!string.IsNullOrEmpty(tenantClaim) && Guid.TryParse(tenantClaim, out var tenantGuid))
             return tenantGuid;

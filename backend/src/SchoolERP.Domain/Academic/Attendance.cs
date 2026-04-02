@@ -7,9 +7,8 @@ namespace SchoolERP.Domain.Academic;
 /// <summary>
 /// Daily attendance record for a student.
 /// </summary>
-public class Attendance : AuditableEntity
+public class Attendance : TenantEntity
 {
-    public Guid TenantId { get; private set; }
     public Guid StudentId { get; private set; }
     public Guid ClassroomId { get; private set; }
     public DateTime Date { get; private set; }

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SchoolERP.Domain.Interfaces;
+using SchoolERP.Domain.Enums;
 
 namespace SchoolERP.Application.Academic.Queries.GetStudentBulletin;
 
@@ -42,13 +43,16 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
         var enrollment = await dbContent.Set<SchoolERP.Domain.Academic.Enrollment>()
             .Include(e => e.Classroom)
             .Include(e => e.AcademicYear)
-            .FirstOrDefaultAsync(e => e.StudentId == request.StudentId, cancellationToken);
+            .FirstOrDefaultAsync(e => e.StudentId == request.StudentId
+                                   && e.Status == EnrollmentStatus.Active, cancellationToken);
 
-        if (enrollment == null) throw new Exception("Student is not enrolled");
+        if (enrollment == null) throw new SchoolERP.Domain.Exceptions.NotFoundException("Enrollment", request.StudentId);
 
         var grades = await dbContent.Set<SchoolERP.Domain.Academic.Grade>()
             .Include(g => g.Subject)
-            .Where(g => g.StudentId == request.StudentId && g.Semester == request.Semester)
+            .Where(g => g.StudentId == request.StudentId
+                     && g.Semester == request.Semester
+                     && g.AcademicYearId == enrollment.AcademicYearId)
             .ToListAsync(cancellationToken);
 
         var subjects = grades.Select(g => new SubjectGradeDto(

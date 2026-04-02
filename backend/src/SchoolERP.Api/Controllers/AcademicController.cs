@@ -90,8 +90,9 @@ public class AcademicController : ControllerBase
     /// Import a list of students from an Excel file into a specific classroom.
     /// </summary>
     [HttpPost("classrooms/{classroomId}/students/import")]
+    [Consumes("multipart/form-data")]
     [Authorize(Roles = "SuperAdmin,SchoolAdmin")]
-    public async Task<IActionResult> ImportStudents(Guid classroomId, [FromForm] IFormFile file, [FromForm] Guid academicYearId)
+    public async Task<IActionResult> ImportStudents([FromRoute] Guid classroomId, IFormFile file, [FromForm] Guid academicYearId)
     {
         if (file == null || file.Length == 0) return BadRequest("Please upload an Excel file.");
         
@@ -158,30 +159,16 @@ public class AcademicController : ControllerBase
     [Authorize(Roles = "SuperAdmin,SchoolAdmin")]
     public async Task<IActionResult> EnrollStudent([FromBody] EnrollStudentCommand command)
     {
-        try
-        {
-            var id = await _mediator.Send(command);
-            return Ok(id);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        var id = await _mediator.Send(command);
+        return Ok(id);
     }
 
     [HttpPost("enrollments/transfer")]
     [Authorize(Roles = "SuperAdmin,SchoolAdmin")]
     public async Task<IActionResult> TransferStudent([FromBody] TransferStudentCommand command)
     {
-        try
-        {
-            await _mediator.Send(command);
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        await _mediator.Send(command);
+        return Ok();
     }
 
     // --- ACADEMIC YEARS ---
@@ -221,15 +208,8 @@ public class AcademicController : ControllerBase
     [Authorize(Roles = "SuperAdmin,SchoolAdmin,Teacher")]
     public async Task<IActionResult> SubmitGradesBulk([FromBody] SubmitGradesCommand command)
     {
-        try
-        {
-            var count = await _mediator.Send(command);
-            return Ok(new { Count = count });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        var count = await _mediator.Send(command);
+        return Ok(new { Count = count });
     }
 
     [HttpGet("classrooms/{classroomId}/attendance")]
@@ -269,14 +249,7 @@ public class AcademicController : ControllerBase
     [HttpGet("students/{studentId}/portal")]
     public async Task<IActionResult> GetStudentPortal(Guid studentId)
     {
-        try
-        {
-            var result = await _mediator.Send(new GetStudentDashboardQuery(studentId));
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return NotFound(new { Message = ex.Message });
-        }
+        var result = await _mediator.Send(new GetStudentDashboardQuery(studentId));
+        return Ok(result);
     }
 }

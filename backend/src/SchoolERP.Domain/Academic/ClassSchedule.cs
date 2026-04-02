@@ -7,9 +7,8 @@ namespace SchoolERP.Domain.Academic;
 /// <summary>
 /// A single scheduled lesson for a classroom on a specific day of the week.
 /// </summary>
-public class ClassSchedule : AuditableEntity
+public class ClassSchedule : TenantEntity
 {
-    public Guid TenantId { get; private set; }
     public Guid ClassroomId { get; private set; }
     public Guid SubjectId { get; private set; }
     public Guid TeacherId { get; private set; }

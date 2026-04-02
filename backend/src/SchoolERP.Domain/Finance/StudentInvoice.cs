@@ -43,7 +43,7 @@ public class StudentInvoice : AuditableEntity
             TenantId = tenantId,
             StudentId = studentId,
             AcademicYearId = academicYearId,
-            InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{new Random().Next(1000, 9999)}",
+            InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}",
             Description = description,
             Amount = amount,
             FeeType = feeType,

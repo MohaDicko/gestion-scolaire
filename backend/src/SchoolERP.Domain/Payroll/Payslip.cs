@@ -9,9 +9,8 @@ namespace SchoolERP.Domain.Payroll;
 /// This is a core business rule — a finalized payslip represents a legal document.
 /// Any attempt to modify a finalized payslip throws a DomainException.
 /// </summary>
-public class Payslip : AuditableEntity
+public class Payslip : TenantEntity
 {
-    public Guid TenantId { get; private set; }
     public Guid EmployeeId { get; private set; }
     public Guid PayrollRunId { get; private set; }
 
