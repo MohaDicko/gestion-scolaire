@@ -30,6 +30,9 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<School> Schools => Set<School>();
     public DbSet<AcademicYear> AcademicYears => Set<AcademicYear>();
     public DbSet<Classroom> Classrooms => Set<Classroom>();
+    public DbSet<Campus> Campuses => Set<Campus>();
+    public DbSet<SchoolSection> SchoolSections => Set<SchoolSection>();
+    public DbSet<Specialty> Specialties => Set<Specialty>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Subject> Subjects => Set<Subject>();
@@ -52,6 +55,8 @@ public class AppDbContext : DbContext, IUnitOfWork
     // ── Finance Context ──────────────────────────────────────
     public DbSet<SchoolERP.Domain.Finance.StudentInvoice> StudentInvoices => Set<SchoolERP.Domain.Finance.StudentInvoice>();
     public DbSet<SchoolERP.Domain.Finance.StudentPayment> StudentPayments => Set<SchoolERP.Domain.Finance.StudentPayment>();
+    public DbSet<SchoolERP.Domain.Finance.PaymentPlan> PaymentPlans => Set<SchoolERP.Domain.Finance.PaymentPlan>();
+    public DbSet<SchoolERP.Domain.Finance.PaymentInstallment> PaymentInstallments => Set<SchoolERP.Domain.Finance.PaymentInstallment>();
     public DbSet<SchoolERP.Domain.Finance.Expense> Expenses => Set<SchoolERP.Domain.Finance.Expense>();
 
     // ── Notifications ──────────────────────────────────────

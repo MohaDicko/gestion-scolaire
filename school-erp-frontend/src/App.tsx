@@ -24,6 +24,7 @@ import { GradesPage } from './features/academic/pages/GradesPage';
 import { EnrollmentsPage } from './features/academic/pages/EnrollmentsPage';
 import { AttendancePage } from './features/academic/pages/AttendancePage';
 import { TimetablePage } from './features/academic/pages/TimetablePage';
+import { BulletinPage } from './features/academic/pages/BulletinPage';
 
 // Pages — HR
 import { EmployeesPage } from './features/hr/pages/EmployeesPage';
@@ -41,6 +42,7 @@ import { InvoicesPage } from './features/finance/pages/InvoicesPage';
 import { PaymentsPage } from './features/finance/pages/PaymentsPage';
 import { ExpensesPage } from './features/finance/pages/ExpensesPage';
 import { FinanceOverviewPage } from './features/finance/pages/FinanceOverviewPage';
+import AccountantDashboardPage from './features/finance/pages/AccountantDashboardPage';
 
 // Pages — Notifications
 import { SendNotificationPage } from './features/notifications/pages/SendNotificationPage';
@@ -82,13 +84,15 @@ function App() {
                 <Route path="/academic/enrollments" element={<EnrollmentsPage />} />
                 <Route path="/academic/attendance" element={<AttendancePage />} />
                 <Route path="/academic/timetable" element={<TimetablePage />} />
+                <Route path="/academic/bulletins" element={<BulletinPage />} />
               </Route>
 
               {/* Finance — Accountant, SchoolAdmin, SuperAdmin */}
               <Route
                 element={<ProtectedRoute roles={['SuperAdmin', 'SchoolAdmin', 'Accountant']} />}
               >
-                <Route path="/finance" element={<FinanceOverviewPage />} />
+                <Route path="/finance" element={<AccountantDashboardPage />} />
+                <Route path="/finance/overview" element={<FinanceOverviewPage />} />
                 <Route path="/finance/invoices" element={<InvoicesPage />} />
                 <Route path="/finance/payments" element={<PaymentsPage />} />
                 <Route path="/finance/expenses" element={<ExpensesPage />} />

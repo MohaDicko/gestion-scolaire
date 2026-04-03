@@ -24,6 +24,11 @@ public class Student : TenantEntity
     public string ParentRelationship { get; private set; } = string.Empty;
 
     public bool IsActive { get; private set; } = true;
+    
+    public Guid CampusId { get; private set; }
+
+    // Navigation
+    public Campus? Campus { get; private set; }
 
     // Navigation
     private readonly List<Enrollment> _enrollments = new();
@@ -41,7 +46,8 @@ public class Student : TenantEntity
         string parentName,
         string parentPhone,
         string parentEmail,
-        string parentRelationship)
+        string parentRelationship,
+        Guid campusId)
     {
         var student = new Student
         {
@@ -54,7 +60,8 @@ public class Student : TenantEntity
             ParentName = parentName,
             ParentPhone = parentPhone,
             ParentEmail = parentEmail,
-            ParentRelationship = parentRelationship
+            ParentRelationship = parentRelationship,
+            CampusId = campusId
         };
 
         // Generate student number: STU-{Year}-{Random5Digits}

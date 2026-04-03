@@ -103,7 +103,7 @@ export function FinanceOverviewPage() {
                             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(val) => `${val/1000}k`} />
                             <Tooltip 
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                                formatter={(value: any) => [formatCurrency(Number(value)), 'Encaissé']}
+                                formatter={((value: any) => [formatCurrency(Number(value)), 'Encaissé']) as any}
                             />
                             <Area type="monotone" dataKey="value" stroke="var(--primary)" fillOpacity={1} fill="url(#colorValue)" strokeWidth={3} />
                         </AreaChart>
@@ -130,7 +130,7 @@ export function FinanceOverviewPage() {
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
+                            <Tooltip formatter={((value: any) => formatCurrency(Number(value))) as any} />
                             <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
                         </PieChart>
                     </ResponsiveContainer>

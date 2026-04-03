@@ -39,7 +39,7 @@ services:
       context: ./school-erp-frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_BASE_URL=${PUBLIC_API_URL}
+        - VITE_API_URL=${PUBLIC_API_URL}
     container_name: schoolerp-web-prod
     restart: unless-stopped
     depends_on:

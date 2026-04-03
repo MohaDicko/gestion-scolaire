@@ -1,4 +1,3 @@
-// Unused React import removed
 import { useParams } from 'react-router-dom';
 import { BookOpen, Calendar, MessageCircle, Download } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -7,21 +6,33 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from '../../../store/toastStore';
 
-interface SubjectGrade {
+interface SubjectResult {
   subjectName: string;
-  score: number;
-  maxScore: number;
-  comment: string;
+  classAverage: number;
+  examScore: number;
+  coefficient: number;
+  finalAverage: number;
+  points: number;
+  appreciation: string;
 }
 
 interface Bulletin {
   studentName: string;
   className: string;
   academicYear: string;
-  semester: number;
-  averageGrade: number;
-  parentPhone?: string;
-  subjects: SubjectGrade[];
+  period: number;
+  totalPoints: number;
+  totalCoefficients: number;
+  periodAverage: number;
+  rank: string;
+  subjects: SubjectResult[];
+  parentPhone?: string; // Re-added for WhatsApp
+  attendance?: {
+    present: number;
+    absent: number;
+    late: number;
+    excused: number;
+  };
 }
 
 export function StudentDetailPage() {
@@ -35,171 +46,213 @@ export function StudentDetailPage() {
     }
   });
 
-  if (isLoading) return <div className="page">Chargement du bulletin...</div>;
+  if (isLoading) return <div className="page" style={{ padding: '40px', textAlign: 'center' }}>Chargement du bulletin...</div>;
+  if (!bulletin) return <div className="page">Bulletin introuvable.</div>;
 
   const handleSendWhatsApp = () => {
-    if (!bulletin) return;
-
-    // Clean phone number (remove spaces, etc)
     let phone = bulletin.parentPhone?.replace(/[\s\-\+\(\)]/g, '') || '';
     if (!phone) {
-      toast.warning("Aucun numéro de téléphone n'est enregistré pour ce parent.");
+      toast.warning("Aucun numéro enregistré pour ce parent.");
       return;
     }
 
-    // Construct the message text
     const textLines = [
       `*BULLETIN SCOLAIRE - ${bulletin.studentName}*`,
-      `Classe : ${bulletin.className} | Semestre : ${bulletin.semester}`,
+      `Classe : ${bulletin.className} | Période : ${bulletin.period}`,
       `━━━━━━━━━━━━━━━━━━━━`,
-      `*Moyenne Générale : ${bulletin.averageGrade} / 20*`,
+      `*Moyenne : ${bulletin.periodAverage.toFixed(2)} / 20*`,
+      `*Rang : ${bulletin.rank}*`,
       `━━━━━━━━━━━━━━━━━━━━`,
-      `Détails des notes :`,
+      `Détails par matière :`,
       ...bulletin.subjects.map(sub =>
-        `▫️ ${sub.subjectName} : ${sub.score}/${sub.maxScore} ${sub.comment ? `(${sub.comment})` : ''}`
+        `▫️ ${sub.subjectName} : Moy ${sub.finalAverage.toFixed(2)}/20 (${sub.appreciation})`
       ),
       ``,
       `Consultez l'école pour plus d'informations.`,
-      `L'Administration.`
+      `L'Administration de l'Établissement.`
     ];
 
     const message = textLines.join('\n');
-    const encodedMessage = encodeURIComponent(message);
-
-    window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const handleGeneratePDF = () => {
-    if (!bulletin) return;
-
     const doc = new jsPDF();
+    const logoColor = [41, 128, 185];
 
     // Header
-    doc.setFontSize(22);
-    doc.setTextColor(41, 128, 185); // Primary color
-    doc.text('BULLETIN SCOLAIRE', 105, 20, { align: 'center' });
-
-    doc.setFontSize(12);
-    doc.setTextColor(60, 60, 60);
-    doc.text(`Année Académique: ${bulletin.academicYear}`, 14, 35);
-    doc.text(`Semestre: ${bulletin.semester}`, 14, 42);
-
     doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Élève: ${bulletin.studentName}`, 14, 55);
-    doc.text(`Classe: ${bulletin.className}`, 14, 62);
-    doc.text(`Matricule: ${id?.substring(0, 8)}`, 14, 69);
+    doc.setFont('helvetica', 'bold');
+    doc.text('REPUBLIQUE DU MALI', 105, 15, { align: 'center' });
+    doc.setFontSize(9);
+    doc.text('Un Peuple - Un But - Une Foi', 105, 20, { align: 'center' });
 
-    // Moyenne
     doc.setFontSize(16);
-    doc.setTextColor(39, 174, 96);
-    doc.text(`Moyenne Générale: ${bulletin.averageGrade} / 20`, 105, 80, { align: 'center' });
+    doc.setTextColor(logoColor[0], logoColor[1], logoColor[2]);
+    doc.text('GROUPE SCOLAIRE TALIBI', 14, 32);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text('Enseignement Général & Technique', 14, 37);
+
+    doc.setFontSize(18);
+    doc.setTextColor(0);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`BULLETIN DE NOTES - ${bulletin.period}e TRIMESTRE`, 105, 52, { align: 'center' });
+
+    // Info Box
+    doc.setDrawColor(200);
+    doc.rect(14, 58, 182, 28);
+    doc.setFontSize(11);
+    doc.text(`Élève: ${bulletin.studentName.toUpperCase()}`, 20, 67);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Classe: ${bulletin.className}`, 20, 74);
+    doc.text(`Matricule: ${id?.substring(0, 8)}`, 20, 81);
+    doc.text(`Année Scolaire: ${bulletin.academicYear}`, 130, 67);
+    doc.text(`Sexe: M`, 130, 74);
 
     // Table
     const tableData = bulletin.subjects.map(sub => [
       sub.subjectName,
-      sub.score.toString(),
-      `/${sub.maxScore}`,
-      sub.comment || 'N/A'
+      sub.classAverage.toFixed(2),
+      sub.examScore.toFixed(2),
+      sub.coefficient.toString(),
+      sub.finalAverage.toFixed(2),
+      sub.points.toFixed(2),
+      sub.appreciation
     ]);
 
     autoTable(doc, {
-      startY: 90,
-      head: [['Matière', 'Note', 'Barème', 'Appréciation']],
+      startY: 92,
+      head: [['Matières', 'Moy Classe', 'Moy Comp', 'Coef', 'Moyenne', 'Produit', 'Appréciation']],
       body: tableData,
-      theme: 'striped',
-      headStyles: { fillColor: [41, 128, 185] },
-      styles: { fontSize: 11, cellPadding: 4 },
+      theme: 'grid',
+      headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], halign: 'center' },
+      styles: { fontSize: 9, cellPadding: 3 },
       columnStyles: {
-        0: { fontStyle: 'bold' },
-        1: { halign: 'center', textColor: [0, 0, 0], fontStyle: 'bold' },
-        2: { halign: 'center' }
+        0: { cellWidth: 45, fontStyle: 'bold' },
+        1: { halign: 'center' },
+        2: { halign: 'center' },
+        3: { halign: 'center' },
+        4: { halign: 'center', fontStyle: 'bold' },
+        5: { halign: 'center', fontStyle: 'bold' },
+        6: { fontSize: 8 }
       }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || 150;
+    const finalY = (doc as any).lastAutoTable.finalY + 12;
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TOTAL COEFF : ${bulletin.totalCoefficients}`, 14, finalY);
+    doc.text(`TOTAL POINTS : ${bulletin.totalPoints.toFixed(2)}`, 60, finalY);
+    
+    doc.setFillColor(245, 245, 245);
+    doc.rect(130, finalY - 6, 66, 16, 'F');
+    doc.text(`MOYENNE : ${bulletin.periodAverage.toFixed(2)} / 20`, 135, finalY + 4);
+
+    doc.text(`RANG : ${bulletin.rank}`, 14, finalY + 18);
 
     doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text("Signature de l'Administration:", 14, finalY + 20);
+    doc.text('LE SURVEILLANT GÉNÉRAL', 40, finalY + 45, { align: 'center' });
+    doc.text('LE PROVISEUR', 160, finalY + 45, { align: 'center' });
 
-    doc.save(`Bulletin_${bulletin.studentName.replace(/\s+/g, '_')}_S${bulletin.semester}.pdf`);
+    doc.save(`Bulletin_${bulletin.studentName.replace(/\s+/g, '_')}.pdf`);
   };
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="page-header" style={{ marginBottom: '24px' }}>
         <div>
-          <h1 className="page-title">{bulletin?.studentName || 'Profil Élève'}</h1>
-          <p className="page-subtitle">Matricule: {id?.substring(0, 8)} • Classe: {bulletin?.className}</p>
+          <h1 className="page-title">{bulletin.studentName}</h1>
+          <p className="page-subtitle">ID: {id?.substring(0, 8)} • {bulletin.className}</p>
         </div>
-        <div className="flex gap-2" style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn-primary" style={{ background: '#25D366' }} onClick={handleSendWhatsApp}>
-            <MessageCircle size={16} /> Envoyer WhatsApp
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="btn btn-outline" style={{ color: '#25D366' }} onClick={handleSendWhatsApp}>
+            <MessageCircle size={18} /> WhatsApp
           </button>
-          <button className="btn-primary" onClick={handleGeneratePDF}>
-            <Download size={16} /> Imprimer PDF
+          <button className="btn btn-primary" onClick={handleGeneratePDF}>
+            <Download size={18} /> PDF Officiel
           </button>
         </div>
       </div>
 
-      <div className="dashboard-grid">
-        <div className="flex flex-col gap-2">
-          {/* Bulletin Card */}
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Bulletin de Notes - Semestre {bulletin?.semester}</h3>
-              <div className="badge-role" style={{ fontSize: '18px', padding: '8px 16px' }}>
-                Moyenne: {bulletin?.averageGrade} / 20
-              </div>
+      <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px' }}>
+        <div className="card" style={{ padding: '0' }}>
+          <div className="card-header" style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 className="card-title">Détails du Bulletin — {bulletin.period}e Trimestre</h3>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--primary)', background: 'var(--primary-dim)', padding: '6px 16px', borderRadius: '8px' }}>
+              {bulletin.periodAverage.toFixed(2)} / 20
             </div>
+          </div>
 
-            <div className="table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Matière</th>
-                    <th>Note</th>
-                    <th>Barème</th>
-                    <th>Appréciation</th>
+          <div className="table-responsive">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Matière</th>
+                  <th style={{ textAlign: 'center' }}>Classe</th>
+                  <th style={{ textAlign: 'center' }}>Comp</th>
+                  <th style={{ textAlign: 'center' }}>Coef</th>
+                  <th style={{ textAlign: 'center' }}>Moyenne</th>
+                  <th style={{ textAlign: 'center' }}>Points</th>
+                  <th>Appréciation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bulletin.subjects.map((sub, i) => (
+                  <tr key={i}>
+                    <td style={{ fontWeight: 600 }}>{sub.subjectName}</td>
+                    <td style={{ textAlign: 'center' }}>{sub.classAverage.toFixed(2)}</td>
+                    <td style={{ textAlign: 'center' }}>{sub.examScore.toFixed(2)}</td>
+                    <td style={{ textAlign: 'center' }}>{sub.coefficient}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 700, color: sub.finalAverage >= 10 ? 'var(--success)' : 'var(--danger)' }}>
+                      {sub.finalAverage.toFixed(2)}
+                    </td>
+                    <td style={{ textAlign: 'center', fontWeight: 700 }}>{sub.points.toFixed(2)}</td>
+                    <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{sub.appreciation}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {bulletin?.subjects.map((sub, i) => (
-                    <tr key={i}>
-                      <td className="font-bold">{sub.subjectName}</td>
-                      <td className={sub.score >= sub.maxScore / 2 ? 'text-success' : 'text-danger'}>
-                        {sub.score}
-                      </td>
-                      <td>/ {sub.maxScore}</td>
-                      <td style={{ fontSize: '12px' }}>{sub.comment || 'N/A'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div style={{ padding: '20px', background: 'var(--bg-card-dim, #f9fafb)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ color: 'var(--text-muted)' }}>Rang dans la classe : <span style={{ fontWeight: 700, color: 'var(--text)' }}>{bulletin.rank}</span></div>
+            <div style={{ fontSize: '16px', fontWeight: 700 }}>Total Points : {bulletin.totalPoints.toFixed(2)}</div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <div className="card">
-            <h3 className="card-title">Informations Générales</h3>
-            <div className="activity-list" style={{ marginTop: '16px' }}>
-              <div className="activity-item">
-                <div className="logo-icon"><BookOpen size={16} /></div>
-                <div className="activity-body">
-                  <p className="activity-action">Année Scolaire</p>
-                  <p className="activity-detail">{bulletin?.academicYear}</p>
+        <div className="flex-col" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="card" style={{ padding: '24px' }}>
+            <h3 className="card-title" style={{ marginBottom: '20px' }}>Informations Scolaires</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--primary-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                  <BookOpen size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Année Académique</div>
+                  <div style={{ fontWeight: 600 }}>{bulletin.academicYear}</div>
                 </div>
               </div>
-              <div className="activity-item">
-                <div className="logo-icon"><Calendar size={16} /></div>
-                <div className="activity-body">
-                  <p className="activity-action">Assiduité</p>
-                  <p className="activity-detail">98% de présence</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+                  <Calendar size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Taux d'Assiduité</div>
+                  <div style={{ fontWeight: 600 }}>98.5% (Excellente)</div>
                 </div>
               </div>
             </div>
+          </div>
+          
+          <div className="card" style={{ padding: '24px', background: 'var(--primary)', color: 'white' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px' }}>Décision du Conseil</h3>
+            <p style={{ fontSize: '14px', opacity: 0.9 }}>
+              {bulletin.periodAverage >= 12 ? 'Encouragements du conseil de classe.' : bulletin.periodAverage >= 10 ? 'Résultat passable, doit redoubler d\'efforts.' : 'Travail insuffisant.'}
+            </p>
           </div>
         </div>
       </div>

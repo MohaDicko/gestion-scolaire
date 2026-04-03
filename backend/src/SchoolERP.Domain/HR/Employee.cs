@@ -22,9 +22,11 @@ public class Employee : TenantEntity
     public bool IsActive { get; private set; } = true;
 
     public Guid DepartmentId { get; private set; }
+    public Guid CampusId { get; private set; }
 
     // Navigation
     public Department? Department { get; private set; }
+    public Campus? Campus { get; private set; }
 
     private readonly List<Contract> _contracts = new();
     public IReadOnlyCollection<Contract> Contracts => _contracts.AsReadOnly();
@@ -38,7 +40,7 @@ public class Employee : TenantEntity
         Guid tenantId, string firstName, string lastName,
         string email, string phoneNumber, DateTime dateOfBirth,
         Gender gender, DateTime hireDate, EmployeeType employeeType,
-        Guid departmentId)
+        Guid departmentId, Guid campusId)
     {
         var employee = new Employee
         {
@@ -51,7 +53,8 @@ public class Employee : TenantEntity
             Gender = gender,
             HireDate = hireDate,
             EmployeeType = employeeType,
-            DepartmentId = departmentId
+            DepartmentId = departmentId,
+            CampusId = campusId
         };
 
         employee.EmployeeNumber = $"EMP-{DateTime.UtcNow.Year}-{Random.Shared.Next(10000, 99999)}";

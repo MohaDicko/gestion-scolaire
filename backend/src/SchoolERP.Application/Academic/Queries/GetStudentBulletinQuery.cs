@@ -10,25 +10,35 @@ public record StudentBulletinDto
     public string StudentName { get; init; } = string.Empty;
     public string ClassName { get; init; } = string.Empty;
     public string AcademicYear { get; init; } = string.Empty;
-    public int Semester { get; init; }
-    public decimal AverageGrade { get; init; }
-    public string ParentPhone { get; init; } = string.Empty;
-    public List<SubjectGradeDto> Subjects { get; init; } = new();
+    public int Period { get; init; } 
+    public decimal TotalPoints { get; init; }
+    public decimal TotalCoefficients { get; init; }
+    public decimal PeriodAverage { get; init; }
+    public string Rank { get; init; } = "N/A";
+    public AttendanceSummaryDto Attendance { get; init; } = new();
+    public List<SubjectResultDto> Subjects { get; init; } = new();
 }
 
-public record SubjectGradeDto(string SubjectName, decimal Score, decimal MaxScore, string Comment);
+public record AttendanceSummaryDto(int Present = 0, int Absent = 0, int Late = 0, int Excused = 0);
 
-public record GetStudentBulletinQuery(Guid StudentId, int Semester) : IRequest<StudentBulletinDto>;
+public record SubjectResultDto(
+    string SubjectName, 
+    decimal ClassAverage, 
+    decimal ExamScore, 
+    decimal Coefficient, 
+    decimal FinalAverage, 
+    decimal Points, 
+    string Appreciation);
+
+public record GetStudentBulletinQuery(Guid StudentId, int Period) : IRequest<StudentBulletinDto>;
 
 public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletinQuery, StudentBulletinDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ITenantService _tenantService;
 
-    public GetStudentBulletinQueryHandler(IUnitOfWork unitOfWork, ITenantService tenantService)
+    public GetStudentBulletinQueryHandler(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
-        _tenantService = tenantService;
     }
 
     public async Task<StudentBulletinDto> Handle(GetStudentBulletinQuery request, CancellationToken cancellationToken)
@@ -37,54 +47,159 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
         
         var student = await dbContent.Set<SchoolERP.Domain.Academic.Student>()
             .FirstOrDefaultAsync(s => s.Id == request.StudentId, cancellationToken);
-            
         if (student == null) throw new Exception("Student not found");
 
         var enrollment = await dbContent.Set<SchoolERP.Domain.Academic.Enrollment>()
             .Include(e => e.Classroom)
             .Include(e => e.AcademicYear)
-            .FirstOrDefaultAsync(e => e.StudentId == request.StudentId
-                                   && e.Status == EnrollmentStatus.Active, cancellationToken);
+            .FirstOrDefaultAsync(e => e.StudentId == request.StudentId && e.Status == EnrollmentStatus.Active, cancellationToken);
 
-        if (enrollment == null) throw new SchoolERP.Domain.Exceptions.NotFoundException("Enrollment", request.StudentId);
+        if (enrollment == null) throw new Exception("Active enrollment not found");
 
-        var grades = await dbContent.Set<SchoolERP.Domain.Academic.Grade>()
-            .Include(g => g.Subject)
-            .Where(g => g.StudentId == request.StudentId
-                     && g.Semester == request.Semester
-                     && g.AcademicYearId == enrollment.AcademicYearId)
+        // 1. Calculate Attendance Stats
+        var attendanceRecords = await dbContent.Set<SchoolERP.Domain.Academic.Attendance>()
+            .Where(a => a.StudentId == request.StudentId && a.ClassroomId == enrollment.ClassroomId)
             .ToListAsync(cancellationToken);
 
-        var subjects = grades.Select(g => new SubjectGradeDto(
-            g.Subject?.Name ?? "Unknown", 
-            g.Score, 
-            g.MaxScore, 
-            g.Comment ?? ""
-        )).ToList();
+        var attendanceSummary = new AttendanceSummaryDto(
+            attendanceRecords.Count(a => a.Status == AttendanceStatus.Present),
+            attendanceRecords.Count(a => a.Status == AttendanceStatus.Absent),
+            attendanceRecords.Count(a => a.Status == AttendanceStatus.Late),
+            attendanceRecords.Count(a => a.Status == AttendanceStatus.Excused)
+        );
 
-        decimal totalWeightedScore = 0;
-        decimal totalCoefficients = 0;
+        // 2. Fetch all classmates to calculate RANK
+        var classmates = await dbContent.Set<SchoolERP.Domain.Academic.Enrollment>()
+            .Where(e => e.ClassroomId == enrollment.ClassroomId && e.AcademicYearId == enrollment.AcademicYearId && e.Status == EnrollmentStatus.Active)
+            .Select(e => e.StudentId)
+            .ToListAsync(cancellationToken);
 
-        foreach (var grade in grades)
+        // Calculate averages for ALL classmates (this can be optimized for larger classes)
+        var allGrades = await dbContent.Set<SchoolERP.Domain.Academic.Grade>()
+            .Include(g => g.Subject)
+            .Where(g => classmates.Contains(g.StudentId) && g.Semester == request.Period && g.AcademicYearId == enrollment.AcademicYearId)
+            .ToListAsync(cancellationToken);
+
+        var studentsAverages = new Dictionary<Guid, decimal>();
+        foreach (var studentId in classmates)
         {
-            var coef = grade.Subject?.Coefficient ?? 1;
-            // Normalize score to 20 base Scale
-            var normalizedScore = grade.Score * 20 / grade.MaxScore;
-            totalWeightedScore += normalizedScore * coef;
-            totalCoefficients += coef;
+            var studentGrades = allGrades.Where(g => g.StudentId == studentId).ToList();
+            studentsAverages[studentId] = CalculateStudentAverage(studentGrades, studentId == request.StudentId ? attendanceSummary : null);
         }
 
-        var average = totalCoefficients > 0 ? totalWeightedScore / totalCoefficients : 0;
+        var sortedAverages = studentsAverages.OrderByDescending(x => x.Value).ToList();
+        var rankPosition = sortedAverages.FindIndex(x => x.Key == request.StudentId) + 1;
+
+        // 3. Prepare Final Result for Current Student
+        var currentsGrades = allGrades.Where(g => g.StudentId == request.StudentId).ToList();
+        var subjectsGrouped = currentsGrades.GroupBy(g => g.SubjectId);
+        var subjectResults = new List<SubjectResultDto>();
+        
+        decimal totalFinalPoints = 0;
+        decimal totalCoeffs = 0;
+
+        foreach (var group in subjectsGrouped)
+        {
+            var subject = group.First().Subject;
+            if (subject == null) continue;
+
+            decimal moyClasse = group.Where(g => g.ExamType == ExamType.Continuous).Any() 
+                ? group.Where(g => g.ExamType == ExamType.Continuous).Average(g => g.Score * 20 / g.MaxScore) : 0;
+            
+            decimal moyComp = group.Where(g => g.ExamType == ExamType.Final).Any() 
+                ? group.Where(g => g.ExamType == ExamType.Final).Average(g => g.Score * 20 / g.MaxScore) : 0;
+
+            // Logic for CONDUCT if it's the conduct subject
+            if (subject.Name.ToUpper().Contains("CONDUITE"))
+            {
+                // Auto-calculate conduct based on attendance if not manually entered
+                if (moyClasse == 0 && attendanceRecords.Any())
+                {
+                    moyClasse = CalculateConductScore(attendanceSummary);
+                    moyComp = moyClasse; // Conduite often has same grade for both
+                }
+            }
+
+            decimal finalMoySubject = (moyClasse + (moyComp * 2)) / 3;
+            decimal points = finalMoySubject * subject.Coefficient;
+
+            totalFinalPoints += points;
+            totalCoeffs += subject.Coefficient;
+
+            subjectResults.Add(new SubjectResultDto(
+                subject.Name,
+                Math.Round(moyClasse, 2),
+                Math.Round(moyComp, 2),
+                subject.Coefficient,
+                Math.Round(finalMoySubject, 2),
+                Math.Round(points, 2),
+                GetAppreciation(finalMoySubject)
+            ));
+        }
 
         return new StudentBulletinDto
         {
             StudentName = student.FullName,
             ClassName = enrollment.Classroom?.Name ?? "N/A",
             AcademicYear = enrollment.AcademicYear?.Name ?? "N/A",
-            Semester = request.Semester,
-            AverageGrade = Math.Round(average, 2),
-            ParentPhone = student.ParentPhone,
-            Subjects = subjects
+            Period = request.Period,
+            TotalPoints = Math.Round(totalFinalPoints, 2),
+            TotalCoefficients = totalCoeffs,
+            PeriodAverage = Math.Round(studentsAverages[request.StudentId], 2),
+            Rank = $"{rankPosition} ème / {classmates.Count}",
+            Attendance = attendanceSummary,
+            Subjects = subjectResults
+        };
+    }
+
+    private decimal CalculateStudentAverage(List<SchoolERP.Domain.Academic.Grade> grades, AttendanceSummaryDto? attendance = null)
+    {
+        var grouped = grades.GroupBy(g => g.SubjectId);
+        decimal totalPoints = 0;
+        decimal totalCoeffs = 0;
+
+        foreach (var group in grouped)
+        {
+            var subject = group.First().Subject;
+            if (subject == null) continue;
+
+            decimal moyClasse = group.Where(g => g.ExamType == ExamType.Continuous).Any() ? group.Where(g => g.ExamType == ExamType.Continuous).Average(g => g.Score * 20 / g.MaxScore) : 0;
+            decimal moyComp = group.Where(g => g.ExamType == ExamType.Final).Any() ? group.Where(g => g.ExamType == ExamType.Final).Average(g => g.Score * 20 / g.MaxScore) : 0;
+
+            if (subject.Name.ToUpper().Contains("CONDUITE") && attendance != null && moyClasse == 0)
+            {
+                moyClasse = CalculateConductScore(attendance);
+                moyComp = moyClasse;
+            }
+
+            decimal finalMoy = (moyClasse + (moyComp * 2)) / 3;
+            totalPoints += finalMoy * subject.Coefficient;
+            totalCoeffs += subject.Coefficient;
+        }
+
+        return totalCoeffs > 0 ? totalPoints / totalCoeffs : 0;
+    }
+
+    private decimal CalculateConductScore(AttendanceSummaryDto summary)
+    {
+        // Start with 20, minus 1 per unjustified absence, minus 0.2 per late
+        decimal score = 20;
+        score -= summary.Absent * 1.0m;
+        score -= summary.Late * 0.2m;
+        return Math.Max(0, score);
+    }
+
+    private string GetAppreciation(decimal avg)
+    {
+        return avg switch
+        {
+            >= 16 => "Très Bien",
+            >= 14 => "Bien",
+            >= 12 => "Assez Bien",
+            >= 10 => "Passable",
+            >= 8 => "Insuffisant",
+            >= 5 => "Faible",
+            _ => "Très Faible"
         };
     }
 }

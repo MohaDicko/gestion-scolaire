@@ -12,16 +12,22 @@ public class Classroom : TenantEntity
     public string? Stream { get; private set; }              // e.g. "TSE", "TLL", "TSS" (Série)
     public int MaxCapacity { get; private set; }
     public Guid AcademicYearId { get; private set; }
+    public Guid CampusId { get; private set; }
+    public Guid SchoolSectionId { get; private set; }
+    public Guid? SpecialtyId { get; private set; }
 
     // Navigation
     public AcademicYear? AcademicYear { get; private set; }
+    public Campus? Campus { get; private set; }
+    public SchoolSection? Section { get; private set; }
+    public Specialty? Specialty { get; private set; }
 
     private readonly List<Enrollment> _enrollments = new();
     public IReadOnlyCollection<Enrollment> Enrollments => _enrollments.AsReadOnly();
 
     private Classroom() { }
 
-    public static Classroom Create(Guid tenantId, string name, string level, int maxCapacity, Guid academicYearId, string? stream = null)
+    public static Classroom Create(Guid tenantId, string name, string level, int maxCapacity, Guid academicYearId, Guid campusId, Guid schoolSectionId, Guid? specialtyId = null, string? stream = null)
     {
         return new Classroom
         {
@@ -30,7 +36,10 @@ public class Classroom : TenantEntity
             Level = level,
             Stream = stream,
             MaxCapacity = maxCapacity,
-            AcademicYearId = academicYearId
+            AcademicYearId = academicYearId,
+            CampusId = campusId,
+            SchoolSectionId = schoolSectionId,
+            SpecialtyId = specialtyId
         };
     }
 

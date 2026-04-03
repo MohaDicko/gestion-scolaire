@@ -144,4 +144,30 @@ Chaque école est un **Tenant** identifié par un `TenantId` (Guid).
 
 ---
 
-*Généré avec le Prompt Maître SchoolERP v2.0*
+## 🌐 Déploiement Production
+
+Le projet est pré-configuré pour un déploiement hybride moderne :
+
+### 🎨 Frontend (Vercel)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+*   Connectez votre repo GitHub.
+*   Sélectionnez le dossier `school-erp-frontend` lors du déploiement.
+*   Configurez `VITE_API_URL` avec l'URL de votre backend.
+
+### ⚙️ Backend (Railway)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new)
+*   Importez le repo GitHub.
+*   Railway détectera automatiquement le `backend/Dockerfile` grâce à [railway.json](file:///c:/Users/tinkpad/Desktop/Mes%20Nouveaux%20Projets/gestion%20scolaire/backend/railway.json).
+*   Configurez les variables d'environnement (voir ci-dessous).
+
+### 🔑 Variables d'Environnement Requises (Production)
+| Variable | Usage |
+| :--- | :--- |
+| `ASPNETCORE_ENVIRONMENT` | Doit être mis à `Production` |
+| `ConnectionStrings__DefaultConnection` | Votre URL de pooling Supabase (Port 6543) |
+| `Jwt__Key` | Clé secrète de signature JWT |
+| `Cors__AllowedOrigins` | URL de votre frontend Vercel |
+
+---
+
+*Projet analysé et optimisé par Antigravity — v1.0 Production Ready*
