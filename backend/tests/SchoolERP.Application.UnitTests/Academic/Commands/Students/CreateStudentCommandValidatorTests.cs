@@ -23,7 +23,8 @@ public class CreateStudentCommandValidatorTests
         ParentName: "Paul Dupont",
         ParentPhone: "0707070707",
         ParentEmail: "paul.dupont@example.com",
-        ParentRelationship: "Father"
+        ParentRelationship: "Father",
+        CampusId: Guid.NewGuid()
     );
 
     [Fact]

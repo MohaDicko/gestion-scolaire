@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SchoolERP.Application.Finance.Queries.GetInvoices;
 
-public record GetInvoicesQuery(bool OnlyWithArrears = false) : IRequest<List<InvoiceDto>>;
+public record GetInvoicesQuery(bool OnlyWithArrears = false, Guid? CampusId = null) : IRequest<List<InvoiceDto>>;
 
 public record InvoiceDto(
     Guid Id,
@@ -31,6 +31,10 @@ public class GetInvoicesQueryHandler : IRequestHandler<GetInvoicesQuery, List<In
     {
         var db = (DbContext)_unitOfWork;
         var query = db.Set<StudentInvoice>().AsNoTracking();
+        if (request.CampusId.HasValue)
+        {
+            query = query.Where(i => i.Student.CampusId == request.CampusId.Value);
+        }
 
         var result = await query
             .Select(i => new InvoiceDto(

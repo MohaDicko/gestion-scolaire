@@ -8,6 +8,8 @@ export interface Classroom {
     maxCapacity: number;
     studentCount: number;
     academicYearName: string;
+    sectionName: string;
+    campusName: string;
 }
 
 export interface AcademicYear {
@@ -30,7 +32,14 @@ export function useClassrooms() {
 
     // Create a new classroom
     const createClassroom = useMutation({
-        mutationFn: async (newClassroom: { name: string; level: string; maxCapacity: number; academicYearId: string }) => {
+        mutationFn: async (newClassroom: { 
+            name: string; 
+            level: string; 
+            maxCapacity: number; 
+            academicYearId: string;
+            schoolSectionId: string;
+            campusId: string;
+        }) => {
             const { data } = await apiClient.post('/academic/classrooms', newClassroom);
             return data;
         },
@@ -75,6 +84,38 @@ export function useAcademicYears() {
         queryKey: ['academicYears'],
         queryFn: async () => {
             const { data } = await apiClient.get<AcademicYear[]>('/academic/years');
+            return data;
+        }
+    });
+}
+
+export interface SchoolSection {
+    id: string;
+    name: string;
+    code: string;
+    maxGradeValue: number;
+}
+
+export function useSections() {
+    return useQuery({
+        queryKey: ['sections'],
+        queryFn: async () => {
+            const { data } = await apiClient.get<SchoolSection[]>('/academic/sections');
+            return data;
+        }
+    });
+}
+
+export interface Campus {
+    id: string;
+    name: string;
+}
+
+export function useCampuses() {
+    return useQuery({
+        queryKey: ['campuses'],
+        queryFn: async () => {
+            const { data } = await apiClient.get<Campus[]>('/academic/campuses');
             return data;
         }
     });

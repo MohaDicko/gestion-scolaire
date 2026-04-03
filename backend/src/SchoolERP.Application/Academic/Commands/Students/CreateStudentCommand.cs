@@ -14,7 +14,8 @@ public record CreateStudentCommand(
     string ParentName,
     string ParentPhone,
     string ParentEmail,
-    string ParentRelationship
+    string ParentRelationship,
+    Guid CampusId
 ) : IRequest<Guid>;
 
 public class CreateStudentCommandHandler : IRequestHandler<CreateStudentCommand, Guid>
@@ -44,7 +45,8 @@ public class CreateStudentCommandHandler : IRequestHandler<CreateStudentCommand,
             request.ParentName,
             request.ParentPhone,
             request.ParentEmail,
-            request.ParentRelationship
+            request.ParentRelationship,
+            request.CampusId
         );
 
         await _repository.AddAsync(student, cancellationToken);

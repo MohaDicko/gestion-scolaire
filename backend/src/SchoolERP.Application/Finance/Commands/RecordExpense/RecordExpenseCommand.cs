@@ -10,7 +10,8 @@ public record RecordExpenseCommand(
     decimal Amount,
     DateTime DateIncurred,
     int CategoryId,
-    string? ReferenceNumber
+    string? ReferenceNumber,
+    Guid? CampusId = null
 ) : IRequest<Guid>;
 
 public class RecordExpenseCommandHandler : IRequestHandler<RecordExpenseCommand, Guid>
@@ -34,7 +35,8 @@ public class RecordExpenseCommandHandler : IRequestHandler<RecordExpenseCommand,
             request.Amount,
             request.DateIncurred,
             (ExpenseCategory)request.CategoryId,
-            request.ReferenceNumber
+            request.ReferenceNumber,
+            request.CampusId
         );
 
         var db = (DbContext)_unitOfWork;

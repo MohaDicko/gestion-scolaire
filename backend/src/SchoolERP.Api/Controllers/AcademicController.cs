@@ -19,6 +19,8 @@ using SchoolERP.Application.Academic.Commands.RecordClassAttendance;
 using SchoolERP.Application.Academic.Commands.Schedules;
 using SchoolERP.Application.Academic.Queries.GetClassSchedule;
 using SchoolERP.Application.Academic.Queries.GetStudentDashboard;
+using SchoolERP.Application.Academic.Queries.GetSchoolSections;
+using SchoolERP.Application.Academic.Queries.GetCampuses;
 using SchoolERP.Domain.Enums;
 
 namespace SchoolERP.Api.Controllers;
@@ -251,5 +253,28 @@ public class AcademicController : ControllerBase
     {
         var result = await _mediator.Send(new GetStudentDashboardQuery(studentId));
         return Ok(result);
+    }
+
+    [HttpGet("sections")]
+    public async Task<IActionResult> GetSections()
+    {
+        var sections = await _mediator.Send(new GetSchoolSectionsQuery());
+        return Ok(sections);
+    }
+
+    [HttpGet("campuses")]
+    public async Task<IActionResult> GetCampuses()
+    {
+        var campuses = await _mediator.Send(new GetCampusesQuery());
+        return Ok(campuses);
+    }
+
+    [HttpPost("students/{studentId}/sanctions")]
+    [Authorize(Roles = "SuperAdmin,SchoolAdmin")]
+    public async Task<IActionResult> AddSanction(Guid studentId, [FromBody] SchoolERP.Application.Academic.Commands.Sanctions.CreateSanctionCommand command)
+    {
+        if (studentId != command.StudentId) return BadRequest("ID mismatch");
+        var sanctionId = await _mediator.Send(command);
+        return Ok(new { SanctionId = sanctionId });
     }
 }

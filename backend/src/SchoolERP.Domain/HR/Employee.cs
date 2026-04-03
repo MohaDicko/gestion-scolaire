@@ -1,5 +1,6 @@
 using SchoolERP.Domain.Common;
 using SchoolERP.Domain.Enums;
+using SchoolERP.Domain.Academic;
 
 namespace SchoolERP.Domain.HR;
 

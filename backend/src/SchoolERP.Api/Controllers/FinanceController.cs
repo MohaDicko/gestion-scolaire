@@ -24,10 +24,18 @@ public class FinanceController : ControllerBase
     }
 
     [HttpGet("invoices")]
-    public async Task<IActionResult> GetInvoices([FromQuery] bool onlyWithArrears = false)
+    public async Task<IActionResult> GetInvoices([FromQuery] bool onlyWithArrears = false, [FromQuery] Guid? campusId = null)
     {
-        var invoices = await _mediator.Send(new GetInvoicesQuery(onlyWithArrears));
+        var invoices = await _mediator.Send(new GetInvoicesQuery(onlyWithArrears, campusId));
         return Ok(invoices);
+    }
+
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboard([FromQuery] Guid academicYearId, [FromQuery] Guid? campusId = null)
+    {
+        var query = new SchoolERP.Application.Finance.Queries.GetFinancialDashboardQuery(academicYearId, campusId);
+        var dashboard = await _mediator.Send(query);
+        return Ok(dashboard);
     }
 
     /// <summary>
@@ -85,9 +93,9 @@ public class FinanceController : ControllerBase
     }
 
     [HttpGet("expenses")]
-    public async Task<IActionResult> GetExpenses()
+    public async Task<IActionResult> GetExpenses([FromQuery] Guid? campusId = null)
     {
-        var expenses = await _mediator.Send(new GetExpensesQuery());
+        var expenses = await _mediator.Send(new GetExpensesQuery(campusId));
         return Ok(expenses);
     }
 

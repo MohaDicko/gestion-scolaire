@@ -98,6 +98,7 @@ export interface StudentBulletin {
         late: number;
         excused: number;
     };
+    maxGrade: number;
     subjects: Array<{
         subjectName: string;
         classAverage: number;

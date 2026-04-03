@@ -13,7 +13,9 @@ public record ClassroomDto(
     string Level,
     int MaxCapacity,
     int StudentCount,
-    string AcademicYearName
+    string AcademicYearName,
+    string SectionName = "N/A",
+    string CampusName = "N/A"
 );
 
 public class GetClassroomsQueryHandler : IRequestHandler<GetClassroomsQuery, List<ClassroomDto>>
@@ -30,6 +32,8 @@ public class GetClassroomsQueryHandler : IRequestHandler<GetClassroomsQuery, Lis
         var db = (DbContext)_unitOfWork;
         return await db.Set<Classroom>()
             .Include(c => c.AcademicYear)
+            .Include(c => c.Section)
+            .Include(c => c.Campus)
             .Include(c => c.Enrollments)
             .Select(c => new ClassroomDto(
                 c.Id,
@@ -37,7 +41,9 @@ public class GetClassroomsQueryHandler : IRequestHandler<GetClassroomsQuery, Lis
                 c.Level,
                 c.MaxCapacity,
                 c.Enrollments.Count,
-                c.AcademicYear != null ? c.AcademicYear.Name : "N/A"
+                c.AcademicYear != null ? c.AcademicYear.Name : "N/A",
+                c.Section != null ? c.Section.Name : "N/A",
+                c.Campus != null ? c.Campus.Name : "N/A"
             ))
             .ToListAsync(cancellationToken);
     }

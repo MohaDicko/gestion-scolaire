@@ -122,7 +122,7 @@ export function BulletinPage() {
                             </div>
                             <div style={{ textAlign: 'right' }}>
                                 <h4 style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Performance Académique</h4>
-                                <p style={{ fontSize: '32px', fontWeight: 800, color: 'var(--success)' }}>{bulletin.periodAverage.toFixed(2)} <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>/ 20</span></p>
+                                <p style={{ fontSize: '32px', fontWeight: 800, color: 'var(--success)' }}>{bulletin.periodAverage.toFixed(2)} <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>/ {bulletin.maxGrade}</span></p>
                                 <p style={{ fontWeight: 600 }}>Rang : {bulletin.rank}</p>
                             </div>
                         </div>

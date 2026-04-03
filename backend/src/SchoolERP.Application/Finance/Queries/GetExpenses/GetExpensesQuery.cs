@@ -5,7 +5,7 @@ using SchoolERP.Domain.Finance;
 
 namespace SchoolERP.Application.Finance.Queries.GetExpenses;
 
-public record GetExpensesQuery() : IRequest<List<ExpenseDto>>;
+public record GetExpensesQuery(Guid? CampusId = null) : IRequest<List<ExpenseDto>>;
 
 public record ExpenseDto(
     Guid Id,
@@ -30,7 +30,14 @@ public class GetExpensesQueryHandler : IRequestHandler<GetExpensesQuery, List<Ex
     {
         var db = (DbContext)_unitOfWork;
 
-        var expenses = await db.Set<Expense>()
+        var query = db.Set<Expense>().AsNoTracking();
+        
+        if (request.CampusId.HasValue)
+        {
+            query = query.Where(x => x.CampusId == request.CampusId.Value);
+        }
+
+        var expenses = await query
             .OrderByDescending(x => x.DateIncurred)
             .ToListAsync(cancellationToken);
 

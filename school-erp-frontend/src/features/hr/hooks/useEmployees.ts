@@ -10,6 +10,7 @@ export interface Employee {
     phoneNumber: string;
     employeeType: string;
     departmentName: string | null;
+    campusName: string | null;
     isActive: boolean;
     photoUrl?: string;
 }

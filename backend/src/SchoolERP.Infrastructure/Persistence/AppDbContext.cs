@@ -38,6 +38,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<Subject> Subjects => Set<Subject>();
     public DbSet<Grade> Grades => Set<Grade>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
+    public DbSet<Sanction> Sanctions => Set<Sanction>();
     public DbSet<ClassSchedule> ClassSchedules => Set<ClassSchedule>();
 
     // ── HR Context ───────────────────────────────────────────

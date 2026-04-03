@@ -12,6 +12,7 @@ public record GetEmployeesQuery(
     int PageSize = 10,
     string? Search = null,
     Guid? DepartmentId = null,
+    Guid? CampusId = null,
     bool? IsActive = true,
     decimal? MaxBaseSalary = null
 ) : IRequest<PaginatedResult<EmployeeDto>>;
@@ -25,6 +26,7 @@ public record EmployeeDto(
     string PhoneNumber,
     string EmployeeType,
     string? DepartmentName,
+    string? CampusName,
     bool IsActive,
     string? PhotoUrl = null
 );
@@ -63,6 +65,11 @@ public class GetEmployeesQueryHandler : IRequestHandler<GetEmployeesQuery, Pagin
             query = query.Where(e => e.IsActive == request.IsActive.Value);
         }
 
+        if (request.CampusId.HasValue)
+        {
+            query = query.Where(e => e.CampusId == request.CampusId.Value);
+        }
+
         if (request.MaxBaseSalary.HasValue)
         {
             query = query.Where(e => e.Contracts.Any(c => c.Status == ContractStatus.Active && c.BaseSalary <= request.MaxBaseSalary.Value));
@@ -72,6 +79,7 @@ public class GetEmployeesQueryHandler : IRequestHandler<GetEmployeesQuery, Pagin
         
         var items = await query
             .Include(e => e.Department)
+            .Include(e => e.Campus)
             .OrderBy(e => e.LastName)
             .ThenBy(e => e.FirstName)
             .Skip((request.PageNumber - 1) * request.PageSize)
@@ -85,6 +93,7 @@ public class GetEmployeesQueryHandler : IRequestHandler<GetEmployeesQuery, Pagin
                 e.PhoneNumber,
                 e.EmployeeType.ToString(),
                 e.Department != null ? e.Department.Name : null,
+                e.Campus != null ? e.Campus.Name : null,
                 e.IsActive,
                 e.PhotoUrl
             ))

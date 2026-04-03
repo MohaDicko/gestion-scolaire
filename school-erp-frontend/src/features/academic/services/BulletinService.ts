@@ -78,7 +78,7 @@ export class BulletinService {
         
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(`MOYENNE : ${bulletin.periodAverage.toFixed(2)} / 20`, pageWidth - 85, finalY + 15);
+        doc.text(`MOYENNE : ${bulletin.periodAverage.toFixed(2)} / ${bulletin.maxGrade}`, pageWidth - 85, finalY + 15);
 
         // 🕒 Présence & Conduite
         const attendanceY = finalY + 35;

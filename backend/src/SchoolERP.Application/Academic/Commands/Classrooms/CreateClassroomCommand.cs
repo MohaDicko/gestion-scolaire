@@ -9,7 +9,11 @@ public record CreateClassroomCommand(
     string Name,
     string Level,
     int MaxCapacity,
-    Guid AcademicYearId
+    Guid AcademicYearId,
+    Guid SchoolSectionId,
+    Guid CampusId,
+    string? Stream = null,
+    Guid? SpecialtyId = null
 ) : IRequest<Guid>;
 
 public class CreateClassroomCommandHandler : IRequestHandler<CreateClassroomCommand, Guid>
@@ -33,7 +37,11 @@ public class CreateClassroomCommandHandler : IRequestHandler<CreateClassroomComm
             request.Name,
             request.Level,
             request.MaxCapacity,
-            request.AcademicYearId
+            request.AcademicYearId,
+            request.CampusId,
+            request.SchoolSectionId,
+            request.SpecialtyId,
+            request.Stream
         );
 
         db.Add(classroom);

@@ -17,7 +17,7 @@ public record FinancialDashboardDto
 
 public record DefaulterDto(string StudentName, string ClassName, decimal AmountDue, string ParentPhone);
 
-public record GetFinancialDashboardQuery(Guid AcademicYearId) : IRequest<FinancialDashboardDto>;
+public record GetFinancialDashboardQuery(Guid AcademicYearId, Guid? CampusId = null) : IRequest<FinancialDashboardDto>;
 
 public class GetFinancialDashboardQueryHandler : IRequestHandler<GetFinancialDashboardQuery, FinancialDashboardDto>
 {
@@ -32,11 +32,17 @@ public class GetFinancialDashboardQueryHandler : IRequestHandler<GetFinancialDas
     {
         var db = (DbContext)_unitOfWork;
         
-        var invoices = await db.Set<StudentInvoice>()
+        var query = db.Set<StudentInvoice>()
             .Include(i => i.Student)
             .Include(i => i.Payments)
-            .Where(i => i.AcademicYearId == request.AcademicYearId)
-            .ToListAsync(cancellationToken);
+            .Where(i => i.AcademicYearId == request.AcademicYearId);
+
+        if (request.CampusId.HasValue)
+        {
+            query = query.Where(i => i.Student.CampusId == request.CampusId.Value);
+        }
+
+        var invoices = await query.ToListAsync(cancellationToken);
 
         var totalExpected = invoices.Sum(i => i.Amount);
         var totalCollected = invoices.SelectMany(i => i.Payments).Sum(p => p.Amount);

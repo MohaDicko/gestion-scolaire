@@ -19,7 +19,8 @@ public class Expense : TenantEntity
     public decimal Amount { get; private set; }
     public DateTime DateIncurred { get; private set; }
     public ExpenseCategory Category { get; private set; }
-    public string? ReferenceNumber { get; private set; } // Invoice/Receipt #
+    public string? ReferenceNumber { get; private set; }
+    public Guid? CampusId { get; private set; }
 
     private Expense() { }
 
@@ -29,7 +30,7 @@ public class Expense : TenantEntity
         decimal amount,
         DateTime dateIncurred,
         ExpenseCategory category,
-        string? referenceNumber)
+        string? referenceNumber, Guid? campusId = null)
     {
         return new Expense
         {
@@ -38,7 +39,8 @@ public class Expense : TenantEntity
             Amount = amount,
             DateIncurred = dateIncurred,
             Category = category,
-            ReferenceNumber = referenceNumber
+            ReferenceNumber = referenceNumber,
+            CampusId = campusId
         };
     }
 }

@@ -16,6 +16,7 @@ public record StudentBulletinDto
     public decimal PeriodAverage { get; init; }
     public string Rank { get; init; } = "N/A";
     public AttendanceSummaryDto Attendance { get; init; } = new();
+    public int MaxGrade { get; init; } = 20;
     public List<SubjectResultDto> Subjects { get; init; } = new();
 }
 
@@ -51,10 +52,13 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
 
         var enrollment = await dbContent.Set<SchoolERP.Domain.Academic.Enrollment>()
             .Include(e => e.Classroom)
+                .ThenInclude(c => c!.Section)
             .Include(e => e.AcademicYear)
             .FirstOrDefaultAsync(e => e.StudentId == request.StudentId && e.Status == EnrollmentStatus.Active, cancellationToken);
 
         if (enrollment == null) throw new Exception("Active enrollment not found");
+        
+        int maxGrade = enrollment.Classroom?.Section?.MaxGradeValue ?? 20;
 
         // 1. Calculate Attendance Stats
         var attendanceRecords = await dbContent.Set<SchoolERP.Domain.Academic.Attendance>()
@@ -84,7 +88,7 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
         foreach (var studentId in classmates)
         {
             var studentGrades = allGrades.Where(g => g.StudentId == studentId).ToList();
-            studentsAverages[studentId] = CalculateStudentAverage(studentGrades, studentId == request.StudentId ? attendanceSummary : null);
+            studentsAverages[studentId] = CalculateStudentAverage(studentGrades, maxGrade, studentId == request.StudentId ? attendanceSummary : null);
         }
 
         var sortedAverages = studentsAverages.OrderByDescending(x => x.Value).ToList();
@@ -104,10 +108,10 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
             if (subject == null) continue;
 
             decimal moyClasse = group.Where(g => g.ExamType == ExamType.Continuous).Any() 
-                ? group.Where(g => g.ExamType == ExamType.Continuous).Average(g => g.Score * 20 / g.MaxScore) : 0;
+                ? group.Where(g => g.ExamType == ExamType.Continuous).Average(g => g.Score * maxGrade / g.MaxScore) : 0;
             
             decimal moyComp = group.Where(g => g.ExamType == ExamType.Final).Any() 
-                ? group.Where(g => g.ExamType == ExamType.Final).Average(g => g.Score * 20 / g.MaxScore) : 0;
+                ? group.Where(g => g.ExamType == ExamType.Final).Average(g => g.Score * maxGrade / g.MaxScore) : 0;
 
             // Logic for CONDUCT if it's the conduct subject
             if (subject.Name.ToUpper().Contains("CONDUITE"))
@@ -115,7 +119,7 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
                 // Auto-calculate conduct based on attendance if not manually entered
                 if (moyClasse == 0 && attendanceRecords.Any())
                 {
-                    moyClasse = CalculateConductScore(attendanceSummary);
+                    moyClasse = CalculateConductScore(attendanceSummary, maxGrade);
                     moyComp = moyClasse; // Conduite often has same grade for both
                 }
             }
@@ -148,11 +152,12 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
             PeriodAverage = Math.Round(studentsAverages[request.StudentId], 2),
             Rank = $"{rankPosition} ème / {classmates.Count}",
             Attendance = attendanceSummary,
+            MaxGrade = maxGrade,
             Subjects = subjectResults
         };
     }
 
-    private decimal CalculateStudentAverage(List<SchoolERP.Domain.Academic.Grade> grades, AttendanceSummaryDto? attendance = null)
+    private decimal CalculateStudentAverage(List<SchoolERP.Domain.Academic.Grade> grades, int maxGrade, AttendanceSummaryDto? attendance = null)
     {
         var grouped = grades.GroupBy(g => g.SubjectId);
         decimal totalPoints = 0;
@@ -163,12 +168,12 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
             var subject = group.First().Subject;
             if (subject == null) continue;
 
-            decimal moyClasse = group.Where(g => g.ExamType == ExamType.Continuous).Any() ? group.Where(g => g.ExamType == ExamType.Continuous).Average(g => g.Score * 20 / g.MaxScore) : 0;
-            decimal moyComp = group.Where(g => g.ExamType == ExamType.Final).Any() ? group.Where(g => g.ExamType == ExamType.Final).Average(g => g.Score * 20 / g.MaxScore) : 0;
+            decimal moyClasse = group.Where(g => g.ExamType == ExamType.Continuous).Any() ? group.Where(g => g.ExamType == ExamType.Continuous).Average(g => g.Score * maxGrade / g.MaxScore) : 0;
+            decimal moyComp = group.Where(g => g.ExamType == ExamType.Final).Any() ? group.Where(g => g.ExamType == ExamType.Final).Average(g => g.Score * maxGrade / g.MaxScore) : 0;
 
             if (subject.Name.ToUpper().Contains("CONDUITE") && attendance != null && moyClasse == 0)
             {
-                moyClasse = CalculateConductScore(attendance);
+                moyClasse = CalculateConductScore(attendance, maxGrade);
                 moyComp = moyClasse;
             }
 
@@ -180,12 +185,12 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
         return totalCoeffs > 0 ? totalPoints / totalCoeffs : 0;
     }
 
-    private decimal CalculateConductScore(AttendanceSummaryDto summary)
+    private decimal CalculateConductScore(AttendanceSummaryDto summary, int maxGrade = 20)
     {
-        // Start with 20, minus 1 per unjustified absence, minus 0.2 per late
-        decimal score = 20;
-        score -= summary.Absent * 1.0m;
-        score -= summary.Late * 0.2m;
+        // Start with maxGrade, minus 1 per unjustified absence, minus 0.2 per late
+        decimal score = maxGrade;
+        score -= summary.Absent * 1.0m * (maxGrade / 20.0m);
+        score -= summary.Late * 0.2m * (maxGrade / 20.0m);
         return Math.Max(0, score);
     }
 

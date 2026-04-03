@@ -30,6 +30,7 @@ export interface CreateStudentCommand {
     parentPhone: string;
     parentEmail: string;
     parentRelationship: string;
+    campusId: string;
 }
 
 export interface UpdateStudentCommand {

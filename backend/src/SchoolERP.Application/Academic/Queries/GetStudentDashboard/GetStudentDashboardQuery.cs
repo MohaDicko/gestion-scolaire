@@ -24,13 +24,16 @@ public record StudentDashboardDto(
     List<SubjectGradeSummary> Grades,
     List<AttendanceSummaryItem> RecentAttendance,
     List<StudentInvoiceSummary> Invoices,
-    List<ScheduleSummary> TodaySchedule
+    List<ScheduleSummary> TodaySchedule,
+    List<SanctionSummary> Sanctions,
+    double MaxSectionGrade = 20.0
 );
 
 public record SubjectGradeSummary(string SubjectName, double Average, double MaxScore);
 public record AttendanceSummaryItem(DateTime Date, string Status, string? Remarks);
 public record StudentInvoiceSummary(Guid InvoiceId, string Description, decimal Amount, decimal AmountPaid, string Status, DateTime DueDate);
 public record ScheduleSummary(string StartTime, string EndTime, string SubjectName, string TeacherName);
+public record SanctionSummary(Guid Id, string Type, string Reason, DateTime Date, int? DurationDays);
 
 public class GetStudentDashboardQueryHandler : IRequestHandler<GetStudentDashboardQuery, StudentDashboardDto>
 {
@@ -56,6 +59,8 @@ public class GetStudentDashboardQueryHandler : IRequestHandler<GetStudentDashboa
         var enrollment = await db.Set<Enrollment>()
             .Include(e => e.Classroom)
                 .ThenInclude(c => c!.AcademicYear)
+            .Include(e => e.Classroom)
+                .ThenInclude(c => c!.Section)
             .Where(e => e.StudentId == request.StudentId && e.Status == EnrollmentStatus.Active)
             .OrderByDescending(e => e.EnrollmentDate)
             .FirstOrDefaultAsync(cancellationToken);
@@ -63,6 +68,7 @@ public class GetStudentDashboardQueryHandler : IRequestHandler<GetStudentDashboa
         var classroomId = enrollment?.ClassroomId;
         var className = enrollment?.Classroom?.Name ?? "—";
         var academicYear = enrollment?.Classroom?.AcademicYear?.Name ?? "—";
+        var maxSectionGrade = (double)(enrollment?.Classroom?.Section?.MaxGradeValue ?? 20);
 
         // Grades
         var grades = await db.Set<Grade>()
@@ -80,7 +86,7 @@ public class GetStudentDashboardQueryHandler : IRequestHandler<GetStudentDashboa
             .ToList();
 
         double? overallAverage = grades.Count > 0
-            ? Math.Round((double)grades.Average(g => (g.Score / g.MaxScore) * 20), 2)
+            ? Math.Round((double)grades.Average(g => (g.Score / g.MaxScore) * (decimal)maxSectionGrade), 2)
             : null;
 
         // Attendance (last 30 days)
@@ -140,6 +146,13 @@ public class GetStudentDashboardQueryHandler : IRequestHandler<GetStudentDashboa
                 .ToListAsync(cancellationToken)
             : new List<ScheduleSummary>();
 
+        // Sanctions
+        var sanctions = await db.Set<Sanction>()
+            .Where(s => s.StudentId == request.StudentId)
+            .OrderByDescending(s => s.DateIncurred)
+            .Select(s => new SanctionSummary(s.Id, s.Type.ToString(), s.Reason, s.DateIncurred, s.DurationDays))
+            .ToListAsync(cancellationToken);
+
         return new StudentDashboardDto(
             student.Id,
             student.FullName,
@@ -155,7 +168,9 @@ public class GetStudentDashboardQueryHandler : IRequestHandler<GetStudentDashboa
             subjectGrades,
             recentAttendance,
             invoiceSummaries,
-            todaySchedule
+            todaySchedule,
+            sanctions,
+            maxSectionGrade
         );
     }
 }

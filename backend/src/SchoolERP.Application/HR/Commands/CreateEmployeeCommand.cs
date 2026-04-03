@@ -14,7 +14,8 @@ public record CreateEmployeeCommand(
     Gender Gender,
     DateTime HireDate,
     EmployeeType EmployeeType,
-    Guid DepartmentId
+    Guid DepartmentId,
+    Guid CampusId
 ) : IRequest<Guid>;
 
 public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, Guid>
@@ -44,7 +45,8 @@ public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeComman
             request.Gender,
             request.HireDate,
             request.EmployeeType,
-            request.DepartmentId
+            request.DepartmentId,
+            request.CampusId
         );
 
         await _repository.AddAsync(employee, cancellationToken);

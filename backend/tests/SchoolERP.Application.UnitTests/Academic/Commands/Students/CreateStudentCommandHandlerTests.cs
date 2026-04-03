@@ -44,7 +44,8 @@ public class CreateStudentCommandHandlerTests
             ParentName: "Pierre Curie",
             ParentPhone: "0707070707",
             ParentEmail: "pierre@example.com",
-            ParentRelationship: "Father"
+            ParentRelationship: "Father",
+            CampusId: Guid.NewGuid()
         );
 
         // Act

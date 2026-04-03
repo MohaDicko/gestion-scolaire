@@ -39,6 +39,9 @@ public class ImportStudentsFromExcelCommandHandler : IRequestHandler<ImportStude
             DateTime dob = DateTime.TryParse(row.DateOfBirth?.ToString(), out DateTime d) ? d : new DateTime(2010, 1, 1);
             Gender gender = Enum.TryParse<Gender>(row.Gender?.ToString(), true, out Gender g) ? g : Gender.Other;
 
+            var classroom = await db.Set<Classroom>().FindAsync(new object[] { request.ClassroomId }, cancellationToken);
+            Guid campusId = classroom?.CampusId ?? Guid.Empty;
+
             var student = Student.Create(
                 tenantId,
                 firstName,
@@ -49,7 +52,8 @@ public class ImportStudentsFromExcelCommandHandler : IRequestHandler<ImportStude
                 row.ParentName?.ToString() ?? "",
                 row.ParentPhone?.ToString() ?? "",
                 row.ParentEmail?.ToString() ?? "",
-                "Parent"
+                "Parent",
+                campusId
             );
 
             await db.AddAsync(student, cancellationToken);
