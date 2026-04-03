@@ -82,3 +82,43 @@ export function useSubmitGrades() {
         }
     });
 }
+
+export interface StudentBulletin {
+    studentName: string;
+    className: string;
+    academicYear: string;
+    period: number;
+    totalPoints: number;
+    totalCoefficients: number;
+    periodAverage: number;
+    rank: string;
+    attendance: {
+        present: number;
+        absent: number;
+        late: number;
+        excused: number;
+    };
+    subjects: Array<{
+        subjectName: string;
+        classAverage: number;
+        examScore: number;
+        coefficient: number;
+        finalAverage: number;
+        points: number;
+        appreciation: string;
+    }>;
+}
+
+export function useStudentBulletin(studentId: string, period: number) {
+    return useQuery({
+        queryKey: ['bulletin', studentId, period],
+        queryFn: async () => {
+            if (!studentId) return null;
+            const { data } = await apiClient.get<StudentBulletin>(`/academic/students/${studentId}/bulletin`, {
+                params: { semester: period }
+            });
+            return data;
+        },
+        enabled: !!studentId
+    });
+}

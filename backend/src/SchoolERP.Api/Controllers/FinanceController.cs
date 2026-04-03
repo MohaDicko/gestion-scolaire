@@ -98,6 +98,14 @@ public class FinanceController : ControllerBase
         var result = await _mediator.Send(command);
         return Ok(new { id = result });
     }
+    [HttpPost("classrooms/{classroomId}/payment-plan")]
+    public async Task<IActionResult> GeneratePaymentPlan(Guid classroomId, [FromBody] GeneratePaymentPlanRequest request)
+    {
+        var command = new SchoolERP.Application.Finance.Commands.GeneratePaymentPlan.GeneratePaymentPlanCommand(
+            classroomId, request.AcademicYearId, request.BaseDescription, request.TotalAmount, request.FeeType, request.Installments, request.IntervalDays);
+        var count = await _mediator.Send(command);
+        return Ok(new { InvoicesGenerated = count });
+    }
 }
 
 public record PayInvoiceRequest(decimal Amount, string PaymentMethod, string ReferenceNumber);
@@ -108,3 +116,11 @@ public record GenerateClassInvoicesRequest(
     decimal Amount,
     FeeType FeeType,
     DateTime DueDate);
+
+public record GeneratePaymentPlanRequest(
+    Guid AcademicYearId,
+    string BaseDescription,
+    decimal TotalAmount,
+    FeeType FeeType,
+    int Installments,
+    int IntervalDays = 30);

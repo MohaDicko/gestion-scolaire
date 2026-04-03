@@ -1,20 +1,26 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../../lib/apiClient';
-import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, DollarSign } from 'lucide-react';
+import { TrendingUp, AlertCircle, CheckCircle, Wallet, Calendar } from 'lucide-react';
+import { 
+    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+    PieChart, Pie, Cell, AreaChart, Area, Legend 
+} from 'recharts';
 
 const formatCurrency = (n: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(n);
 
+const COLORS = ['var(--primary)', 'var(--success)', 'var(--warning)', 'var(--danger)', '#8b5cf6', '#ec4899'];
+
 export function FinanceOverviewPage() {
-    const { data: invoices = [] } = useQuery<any[]>({
+    const { data: invoices = [], isLoading: loadingInvoices } = useQuery<any[]>({
         queryKey: ['invoices'],
         queryFn: async () => { const { data } = await apiClient.get('/finance/invoices'); return data; }
     });
-    const { data: payments = [] } = useQuery<any[]>({
+    const { data: payments = [], isLoading: loadingPayments } = useQuery<any[]>({
         queryKey: ['payments'],
         queryFn: async () => { const { data } = await apiClient.get('/finance/payments'); return data; }
     });
-    const { data: expenses = [] } = useQuery<any[]>({
+    const { data: expenses = [], isLoading: loadingExpenses } = useQuery<any[]>({
         queryKey: ['expenses'],
         queryFn: async () => { const { data } = await apiClient.get('/finance/expenses'); return data; }
     });
@@ -26,166 +32,165 @@ export function FinanceOverviewPage() {
     const netBalance = totalCollected - totalExpenses;
     const collectionRate = totalInvoiced > 0 ? Math.round((totalCollected / totalInvoiced) * 100) : 0;
 
-    const kpis = [
-        { label: 'Total Facturé', value: formatCurrency(totalInvoiced), icon: DollarSign, color: 'var(--primary)', bg: 'var(--primary-dim)' },
-        { label: 'Encaissements', value: formatCurrency(totalCollected), icon: TrendingUp, color: 'var(--success)', bg: 'rgba(16, 185, 129, 0.1)' },
-        { label: 'Impayés', value: formatCurrency(totalOutstanding), icon: AlertCircle, color: 'var(--warning)', bg: 'rgba(245, 158, 11, 0.1)' },
-        { label: 'Total Dépenses', value: formatCurrency(totalExpenses), icon: TrendingDown, color: 'var(--danger)', bg: 'rgba(239, 68, 68, 0.1)' },
-        { label: 'Solde Net', value: formatCurrency(netBalance), icon: CheckCircle, color: netBalance >= 0 ? 'var(--success)' : 'var(--danger)', bg: netBalance >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' },
-        { label: 'Taux de Recouvrement', value: `${collectionRate}%`, icon: TrendingUp, color: collectionRate >= 80 ? 'var(--success)' : collectionRate >= 50 ? 'var(--warning)' : 'var(--danger)', bg: 'var(--primary-dim)' },
-    ];
-
-    // Break down expenses by category
-    const expenseByCategory = expenses.reduce((acc: any, e: any) => {
-        const key = e.categoryName || 'Divers';
-        acc[key] = (acc[key] || 0) + e.amount;
+    // Charts data preparation
+    const paymentsByMonth = payments.reduce((acc: any, p: any) => {
+        const date = new Date(p.paidAt || p.date);
+        const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+        acc[month] = (acc[month] || 0) + p.amount;
         return acc;
     }, {});
 
-    // Break down payments by month
-    const paymentsByMonth: Record<string, number> = {};
-    payments.forEach((p: any) => {
-        const month = new Date(p.paidAt || p.date).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
-        paymentsByMonth[month] = (paymentsByMonth[month] || 0) + p.amount;
-    });
-    const sortedMonths = Object.entries(paymentsByMonth).slice(-6);
-    const maxPayment = Math.max(...sortedMonths.map(([, v]) => v), 1);
+    const barData = Object.entries(paymentsByMonth).map(([name, value]) => ({ name, value }));
+
+    const expenseByCategory = expenses.reduce((acc: any, e: any) => {
+        const name = e.categoryName || 'Divers';
+        acc[name] = (acc[name] || 0) + e.amount;
+        return acc;
+    }, {});
+
+    const pieData = Object.entries(expenseByCategory).map(([name, value]) => ({ name, value }));
+
+    const kpis = [
+        { label: 'Total Facturé', value: formatCurrency(totalInvoiced), icon: Wallet, color: 'var(--primary)', bg: 'var(--primary-dim)' },
+        { label: 'Encaissements', value: formatCurrency(totalCollected), icon: TrendingUp, color: 'var(--success)', bg: 'rgba(16, 185, 129, 0.1)' },
+        { label: 'Impayés', value: formatCurrency(totalOutstanding), icon: AlertCircle, color: 'var(--warning)', bg: 'rgba(245, 158, 11, 0.1)' },
+        { label: 'Solde Net', value: formatCurrency(netBalance), icon: CheckCircle, color: netBalance >= 0 ? 'var(--success)' : 'var(--danger)', bg: 'var(--surface-alt)' },
+    ];
+
+    if (loadingInvoices || loadingPayments || loadingExpenses) {
+        return <div className="loading-state">Analyse des données financières...</div>;
+    }
 
     return (
         <div className="page">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Tableau de bord Financier</h1>
-                    <p className="page-subtitle">Vue d'ensemble des flux financiers de l'établissement</p>
+                    <h1 className="page-title">Pilotage Financier Premium</h1>
+                    <p className="page-subtitle">Analyse temps-réel du rendement et de la trésorerie</p>
                 </div>
             </div>
 
-            {/* KPI Cards */}
-            <div className="stats-grid" style={{ marginBottom: '24px', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+            <div className="stats-grid" style={{ marginBottom: '30px' }}>
                 {kpis.map((kpi, idx) => (
-                    <div 
-                        className="stat-card animate-up" 
-                        key={kpi.label}
-                        style={{ animationDelay: `${idx * 0.1}s`, border: `1px solid ${kpi.bg}` }}
-                    >
+                    <div className="stat-card animate-up" key={idx} style={{ animationDelay: `${idx * 0.1}s` }}>
                         <div className="stat-info">
                             <span className="stat-label">{kpi.label}</span>
-                            <span className="stat-value" style={{ color: kpi.color, fontSize: '20px' }}>{kpi.value}</span>
+                            <span className="stat-value" style={{ color: kpi.color, fontSize: '24px' }}>{kpi.value}</span>
                         </div>
                         <div className="stat-icon" style={{ background: kpi.bg, color: kpi.color }}>
-                            <kpi.icon size={24} />
+                            <kpi.icon size={26} />
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                {/* Bar chart: Payments by month */}
-                <div className="card">
-                    <h3 className="card-title" style={{ marginBottom: '20px' }}>📊 Encaissements par mois</h3>
-                    {sortedMonths.length === 0 ? (
-                        <p className="text-muted text-center">Aucune donnée de paiement.</p>
-                    ) : (
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', height: '180px', padding: '0 8px' }}>
-                            {sortedMonths.map(([month, total]) => {
-                                const height = Math.round((total / maxPayment) * 160);
-                                return (
-                                    <div key={month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', writingMode: 'horizontal-tb' }}>
-                                            {formatCurrency(total).replace('FCFA', '')}
-                                        </span>
-                                        <div
-                                            title={`${month}: ${formatCurrency(total)}`}
-                                            style={{
-                                                width: '100%',
-                                                height: `${height}px`,
-                                                background: 'linear-gradient(180deg, var(--primary), var(--primary-dark, var(--primary)))',
-                                                borderRadius: '6px 6px 0 0',
-                                                transition: 'height 0.4s',
-                                                minHeight: '4px',
-                                                cursor: 'default'
-                                            }}
-                                        />
-                                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{month}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '25px', marginBottom: '25px' }}>
+                {/* Revenue Evolution */}
+                <div className="card" style={{ height: '400px' }}>
+                    <div className="card-header" style={{ marginBottom: '20px' }}>
+                        <h3 className="card-title"><Calendar size={18} style={{ marginRight: '8px' }}/> Évolution des Recettes</h3>
+                    </div>
+                    <ResponsiveContainer width="100%" height="85%">
+                        <AreaChart data={barData}>
+                            <defs>
+                                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(val) => `${val/1000}k`} />
+                            <Tooltip 
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                                formatter={(value: any) => [formatCurrency(Number(value)), 'Encaissé']}
+                            />
+                            <Area type="monotone" dataKey="value" stroke="var(--primary)" fillOpacity={1} fill="url(#colorValue)" strokeWidth={3} />
+                        </AreaChart>
+                    </ResponsiveContainer>
                 </div>
 
-                {/* Doughnut-style: Expenses by category */}
-                <div className="card">
-                    <h3 className="card-title" style={{ marginBottom: '20px' }}>🗂️ Dépenses par catégorie</h3>
-                    {Object.keys(expenseByCategory).length === 0 ? (
-                        <p className="text-muted text-center">Aucune dépense enregistrée.</p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {Object.entries(expenseByCategory)
-                                .sort(([, a]: any, [, b]: any) => b - a)
-                                .map(([cat, amount]: any) => {
-                                    const pct = Math.round((amount / totalExpenses) * 100);
-                                    const COLORS: Record<string, string> = {
-                                        Maintenance: '#f59e0b', Utilities: '#3b82f6', OfficeSupplies: '#8b5cf6',
-                                        Equipment: '#10b981', Events: '#ec4899', Miscellaneous: '#6b7280'
-                                    };
-                                    const color = COLORS[cat] || '#6b7280';
-                                    return (
-                                        <div key={cat}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '13px' }}>
-                                                <span style={{ fontWeight: 600, color }}>{cat}</span>
-                                                <span style={{ color: 'var(--text-muted)' }}>{formatCurrency(amount)} ({pct}%)</span>
-                                            </div>
-                                            <div style={{ height: '8px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
-                                                <div style={{
-                                                    height: '100%',
-                                                    width: `${pct}%`,
-                                                    background: color,
-                                                    borderRadius: '4px',
-                                                    transition: 'width 0.5s'
-                                                }} />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                        </div>
-                    )}
+                {/* Expenses Pie */}
+                <div className="card" style={{ height: '400px' }}>
+                    <div className="card-header" style={{ marginBottom: '20px' }}>
+                        <h3 className="card-title">Répartition des Dépenses</h3>
+                    </div>
+                    <ResponsiveContainer width="100%" height="85%">
+                        <PieChart>
+                            <Pie
+                                data={pieData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={80}
+                                paddingAngle={5}
+                                dataKey="value"
+                            >
+                                {pieData.map((_entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
+                            <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
+                        </PieChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
 
-            {/* Collection rate progress */}
-            <div className="card" style={{ marginTop: '20px' }}>
-                <h3 className="card-title" style={{ marginBottom: '16px' }}>📈 Taux de recouvrement des frais scolaires</h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <div style={{ flex: 1, height: '24px', background: 'var(--border)', borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
-                        <div style={{
-                            height: '100%',
-                            width: `${collectionRate}%`,
-                            background: collectionRate >= 80
-                                ? 'linear-gradient(90deg, var(--success), #059669)'
-                                : collectionRate >= 50
-                                    ? 'linear-gradient(90deg, var(--warning), #d97706)'
-                                    : 'linear-gradient(90deg, var(--danger), #dc2626)',
-                            borderRadius: '12px',
-                            transition: 'width 0.8s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            paddingRight: '8px'
-                        }}>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'white' }}>{collectionRate}%</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
+                {/* Collection Rate Performance */}
+                <div className="card">
+                    <h3 className="card-title" style={{ marginBottom: '15px' }}>Performance du Recouvrement</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '150px' }}>
+                        <div style={{ position: 'relative', width: '120px', height: '120px' }}>
+                            <svg width="120" height="120" viewBox="0 0 120 120">
+                                <circle cx="60" cy="60" r="54" fill="none" stroke="var(--primary-dim)" strokeWidth="12" />
+                                <circle 
+                                    cx="60" cy="60" r="54" fill="none" stroke="var(--success)" 
+                                    strokeWidth="12" strokeDasharray={`${(collectionRate / 100) * 339} 339`}
+                                    strokeLinecap="round" transform="rotate(-90 60 60)"
+                                    style={{ transition: 'stroke-dasharray 1s ease' }}
+                                />
+                            </svg>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                                <span style={{ fontSize: '24px', fontWeight: 800, color: 'var(--success)' }}>{collectionRate}%</span>
+                            </div>
+                        </div>
+                        <div style={{ marginLeft: '30px' }}>
+                            <p style={{ fontSize: '14px', marginBottom: '8px' }}>
+                                <span style={{ fontWeight: 700 }}>{formatCurrency(totalCollected)}</span> encaissés
+                            </p>
+                            <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
+                                Sur {formatCurrency(totalInvoiced)} facturés
+                            </p>
                         </div>
                     </div>
-                    <span style={{
-                        fontWeight: 700,
-                        fontSize: '20px',
-                        color: collectionRate >= 80 ? 'var(--success)' : collectionRate >= 50 ? 'var(--warning)' : 'var(--danger)'
-                    }}>{collectionRate}%</span>
                 </div>
-                <p style={{ marginTop: '8px', color: 'var(--text-muted)', fontSize: '13px' }}>
-                    {formatCurrency(totalCollected)} encaissés sur {formatCurrency(totalInvoiced)} facturés.{' '}
-                    {totalOutstanding > 0 && <span style={{ color: 'var(--warning)' }}>Reste à percevoir : {formatCurrency(totalOutstanding)}.</span>}
-                </p>
+
+                {/* Cash Flow Summary */}
+                <div className="card">
+                    <h3 className="card-title" style={{ marginBottom: '15px' }}>Flux de Trésorerie</h3>
+                    <div className="table-container">
+                        <table className="data-table" style={{ border: 'none' }}>
+                            <tbody>
+                                <tr style={{ borderBottom: '1px dashed var(--border)' }}>
+                                    <td style={{ padding: '12px 0' }}>Encaissements (Revenus)</td>
+                                    <td style={{ textAlign: 'right', color: 'var(--success)', fontWeight: 700 }}>+ {formatCurrency(totalCollected)}</td>
+                                </tr>
+                                <tr style={{ borderBottom: '1px dashed var(--border)' }}>
+                                    <td style={{ padding: '12px 0' }}>Dépenses (Charges)</td>
+                                    <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: 700 }}>- {formatCurrency(totalExpenses)}</td>
+                                </tr>
+                                <tr>
+                                    <td style={{ padding: '15px 0', fontWeight: 800, fontSize: '16px' }}>Solde de Trésorerie</td>
+                                    <td style={{ textAlign: 'right', fontSize: '18px', fontWeight: 800, color: netBalance >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                                        {formatCurrency(netBalance)}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -11,6 +11,7 @@ import { GradesPage } from '../features/academic/pages/GradesPage';
 import { EnrollmentsPage } from '../features/academic/pages/EnrollmentsPage';
 import { AttendancePage } from '../features/academic/pages/AttendancePage';
 import { TimetablePage } from '../features/academic/pages/TimetablePage';
+import { BulletinPage } from '../features/academic/pages/BulletinPage';
 
 export const AcademicRoutes = () => (
   <Routes>
@@ -24,6 +25,7 @@ export const AcademicRoutes = () => (
       <Route path="enrollments" element={<EnrollmentsPage />} />
       <Route path="attendance" element={<AttendancePage />} />
       <Route path="timetable" element={<TimetablePage />} />
+      <Route path="bulletins" element={<BulletinPage />} />
     </Route>
   </Routes>
 );

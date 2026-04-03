@@ -51,3 +51,16 @@ export function usePayInvoice() {
         }
     });
 }
+
+export function useGeneratePaymentPlan() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ classroomId, ...payload }: any) => {
+            const { data } = await apiClient.post(`/finance/classrooms/${classroomId}/payment-plan`, payload);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        }
+    });
+}

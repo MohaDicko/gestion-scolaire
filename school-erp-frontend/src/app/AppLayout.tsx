@@ -9,7 +9,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import {
     LayoutDashboard, Users, BookOpen, GraduationCap, Briefcase, UserCheck, Clock,
     FileText, Calendar, DollarSign, LogOut, School, ChevronRight, CreditCard,
-    Wallet, Sun, Moon, TrendingDown, BarChart2, Bell, Settings, Sparkles
+    Wallet, Sun, Moon, TrendingDown, BarChart2, Bell, Settings, Sparkles, Award
 } from 'lucide-react';
 
 const navItems = [
@@ -23,6 +23,7 @@ const navItems = [
     { label: 'Emplois du temps', icon: Clock, path: '/academic/timetable', roles: ['SuperAdmin', 'SchoolAdmin', 'Teacher', 'Student'] },
     { label: 'Présences', icon: UserCheck, path: '/academic/attendance', roles: ['SuperAdmin', 'SchoolAdmin', 'Teacher'] },
     { label: 'Inscriptions', icon: FileText, path: '/academic/enrollments', roles: ['SuperAdmin', 'SchoolAdmin', 'Teacher'] },
+    { label: 'Bulletins', icon: Award, path: '/academic/bulletins', roles: ['SuperAdmin', 'SchoolAdmin', 'Teacher'] },
     { label: 'FINANCE', header: true },
     { label: "Vue d'ensemble", icon: BarChart2, path: '/finance', roles: ['SuperAdmin', 'SchoolAdmin', 'Accountant'] },
     { label: 'Factures', icon: FileText, path: '/finance/invoices', roles: ['SuperAdmin', 'SchoolAdmin', 'Accountant'] },
