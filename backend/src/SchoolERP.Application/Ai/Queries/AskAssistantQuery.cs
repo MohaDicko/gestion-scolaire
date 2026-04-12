@@ -41,6 +41,19 @@ public class AskAssistantQueryHandler : IRequestHandler<AskAssistantQuery, AiRes
             }
         }
 
+        // 1.5. Logic for Health-specific queries (Filières & Stages)
+        if (prompt.Contains("smi") || prompt.Contains("ide") || prompt.Contains("filière") || prompt.Contains("spécialité"))
+        {
+            var specialties = await db.Set<SchoolERP.Domain.Academic.Specialty>().Select(s => s.Name).ToListAsync(cancellationToken);
+            var specialtyList = string.Join(", ", specialties);
+            return new AiResponse($"L'établissement propose les filières suivantes : {specialtyList}. Souhaitez-vous voir la répartition des effectifs par spécialité ?", "NAVIGATE_DASHBOARD");
+        }
+
+        if (prompt.Contains("stage") || prompt.Contains("clinique"))
+        {
+            return new AiResponse("La gestion des stages cliniques est intégrée dans le module de scolarité. Vous pouvez suivre les lieux de stage et les notes de pratique professionnelle dans le détail des élèves.", "NAVIGATE_ACADEMIC");
+        }
+
         // 2. Logic for Financial queries
         if (prompt.Contains("argent") || prompt.Contains("ca") || prompt.Contains("chiffre d'affaire") || prompt.Contains("encaissé"))
         {

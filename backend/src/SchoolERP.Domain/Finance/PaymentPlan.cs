@@ -39,6 +39,24 @@ public class PaymentPlan : TenantEntity
     {
         _installments.Add(PaymentInstallment.Create(TenantId, Id, label, amount, dueDate));
     }
+
+    /// <summary>
+    /// Generates the standard 3-installment plan for Malian Health Schools.
+    /// 40% (Enrollment), 30% (December), 30% (March)
+    /// </summary>
+    public void GenerateHealthStandardInstallments(decimal totalAmount)
+    {
+        var currentYear = DateTime.UtcNow.Year;
+        
+        // 1. Enrollment / Start (40%)
+        _installments.Add(PaymentInstallment.Create(TenantId, Id, "Inscription & 1ère Tranche", totalAmount * 0.4m, DateTime.UtcNow));
+
+        // 2. Second Installment (30%) - mid December
+        _installments.Add(PaymentInstallment.Create(TenantId, Id, "2ème Tranche", totalAmount * 0.3m, new DateTime(currentYear, 12, 15, 0, 0, 0, DateTimeKind.Utc)));
+
+        // 3. Third Installment (30%) - mid March next year
+        _installments.Add(PaymentInstallment.Create(TenantId, Id, "3ème Tranche (Solde)", totalAmount * 0.3m, new DateTime(currentYear + 1, 3, 15, 0, 0, 0, DateTimeKind.Utc)));
+    }
 }
 
 public class PaymentInstallment : TenantEntity

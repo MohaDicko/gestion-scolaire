@@ -1287,3 +1287,45 @@ input::placeholder {
     print-color-adjust: exact !important;
   }
 }
+
+/* ── DASHBOARD ENHANCEMENTS ─────────────────────────────────── */
+.quick-action-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+}
+
+.quick-action-card:hover {
+  background: var(--primary-dim);
+  border-color: var(--primary);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px var(--shadow-color);
+}
+
+.quick-action-card .qa-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  display: grid;
+  place-items: center;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+[data-theme='light'] .glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}

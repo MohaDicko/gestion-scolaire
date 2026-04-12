@@ -16,8 +16,13 @@ public record DashboardStatsDto(
     int TotalClassrooms,
     int TotalPayslips,
     decimal TotalArrearsAmount,
-    int StudentsWithArrearsCount
+    int StudentsWithArrearsCount,
+    List<SpecialtyStatDto> StudentsBySpecialty,
+    List<MonthlyRevenueDto> RecentRevenue
 );
+
+public record SpecialtyStatDto(string Name, int Count);
+public record MonthlyRevenueDto(string Month, decimal Amount);
 
 public class GetDashboardStatsQueryHandler : IRequestHandler<GetDashboardStatsQuery, DashboardStatsDto>
 {
@@ -49,13 +54,33 @@ public class GetDashboardStatsQueryHandler : IRequestHandler<GetDashboardStatsQu
             .Distinct()
             .CountAsync(cancellationToken);
 
+        // Specialty Distribution
+        var specialtyStats = await db.Set<Enrollment>()
+            .Where(e => e.Classroom != null && e.Classroom.Specialty != null)
+            .GroupBy(e => e.Classroom!.Specialty!.Name)
+            .Select(g => new SpecialtyStatDto(g.Key, g.Count()))
+            .ToListAsync(cancellationToken);
+
+        // Recent Revenue (Last 6 months)
+        var sixMonthsAgo = DateTime.UtcNow.AddMonths(-6);
+        var recentRevenue = await db.Set<StudentPayment>()
+            .Where(p => p.PaymentDate >= sixMonthsAgo)
+            .GroupBy(p => new { p.PaymentDate.Year, p.PaymentDate.Month })
+            .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+            .Select(g => new MonthlyRevenueDto(
+                $"{g.Key.Month}/{g.Key.Year}", 
+                g.Sum(p => p.Amount)))
+            .ToListAsync(cancellationToken);
+
         return new DashboardStatsDto(
             studentsCount,
             employeesCount,
             classroomsCount,
             payslipsCount,
             totalArrears,
-            studentsCountWithArrears
+            studentsCountWithArrears,
+            specialtyStats,
+            recentRevenue
         );
     }
 }

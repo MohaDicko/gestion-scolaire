@@ -13,11 +13,12 @@ using SchoolERP.Application.HR.Commands.UpdateLeaveStatus;
 using SchoolERP.Application.HR.Commands.RecordStaffAttendance;
 using SchoolERP.Application.HR.Queries.GetStaffAttendance;
 
-namespace SchoolERP.Api.Controllers;
+using SchoolERP.Application.HR.Queries.GetEmployeeDetail;
 
+namespace SchoolERP.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "SuperAdmin,SchoolAdmin,HR_Manager")]
+[Authorize]
 public class HRController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -31,6 +32,14 @@ public class HRController : ControllerBase
     public async Task<IActionResult> GetEmployees([FromQuery] GetEmployeesQuery query)
     {
         var result = await _mediator.Send(query);
+        return Ok(result);
+    }
+
+    [HttpGet("employees/{id}")]
+    public async Task<IActionResult> GetEmployeeDetail(Guid id)
+    {
+        var result = await _mediator.Send(new GetEmployeeDetailQuery(id));
+        if (result == null) return NotFound();
         return Ok(result);
     }
 

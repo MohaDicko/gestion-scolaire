@@ -20,6 +20,7 @@ export interface AuthUser {
     schoolLogo?: string;
     schoolMotto?: string;
     schoolAddress?: string;
+    isSetupComplete: boolean;
 }
 
 interface AuthState {

@@ -7,17 +7,13 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using SchoolERP.Infrastructure.Persistence;
 using SchoolERP.Application.Common.Interfaces;
-using SchoolERP.Domain.Auth;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace SchoolERP.Api.Controllers;
 
-/// <summary>
-/// Authentication controller — handles login and token generation.
-/// NOTE: This is a DEMO implementation for development.
-/// Replace with real user lookup + password hash verification in production.
-/// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("strict")]
 public class AuthController : ControllerBase
 {
     private readonly IConfiguration _config;

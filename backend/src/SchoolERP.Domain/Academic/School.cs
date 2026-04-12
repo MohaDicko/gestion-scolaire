@@ -18,6 +18,7 @@ public class School : AuditableEntity
     public string Email { get; private set; } = string.Empty;
     public SchoolType Type { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public bool IsSetupComplete { get; private set; } = false; // Flag pour le Wizard d'onboarding
     public string? LogoUrl { get; private set; }
     public string? Motto { get; private set; }
 
@@ -41,9 +42,12 @@ public class School : AuditableEntity
             Country = country,
             PhoneNumber = phone,
             Email = email,
-            Type = type
+            Type = type,
+            IsSetupComplete = false
         };
     }
+
+    public void CompleteSetup() => IsSetupComplete = true;
 
     public void Update(string name, string address, string phone, string email, string? motto = null, string? logoUrl = null)
     {

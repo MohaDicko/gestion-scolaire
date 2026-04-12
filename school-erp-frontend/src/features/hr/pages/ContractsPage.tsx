@@ -60,14 +60,14 @@ export function ContractsPage() {
     };
 
     return (
-        <div className="page">
-            <div className="page-header">
+        <div className="page animate-fade">
+            <div className="page-header" style={{ marginBottom: '30px' }}>
                 <div>
                     <h1 className="page-title">Gestion des Contrats</h1>
-                    <p className="page-subtitle">Suivi des statuts contractuels des employés</p>
+                    <p className="page-subtitle">Suivi des engagements et de la validité contractuelle du personnel</p>
                 </div>
-                <button className="btn-primary" onClick={() => setShowModal(true)}>
-                    <Plus size={16} /> Éditer un contrat
+                <button className="btn-primary flex items-center gap-2" onClick={() => setShowModal(true)}>
+                    <Plus size={18} /> Nouveau Contrat
                 </button>
             </div>
 

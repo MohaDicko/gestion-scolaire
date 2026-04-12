@@ -14,6 +14,9 @@ public record StudentBulletinDto
     public decimal TotalPoints { get; init; }
     public decimal TotalCoefficients { get; init; }
     public decimal PeriodAverage { get; init; }
+    public decimal TheoryAverage { get; init; }
+    public decimal StageAverage { get; init; }
+    public string SpecialtyName { get; init; } = string.Empty;
     public string Rank { get; init; } = "N/A";
     public AttendanceSummaryDto Attendance { get; init; } = new();
     public int MaxGrade { get; init; } = 20;
@@ -101,6 +104,11 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
         
         decimal totalFinalPoints = 0;
         decimal totalCoeffs = 0;
+        
+        decimal theoryPoints = 0;
+        decimal theoryCoeffs = 0;
+        decimal stagePoints = 0;
+        decimal stageCoeffs = 0;
 
         foreach (var group in subjectsGrouped)
         {
@@ -113,14 +121,12 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
             decimal moyComp = group.Where(g => g.ExamType == ExamType.Final).Any() 
                 ? group.Where(g => g.ExamType == ExamType.Final).Average(g => g.Score * maxGrade / g.MaxScore) : 0;
 
-            // Logic for CONDUCT if it's the conduct subject
             if (subject.Name.ToUpper().Contains("CONDUITE"))
             {
-                // Auto-calculate conduct based on attendance if not manually entered
                 if (moyClasse == 0 && attendanceRecords.Any())
                 {
                     moyClasse = CalculateConductScore(attendanceSummary, maxGrade);
-                    moyComp = moyClasse; // Conduite often has same grade for both
+                    moyComp = moyClasse;
                 }
             }
 
@@ -129,9 +135,20 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
 
             totalFinalPoints += points;
             totalCoeffs += subject.Coefficient;
+            
+            if (subject.IsStage)
+            {
+                stagePoints += points;
+                stageCoeffs += subject.Coefficient;
+            }
+            else
+            {
+                theoryPoints += points;
+                theoryCoeffs += subject.Coefficient;
+            }
 
             subjectResults.Add(new SubjectResultDto(
-                subject.Name,
+                subject.Name + (subject.IsStage ? " (Stage)" : ""),
                 Math.Round(moyClasse, 2),
                 Math.Round(moyComp, 2),
                 subject.Coefficient,
@@ -141,15 +158,21 @@ public class GetStudentBulletinQueryHandler : IRequestHandler<GetStudentBulletin
             ));
         }
 
+        var specialty = await dbContent.Set<SchoolERP.Domain.Academic.Specialty>()
+            .FirstOrDefaultAsync(s => s.Id == enrollment.Classroom!.SpecialtyId, cancellationToken);
+
         return new StudentBulletinDto
         {
             StudentName = student.FullName,
             ClassName = enrollment.Classroom?.Name ?? "N/A",
+            SpecialtyName = specialty?.Name ?? enrollment.Classroom?.Stream ?? "N/A",
             AcademicYear = enrollment.AcademicYear?.Name ?? "N/A",
             Period = request.Period,
             TotalPoints = Math.Round(totalFinalPoints, 2),
             TotalCoefficients = totalCoeffs,
             PeriodAverage = Math.Round(studentsAverages[request.StudentId], 2),
+            TheoryAverage = theoryCoeffs > 0 ? Math.Round(theoryPoints / theoryCoeffs, 2) : 0,
+            StageAverage = stageCoeffs > 0 ? Math.Round(stagePoints / stageCoeffs, 2) : 0,
             Rank = $"{rankPosition} ème / {classmates.Count}",
             Attendance = attendanceSummary,
             MaxGrade = maxGrade,

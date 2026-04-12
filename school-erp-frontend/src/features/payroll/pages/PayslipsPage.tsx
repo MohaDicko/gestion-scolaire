@@ -8,76 +8,92 @@ export function PayslipsPage() {
     const { runId } = useParams();
     const { data: payslips, isLoading } = usePayslipsByRun(runId || '');
 
-    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-        "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+    const { user } = useAuthStore();
 
     const downloadPayslip = (slip: Payslip) => {
         const doc = new jsPDF();
+        const primaryColor = [26, 35, 126]; // Deep Indigo
         
-        // Header
+        // Header Rectangle
+        doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.rect(0, 0, 210, 40, "F");
+        
         doc.setFontSize(22);
-        doc.setTextColor(40, 44, 52);
-        doc.text("FICHE DE PAIE", 105, 20, { align: "center" });
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.text("BULLETIN DE PAIE", 105, 25, { align: "center" });
         
         doc.setFontSize(10);
-        doc.setTextColor(100);
-        doc.text(`Référence: ${slip.id.substring(0, 8).toUpperCase()}`, 105, 27, { align: "center" });
+        doc.setTextColor(200);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Réf: ${slip.id.substring(0, 8).toUpperCase()} | Période: ${monthNames[slip.periodMonth - 1].toUpperCase()} ${slip.periodYear}`, 105, 33, { align: "center" });
 
-        // Company & Employee Info
+        // School & Employee Info
+        doc.setTextColor(40, 44, 52);
         doc.setFontSize(12);
-        doc.setTextColor(0);
-        doc.text("ENTREPRISE:", 14, 45);
+        doc.text("EMPLOYEUR:", 14, 55);
         doc.setFont("helvetica", "bold");
-        doc.text("GROUPE SCOLAIRE EXCELLENCE", 14, 52);
+        doc.text(user?.schoolName?.toUpperCase() || "ÉTABLISSEMENT DE SANTÉ", 14, 62);
         doc.setFont("helvetica", "normal");
-        doc.text("Abidjan, Côte d'Ivoire", 14, 58);
+        doc.setTextColor(100);
+        doc.text("Bamako, République du Mali", 14, 68);
+        doc.text(`Tel: ${user?.phoneNumber || "70 00 00 00"}`, 14, 74);
 
-        doc.text("EMPLOYÉ:", 120, 45);
+        doc.setTextColor(40, 44, 52);
+        doc.text("SALARIÉ:", 120, 55);
         doc.setFont("helvetica", "bold");
-        doc.text(slip.employeeName, 120, 52);
+        doc.text(slip.employeeName, 120, 62);
         doc.setFont("helvetica", "normal");
-        doc.text(`Matricule: ${slip.employeeNumber}`, 120, 58);
-        doc.text(`Département: ${slip.departmentName}`, 120, 64);
+        doc.setTextColor(100);
+        doc.text(`Matricule: ${slip.employeeNumber}`, 120, 68);
+        doc.text(`Fonction: ${slip.departmentName}`, 120, 74);
 
-        // Period
-        doc.setFillColor(245, 247, 250);
-        doc.rect(14, 75, 182, 12, "F");
-        doc.setFont("helvetica", "bold");
-        doc.text(`Période de paie: ${monthNames[slip.periodMonth - 1].toUpperCase()} ${slip.periodYear}`, 105, 83, { align: "center" });
+        // Period Box
+        doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.setLineWidth(0.5);
+        doc.line(14, 82, 196, 82);
 
         // Table
-        const tableBody = slip.lines.map(line => [
-            line.label,
-            line.elementType === 'Allowance' ? line.amount.toLocaleString() : '',
-            line.elementType === 'Deduction' ? line.amount.toLocaleString() : ''
-        ]);
+        const tableBody = [
+            ["Salaire de Base", slip.baseSalary.toLocaleString(), ""],
+            ...slip.lines.map(line => [
+                line.label,
+                line.elementType === 'Allowance' ? line.amount.toLocaleString() : '',
+                line.elementType === 'Deduction' ? line.amount.toLocaleString() : ''
+            ])
+        ];
 
         autoTable(doc, {
-            startY: 95,
-            head: [['Description', 'Gains (XOF)', 'Retenues (XOF)']],
+            startY: 90,
+            head: [['LIBELLÉ', 'GAINS (FCFA)', 'RETENUES (FCFA)']],
             body: tableBody,
-            theme: 'striped',
-            headStyles: { fillColor: [40, 44, 52] },
-            foot: [['TOTAL', 
-                slip.lines.filter(l => l.elementType === 'Allowance').reduce((acc, l) => acc + l.amount, 0).toLocaleString(), 
-                slip.lines.filter(l => l.elementType === 'Deduction').reduce((acc, l) => acc + l.amount, 0).toLocaleString()
-            ]],
-            footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
+            theme: 'grid',
+            headStyles: { fillColor: primaryColor, halign: 'center' },
+            styles: { fontSize: 10, cellPadding: 4 },
+            columnStyles: {
+                0: { cellWidth: 100 },
+                1: { halign: 'right' },
+                2: { halign: 'right' }
+            }
         });
 
-        // Net Salary
-        const finalY = (doc as any).lastAutoTable.finalY + 15;
-        doc.setFontSize(14);
-        doc.setTextColor(0);
-        doc.text("NET À PAYER:", 120, finalY);
-        doc.setFontSize(18);
-        doc.setTextColor(16, 185, 129); // Success color
-        doc.text(`${slip.netSalary.toLocaleString()} FCFA`, 120, finalY + 10);
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        
+        // Summary Card
+        doc.setFillColor(245, 247, 250);
+        doc.rect(120, finalY, 76, 25, "F");
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.setFontSize(10);
+        doc.text("NET À PAYER", 125, finalY + 10);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${slip.netSalary.toLocaleString()} FCFA`, 125, finalY + 20);
 
         // Footer
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setTextColor(150);
-        doc.text("Cette fiche de paie est générée électroniquement et ne nécessite pas de signature.", 105, 285, { align: "center" });
+        doc.setFont("helvetica", "italic");
+        doc.text("Établi par le service RH - Document numérique certifié", 105, 285, { align: "center" });
 
         doc.save(`Fiche_Paie_${slip.employeeName.replace(/\s+/g, '_')}_${slip.periodMonth}_${slip.periodYear}.pdf`);
     };

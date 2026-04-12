@@ -32,6 +32,17 @@ export function useEmployees(params: { pageNumber?: number; pageSize?: number; s
     });
 }
 
+export function useEmployeeDetail(id: string) {
+    return useQuery({
+        queryKey: ['employee', id],
+        queryFn: async () => {
+            const { data } = await apiClient.get(`/hr/employees/${id}`);
+            return data;
+        },
+        enabled: !!id
+    });
+}
+
 export function useCreateEmployee() {
     const queryClient = useQueryClient();
     return useMutation({

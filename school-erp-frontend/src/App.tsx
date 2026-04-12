@@ -16,6 +16,7 @@ import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 
 // Pages — Academic
 import { StudentsPage } from './features/academic/pages/StudentsPage';
+import { ParentPortalView } from './features/academic/pages/ParentPortalView';
 import { StudentCardsPage } from './features/academic/pages/StudentCardsPage';
 import { StudentDetailPage } from './features/academic/pages/StudentDetailPage';
 import { StudentPortalPage } from './features/academic/pages/StudentPortalPage';
@@ -54,7 +55,10 @@ import { CalendarPage } from './features/events/pages/CalendarPage';
 import { SettingsPage } from './features/settings/pages/SettingsPage';
 import { AnnualReportPage } from './features/reports/pages/AnnualReportPage';
 import { SmartQueriesPage } from './features/reports/pages/SmartQueriesPage';
+
+// Pages — Admin
 import { UserManagementPage } from './features/admin/pages/UserManagementPage';
+import { OnboardingPage } from './features/admin/pages/OnboardingPage';
 
 function App() {
   return (
@@ -64,9 +68,13 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <Route path="/portal/:id" element={<ParentPortalView />} />
 
-          {/* Protected Routes — Any authenticated user */}
+          {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
+            {/* Onboarding - Outside AppLayout for full-screen experience */}
+            <Route path="/onboarding" element={<OnboardingPage />} />
+
             <Route element={<AppLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />

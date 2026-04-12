@@ -8,6 +8,8 @@ using SchoolERP.Infrastructure.Persistence;
 using SchoolERP.Infrastructure.Services;
 using SchoolERP.Application.Common.Interfaces;
 using FluentValidation;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -117,6 +119,17 @@ builder.Services.AddMediatR(cfg =>
 // ── VALIDATION ────────────────────────────────────────────────────
 builder.Services.AddValidatorsFromAssembly(applicationAssembly);
 
+// ── RATE LIMITING ─────────────────────────────────────────────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("strict", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 100; // Limite raisonnable
+        opt.QueueLimit = 0;
+    });
+});
+
 var app = builder.Build();
 
 // ── MIDDLEWARE PIPELINE ───────────────────────────────────────────
@@ -134,6 +147,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseAuthorization();

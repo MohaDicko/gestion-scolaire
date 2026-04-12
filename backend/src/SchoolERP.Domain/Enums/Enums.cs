@@ -2,7 +2,7 @@ namespace SchoolERP.Domain.Enums;
 
 public enum Gender { Male, Female, Other }
 
-public enum SchoolType { Public, Private, Confessional, International }
+public enum SchoolType { Public, Private, Confessional, International, Health }
 
 public enum EnrollmentStatus { Active, Promoted, Repeated, Withdrawn, Transferred }
 

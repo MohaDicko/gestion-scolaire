@@ -19,6 +19,13 @@ export function ProtectedRoute({ roles }: ProtectedRouteProps) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
+    const { user } = useAuthStore();
+    
+    // Redirect to onboarding if setup not complete (except for SuperAdmin or if already on onboarding)
+    if (user && !user.isSetupComplete && user.role === 'SchoolAdmin' && location.pathname !== '/onboarding') {
+        return <Navigate to="/onboarding" replace />;
+    }
+
     if (roles && roles.length > 0 && !hasRole(roles)) {
         return <Navigate to="/unauthorized" replace />;
     }
