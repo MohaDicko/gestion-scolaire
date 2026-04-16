@@ -1,0 +1,11 @@
+{
+  "name": "school-erp-monorepo",
+  "private": true,
+  "workspaces": [
+    "school-erp-frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=school-erp-frontend",
+    "install": "npm install --workspace=school-erp-frontend"
+  }
+}
