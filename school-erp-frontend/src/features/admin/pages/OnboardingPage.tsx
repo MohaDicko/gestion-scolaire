@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  School, 
   HeartPulse, 
   Baby, 
   GraduationCap, 
   CheckCircle2, 
   ArrowRight,
   Sparkles,
-  BookOpen,
-  CalendarDays
+  BookOpen
 } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 

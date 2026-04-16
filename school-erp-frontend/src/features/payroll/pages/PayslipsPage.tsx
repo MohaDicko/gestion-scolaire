@@ -3,6 +3,12 @@ import { usePayslipsByRun, Payslip } from '../hooks/usePayroll';
 import { FileText, Printer, ArrowLeft, DownloadCloud } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useAuthStore } from '../../../store/authStore';
+
+const monthNames = [
+    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+];
 
 export function PayslipsPage() {
     const { runId } = useParams();
@@ -37,7 +43,7 @@ export function PayslipsPage() {
         doc.setFont("helvetica", "normal");
         doc.setTextColor(100);
         doc.text("Bamako, République du Mali", 14, 68);
-        doc.text(`Tel: ${user?.phoneNumber || "70 00 00 00"}`, 14, 74);
+        doc.text(`Tel: ${(user as any)?.phoneNumber || "70 00 00 00"}`, 14, 74);
 
         doc.setTextColor(40, 44, 52);
         doc.text("SALARIÉ:", 120, 55);
@@ -68,7 +74,7 @@ export function PayslipsPage() {
             head: [['LIBELLÉ', 'GAINS (FCFA)', 'RETENUES (FCFA)']],
             body: tableBody,
             theme: 'grid',
-            headStyles: { fillColor: primaryColor, halign: 'center' },
+            headStyles: { fillColor: primaryColor as [number, number, number], halign: 'center' },
             styles: { fontSize: 10, cellPadding: 4 },
             columnStyles: {
                 0: { cellWidth: 100 },

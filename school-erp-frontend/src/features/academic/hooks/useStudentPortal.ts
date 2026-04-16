@@ -72,7 +72,7 @@ export function useAddSanction() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (sanction: any) => {
-            const { studentId, ...payload } = sanction;
+            const { studentId } = sanction;
             await apiClient.post(`/academic/students/${studentId}/sanctions`, sanction);
         },
         onSuccess: (_data, variables) => {

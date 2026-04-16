@@ -1,7 +1,6 @@
-import React from 'react';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
-import { Printer, Download, MapPin, Phone, Mail, Award } from 'lucide-react';
+import { Printer, Download, MapPin, Phone, Award } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
 interface StudentIDCardProps {
@@ -36,7 +35,7 @@ export function StudentIDCard({ student, school }: StudentIDCardProps) {
   }, [student.id]);
 
   const downloadPDF = () => {
-    const doc = new jsPDF({
+    new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
       format: [86, 54] // Standard ID Card size (CR80)

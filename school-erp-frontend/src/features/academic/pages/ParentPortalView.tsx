@@ -1,15 +1,9 @@
-import React from 'react';
 import { useParams } from 'react-router-dom';
 import { 
-  GraduationCap, 
   Calendar, 
   CreditCard, 
-  AlertCircle, 
-  CheckCircle2, 
-  Clock,
   BookOpen,
-  Phone,
-  MessageSquare
+  Phone
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../../lib/apiClient';

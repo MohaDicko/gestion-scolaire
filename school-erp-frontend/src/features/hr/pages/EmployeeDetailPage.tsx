@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   User, 
@@ -11,10 +11,8 @@ import {
   Wallet, 
   History,
   Plus,
-  ChevronRight,
   Download,
-  CheckCircle2,
-  AlertCircle
+  CheckCircle2
 } from 'lucide-react';
 import { useEmployeeDetail } from '../hooks/useEmployees';
 

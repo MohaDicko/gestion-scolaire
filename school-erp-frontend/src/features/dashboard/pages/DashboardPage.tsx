@@ -2,6 +2,20 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip,
     BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import { 
+    Users, Briefcase, BookOpen, Wallet, GraduationCap, 
+    TrendingUp, CreditCard 
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuthStore } from '../../../store/authStore';
+import { useDashboardStats } from '../hooks/useDashboardStats';
+
+// Placeholder or real recent activity
+const recentActivity = [
+    { action: "Nouvelle inscription", detail: "Oumar Touré (SAGE)", time: "il y a 2h", color: "#10b981" },
+    { action: "Paiement reçu", detail: "Fatim Keita (Licence 2)", time: "il y a 5h", color: "#6366f1" },
+    { action: "Paie générée", detail: "Mois de Mars 2024", time: "Hier", color: "#ec4899" },
+];
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
 
@@ -83,7 +97,7 @@ export function DashboardPage() {
                                         paddingAngle={5}
                                         dataKey="count"
                                     >
-                                        {specialtyData.map((_, index) => (
+                                        {specialtyData.map((_: any, index: number) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
@@ -92,7 +106,7 @@ export function DashboardPage() {
                             </ResponsiveContainer>
                         </div>
                         <div style={{ width: '150px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {specialtyData.map((entry, index) => (
+                            {specialtyData.map((entry: any, index: number) => (
                                 <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
                                     <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: COLORS[index % COLORS.length] }} />
                                     <span style={{ fontWeight: 600 }}>{entry.name}</span>

@@ -8,6 +8,8 @@ export interface DashboardStats {
     totalPayslips: number;
     totalArrearsAmount: number;
     studentsWithArrearsCount: number;
+    studentsBySpecialty: { name: string, count: number }[];
+    recentRevenue: { month: string, amount: number }[];
 }
 
 export function useDashboardStats() {

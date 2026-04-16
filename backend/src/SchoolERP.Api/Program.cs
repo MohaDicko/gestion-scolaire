@@ -98,12 +98,18 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.WithOrigins(
-                builder.Configuration["Cors:AllowedOrigins"] ?? "http://localhost:5173"
-            )
+        var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]?.Split(',') 
+                             ?? new[] { "http://localhost:5173" };
+
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .SetIsOriginAllowed(origin => 
+            {
+                // Permet aussi les URLs de preview de Vercel par sécurité
+                return origin.EndsWith(".vercel.app") || allowedOrigins.Contains(origin);
+            });
     });
 });
 

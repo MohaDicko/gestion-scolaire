@@ -146,27 +146,28 @@ Chaque école est un **Tenant** identifié par un `TenantId` (Guid).
 
 ## 🌐 Déploiement Production
 
-Le projet est pré-configuré pour un déploiement hybride moderne :
+Le projet est configuré pour un déploiement optimisé sur **Vercel** et **Supabase**, sans dépendance à Railway.
 
-### 🎨 Frontend (Vercel)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
-*   Connectez votre repo GitHub.
-*   Sélectionnez le dossier `school-erp-frontend` lors du déploiement.
-*   Configurez `VITE_API_URL` avec l'URL de votre backend.
+### 🎨 Frontend & Backend Proxy (Vercel)
+Vercel héberge nativement le frontend React. Pour le backend .NET, il est recommandé d'utiliser un hébergeur compatible .NET (comme Azure ou Render) tout en pointant votre domaine Vercel vers celui-ci via un proxy ou sous-domaine.
 
-### ⚙️ Backend (Railway)
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new)
-*   Importez le repo GitHub.
-*   Railway détectera automatiquement le `backend/Dockerfile` grâce à [railway.json](file:///c:/Users/tinkpad/Desktop/Mes%20Nouveaux%20Projets/gestion%20scolaire/backend/railway.json).
-*   Configurez les variables d'environnement (voir ci-dessous).
+1.  Connectez votre repo GitHub à Vercel.
+2.  Configurez les variables d'environnement suivantes dans Vercel :
+    - `VITE_API_URL` : L'URL de votre API de production.
+    - `VITE_SUPABASE_URL` : Votre URL Supabase.
+    - `VITE_SUPABASE_ANON_KEY` : Votre clé publique Supabase.
 
-### 🔑 Variables d'Environnement Requises (Production)
-| Variable | Usage |
+### 🗄️ Base de Données (Supabase)
+Le projet utilise déjà **PostgreSQL sur Supabase** avec le pooler de transactions (Port 6543) pour une performance maximale.
+
+### 🔑 Variables d'Environnement (Backend)
+Si vous déployez le backend sur un service compatible (ex: App Service), utilisez ces noms :
+| Variable | Valeur recommandée |
 | :--- | :--- |
-| `ASPNETCORE_ENVIRONMENT` | Doit être mis à `Production` |
-| `ConnectionStrings__DefaultConnection` | Votre URL de pooling Supabase (Port 6543) |
-| `Jwt__Key` | Clé secrète de signature JWT |
-| `Cors__AllowedOrigins` | URL de votre frontend Vercel |
+| `ASPNETCORE_ENVIRONMENT` | `Production` |
+| `ConnectionStrings__DefaultConnection` | URL de pooling Supabase (Port 6543) |
+| `Jwt__Key` | Votre clé secrète JWT |
+| `Cors__AllowedOrigins` | Votre domaine Vercel (ex: `https://app.schoolerp.com`) |
 
 ---
 
