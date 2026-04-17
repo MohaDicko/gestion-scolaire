@@ -1,0 +1,70 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
+
+// Liste des routes accessibles sans être connecté
+const publicPaths = [
+  '/login',
+  '/api/auth/login',
+  '/portal',
+  '/api/portal',
+  '/_next',
+  '/favicon.ico'
+];
+
+// Vérifie si le chemin demandé est public
+const isPublicPath = (url: string) => {
+  return publicPaths.some(path => url.startsWith(path));
+};
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // 1. Laisser passer les routes publiques
+  if (isPublicPath(pathname)) {
+    // Si l'utilisateur est déjà connecté et essaie d'aller sur /login, on le redirige vers le dashboard
+    const token = request.cookies.get('refreshToken')?.value;
+    if (token && pathname === '/login') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // 2. Vérification de sécurité pour les routes privées
+  const token = request.cookies.get('refreshToken')?.value;
+
+  if (!token) {
+    // Pas de token -> retour à la page de connexion
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  try {
+    // 3. Validation Cryptographique du JWT sur le "Edge Runtime"
+    const secretKey = process.env.JWT_SECRET || 'secret';
+    const key = new TextEncoder().encode(secretKey);
+    
+    await jwtVerify(token, key, { algorithms: ['HS256'] });
+
+    // Le token est valide, on laisse passer la requête
+    return NextResponse.next();
+  } catch (error) {
+    // Token expiré ou falsifié -> On détruit le cookie suspect et on redirige
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.cookies.delete('refreshToken');
+    return response;
+  }
+}
+
+// 4. Cibler uniquement les pages et les API importantes (ignorer les images, css, etc.)
+export const config = {
+  matcher: [
+    /*
+     * Protéger toutes les routes SAUF:
+     * - api (si on veut laisser des webhooks, sinon on protège aussi)
+     * - _next/static (fichiers statiques)
+     * - _next/image (images d'optimisation)
+     * - favicon.ico (icône du site)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
+};

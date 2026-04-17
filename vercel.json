@@ -1,17 +1,5 @@
 {
   "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "buildCommand": "npm run build",
-  "outputDirectory": "school-erp-frontend/dist",
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://api-school-erp.votre-domaine.com/api/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "buildCommand": "npx prisma generate && next build",
+  "installCommand": "npm install"
 }

@@ -1,18 +1,40 @@
 {
   "name": "school-erp-monorepo",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "private": true,
-  "workspaces": [
-    "school-erp-frontend"
-  ],
   "scripts": {
-    "dev": "npm run dev -w school-erp-frontend",
-    "build": "npm run build -w school-erp-frontend",
-    "lint": "npm run lint -w school-erp-frontend",
-    "preview": "npm run preview -w school-erp-frontend",
-    "install:all": "npm install"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
   },
-  "engines": {
-    "node": ">=20.0.0"
+  "dependencies": {
+    "@prisma/client": "^5.15.0",
+    "bcryptjs": "^3.0.0",
+    "clsx": "^2.1.1",
+    "jose": "^5.9.6",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.475.0",
+    "next": "15.1.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "recharts": "^3.8.1",
+    "tailwind-merge": "^3.0.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.5.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.4",
+    "postcss": "^8.4.38",
+    "prisma": "^5.15.0",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.4.5"
   }
 }

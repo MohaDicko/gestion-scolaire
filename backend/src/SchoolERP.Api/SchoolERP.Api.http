@@ -1,6 +1,0 @@
-@SchoolERP.Api_HostAddress = http://localhost:5104
-
-GET {{SchoolERP.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

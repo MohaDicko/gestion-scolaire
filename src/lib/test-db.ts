@@ -1,0 +1,1 @@
+import { prisma } from './prisma'; async function main() { try { const count = await prisma.student.count(); console.log('Connexion OK ! Nombre d\'élèves dans la BD :', count); } catch(e) { console.error('Erreur de connexion :', e); } } main();
