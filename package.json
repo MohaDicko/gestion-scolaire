@@ -1,5 +1,6 @@
 {
   "name": "school-erp-monorepo",
+  "version": "1.0.1",
   "private": true,
   "workspaces": [
     "school-erp-frontend"
