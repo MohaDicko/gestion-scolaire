@@ -10,5 +10,8 @@
     "lint": "npm run lint -w school-erp-frontend",
     "preview": "npm run preview -w school-erp-frontend",
     "install:all": "npm install"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
