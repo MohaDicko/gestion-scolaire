@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://votre-api-dotnet.com/api/$1"
+      "destination": "https://api-school-erp.votre-domaine.com/api/$1"
     },
     {
       "source": "/(.*)",
