@@ -5,7 +5,10 @@
     "school-erp-frontend"
   ],
   "scripts": {
-    "build": "npm run build --workspace=school-erp-frontend",
-    "install": "npm install --workspace=school-erp-frontend"
+    "dev": "npm run dev -w school-erp-frontend",
+    "build": "npm run build -w school-erp-frontend",
+    "lint": "npm run lint -w school-erp-frontend",
+    "preview": "npm run preview -w school-erp-frontend",
+    "install:all": "npm install"
   }
 }

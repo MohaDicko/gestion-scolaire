@@ -1,0 +1,23 @@
+# Node
+node_modules/
+dist/
+build/
+.env*
+!.env.example
+.vercel/
+
+# .NET
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
