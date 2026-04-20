@@ -2,64 +2,78 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { encrypt } from '@/lib/auth';
 import * as bcrypt from 'bcryptjs';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 export async function POST(request: Request) {
-  try {
-    const { email, password } = await request.json();
+  // ── Rate Limiting: max 10 login attempts per IP per 15 minutes ──
+  const ip = getClientIp(request);
+  const rl = rateLimit(`login:${ip}`, { limit: 10, windowSecs: 15 * 60 });
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
-    }
-
-    // 1. Find User (For this PoC, we will create a dummy user logic if DB is empty, or just authenticate based on Prisma)
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      // Temporaire : Auto-création du premier Admin si la DB est vide
-      if (email === 'admin@schoolerp.com') {
-        const hashedPassword = await bcrypt.hash('admin123', 10);
-        const newUser = await prisma.user.create({
-          data: {
-            email,
-            password: hashedPassword,
-            firstName: 'Super',
-            lastName: 'Admin',
-            role: 'SUPER_ADMIN',
-            tenantId: '1' // ID par défaut
-          }
-        });
-        return await handleLogin(newUser);
+  if (!rl.success) {
+    const retryAfterSecs = Math.ceil((rl.resetAt - Date.now()) / 1000);
+    return NextResponse.json(
+      { error: `Trop de tentatives. Réessayez dans ${Math.ceil(retryAfterSecs / 60)} minute(s).` },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(retryAfterSecs),
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': '0',
+        }
       }
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const { email, password } = body;
+
+    // --- Input validation ---
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return NextResponse.json({ error: 'Adresse email invalide.' }, { status: 400 });
+    }
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      return NextResponse.json({ error: 'Mot de passe invalide (minimum 6 caractères).' }, { status: 400 });
     }
 
-    // 2. Validate Password
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+
+    // Always respond after bcrypt compare — avoids timing attacks / user enumeration
+    if (!user) {
+      await bcrypt.compare(password, '$2a$10$dummyhashtopreventtimingattack000000000000'); // blind compare
+      return NextResponse.json({ error: 'Email ou mot de passe incorrect.' }, { status: 401 });
+    }
+
+    if (!user.isActive) {
+      return NextResponse.json({ error: 'Ce compte a été désactivé. Contactez l\'administrateur.' }, { status: 403 });
+    }
+
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json({ error: 'Email ou mot de passe incorrect.' }, { status: 401 });
     }
 
-    // 3. Handle Login
     return await handleLogin(user);
 
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    // No stack trace in production logs
+    console.error('[AUTH] Login error occurred');
+    return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
   }
 }
 
 async function handleLogin(user: any) {
-  const payload = {
+  const sessionPayload = {
     id: user.id,
     email: user.email,
     role: user.role,
     tenantId: user.tenantId,
   };
 
-  const accessToken = await encrypt(payload, '1h');
-  const refreshToken = await encrypt({ id: user.id }, '7d');
+  // accessToken short-lived (15min) stored in memory via localStorage
+  const accessToken = await encrypt(sessionPayload, '15m');
+  // refreshToken long-lived (7d) stored in httpOnly cookie only
+  const refreshToken = await encrypt(sessionPayload, '7d'); // includes full payload for getSession()
 
   const response = NextResponse.json({
     accessToken,
@@ -73,12 +87,11 @@ async function handleLogin(user: any) {
     }
   });
 
-  // Set HTTP Only cookie for refresh logic
   response.cookies.set('refreshToken', refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    sameSite: 'strict', // upgraded from 'lax'
+    maxAge: 7 * 24 * 60 * 60,
     path: '/',
   });
 
