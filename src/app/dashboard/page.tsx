@@ -53,22 +53,30 @@ export default function DashboardPage() {
         <div className="layout-root">
           <div className="sidebar">
             <div className="sidebar-logo">
-              <div className="logo-title">SchoolERP Pro</div>
+              <div className="logo-icon"><span style={{fontSize: '18px'}}>🎓</span></div>
+              <div>
+                <div className="logo-title">SchoolERP <span style={{color:'var(--primary)'}}>Pro</span></div>
+                <div className="logo-school">Gestion scolaire</div>
+              </div>
             </div>
             <div className="sidebar-nav">
-              <div className="nav-item active">Tableau de Bord</div>
-              <div className="nav-item" onClick={() => router.push('/students')}>Élèves (Scolarité)</div>
-              <div className="nav-item" onClick={() => router.push('/classrooms')}>Classes</div>
-              <div className="nav-item" onClick={() => router.push('/grades')}>Saisie des Notes</div>
-              <div className="nav-item" onClick={() => router.push('/employees')}>Employés (RH)</div>
-              <div className="nav-item" onClick={() => router.push('/payslips')}>Paie (Bulletins)</div>
-              <div className="nav-item" onClick={() => router.push('/invoices')}>Comptabilité</div>
+              <div className="nav-section-label">Académique</div>
+              <div className="nav-item active">📊 Tableau de Bord</div>
+              <div className="nav-item" onClick={() => router.push('/students')}>👨‍🎓 Élèves & Scolarité</div>
+              <div className="nav-item" onClick={() => router.push('/classrooms')}>🏫 Classes</div>
+              <div className="nav-item" onClick={() => router.push('/grades')}>📝 Saisie des Notes</div>
+              <div className="nav-section-label">Administration</div>
+              <div className="nav-item" onClick={() => router.push('/employees')}>💼 Ressources Humaines</div>
+              <div className="nav-item" onClick={() => router.push('/payslips')}>💰 Paie & Bulletins</div>
+              <div className="nav-item" onClick={() => router.push('/invoices')}>🧾 Comptabilité</div>
             </div>
-            
             <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
-                <button className="btn-ghost" onClick={() => router.push('/api/auth/logout')} style={{ width: '100%', color: 'var(--danger)' }}>
-                    Déconnexion
-                </button>
+              <div className="user-avatar">A</div>
+              <div className="user-info">
+                <div className="user-name">Super Admin</div>
+                <div className="user-role">SUPER_ADMIN</div>
+              </div>
+              <button className="logout-btn" onClick={() => router.push('/api/auth/logout')} title="Déconnexion">🚪</button>
             </div>
           </div>
           
@@ -77,36 +85,37 @@ export default function DashboardPage() {
                 <div className="page-header">
                     <div>
                         <h1 className="page-title">Vue d'ensemble</h1>
-                        <p className="page-subtitle">Métriques en temps réel issues de Supabase</p>
+                        <p className="page-subtitle">Indicateurs de performance en temps réel</p>
                     </div>
+                    <div className="badge-role">Actif</div>
                 </div>
 
                 <div className="stats-grid">
                     <div className="stat-card">
                         <div className="stat-icon" style={{ background: 'var(--primary-dim)', color: 'var(--primary)' }}>
-                            <Users size={24} />
+                            <Users size={22} />
                         </div>
                         <div className="stat-body">
                             <div className="stat-label">Effectif Total</div>
                             <div className="stat-value">{stats.studentsCount}</div>
-                            <div className="stat-change">+12% depuis septembre</div>
+                            <div className="stat-change">↑ Croissance active</div>
                         </div>
                     </div>
 
                     <div className="stat-card">
-                        <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)' }}>
-                            <CreditCard size={24} />
+                        <div className="stat-icon" style={{ background: 'var(--success-dim)', color: 'var(--success)' }}>
+                            <CreditCard size={22} />
                         </div>
                         <div className="stat-body">
                             <div className="stat-label">Recettes encaissées</div>
                             <div className="stat-value">{(stats.invoicesPaid).toLocaleString()} XOF</div>
-                            <div className="stat-change" style={{ color: 'var(--success)' }}>Taux de paiement: {paymentRate}%</div>
+                            <div className="stat-change" style={{ background: 'var(--success-dim)', color: 'var(--success)' }}>Taux: {paymentRate}%</div>
                         </div>
                     </div>
 
                     <div className="stat-card">
-                        <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--warning)' }}>
-                            <FileText size={24} />
+                        <div className="stat-icon" style={{ background: 'var(--warning-dim)', color: 'var(--warning)' }}>
+                            <FileText size={22} />
                         </div>
                         <div className="stat-body">
                             <div className="stat-label">Restes à recouvrer</div>
@@ -115,8 +124,8 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="stat-card">
-                        <div className="stat-icon" style={{ background: 'rgba(236, 72, 153, 0.15)', color: 'var(--pink)' }}>
-                            <BookOpen size={24} />
+                        <div className="stat-icon" style={{ background: 'var(--purple-dim)', color: 'var(--purple)' }}>
+                            <BookOpen size={22} />
                         </div>
                         <div className="stat-body">
                             <div className="stat-label">Staff Académique</div>
