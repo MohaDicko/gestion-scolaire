@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth';
 
 export async function GET(request: Request) {
+  const session = await getSession();
+  if (!session || !session.tenantId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const classrooms = await prisma.classroom.findMany({
+      where: { tenantId: session.tenantId },
       include: {
         campus: true,
         academicYear: true,
@@ -21,8 +28,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session || !session.tenantId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const { tenantId, campusId, academicYearId, name, level, stream, maxCapacity } = await request.json();
+    const { campusId, academicYearId, name, level, stream, maxCapacity } = await request.json();
     
     if (!campusId || !academicYearId || !name || !level || !maxCapacity) {
         return NextResponse.json({ error: 'Champs obligatoires manquants' }, { status: 400 });
@@ -30,7 +42,7 @@ export async function POST(request: Request) {
 
     const newClassroom = await prisma.classroom.create({
       data: {
-        tenantId: tenantId || '1',
+        tenantId: session.tenantId,
         campusId,
         academicYearId,
         name,

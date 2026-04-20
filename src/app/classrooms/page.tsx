@@ -60,7 +60,7 @@ export default function ClassroomsPage() {
         <div className="layout-root">
           <div className="sidebar">
             <div className="sidebar-logo">
-              <div className="logo-title">SchoolERP Vercel</div>
+              <div className="logo-title">SchoolERP Pro</div>
             </div>
             <div className="sidebar-nav">
               <div className="nav-item" onClick={() => router.push('/dashboard')}>Tableau de Bord</div>
@@ -74,7 +74,7 @@ export default function ClassroomsPage() {
                 <div className="page-header">
                     <div>
                         <h1 className="page-title">Gestion des Classes</h1>
-                        <p className="page-subtitle">Structure académique (100% Vercel API)</p>
+                        <p className="page-subtitle">Organisation structurelle des cohortes</p>
                     </div>
                     <button className="btn-primary" onClick={() => setShowForm(true)}>
                         <Plus size={16} /> Nouvelle Classe

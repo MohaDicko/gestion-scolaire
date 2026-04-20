@@ -17,20 +17,6 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      // Create a super admin automatically if none exists (for testing purposes)
-      if (email === 'admin@schoolerp.com') {
-        const hashedPassword = await bcrypt.hash('admin123', 10);
-        const newUser = await prisma.user.create({
-          data: {
-            email,
-            password: hashedPassword,
-            firstName: 'Super',
-            lastName: 'Admin',
-            role: 'SUPER_ADMIN',
-          }
-        });
-        return await handleLogin(newUser);
-      }
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 

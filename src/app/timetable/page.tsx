@@ -64,7 +64,7 @@ export default function TimetablePage() {
         <div className="layout-root">
           <div className="sidebar">
             <div className="sidebar-logo">
-              <div className="logo-title">SchoolERP Vercel</div>
+              <div className="logo-title">SchoolERP Pro</div>
             </div>
             <div className="sidebar-nav">
               <div className="nav-item" onClick={() => router.push('/dashboard')}>Tableau de Bord</div>
@@ -84,7 +84,7 @@ export default function TimetablePage() {
 
                 <div className="card shadow-sm" style={{ marginBottom: '20px' }}>
                     <div className="form-group" style={{ maxWidth: '300px' }}>
-                        <label>Classe (Mock pour tester)</label>
+                        <label>Sélectionner une Classe</label>
                         <select value={selectedClassroom} onChange={(e) => setSelectedClassroom(e.target.value)} className="form-input">
                             <option value="">Sélectionner une classe</option>
                             <option value="class-fake-id">6ème Année B</option>
@@ -146,11 +146,11 @@ export default function TimetablePage() {
                                                 </div>
                                                 <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                     {daySlots.map(slot => (
-                                                        <div key={slot.id} style={{ background: 'var(--primary-dim)', borderLeft: '3px solid var(--primary)', padding: '10px', borderRadius: '4px', fontSize: '12px', position: 'relative' }}>
+                                                        <div key={slot.id} style={{ background: 'var(--primary-dim)', borderLeft: '3px solid var(--primary)', padding: '10px', borderRadius: '8px', fontSize: '12px', position: 'relative', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                                                             <div style={{ color: 'var(--primary)', fontWeight: 'bold', marginBottom: '4px' }}><Clock size={12} style={{ display: 'inline', verticalAlign: 'text-bottom' }}/> {slot.startTime} - {slot.endTime}</div>
-                                                            <div><strong>Matière ID: {slot.subjectId}</strong></div>
-                                                            <div>Prof ID: {slot.employeeId}</div>
-                                                            <button onClick={() => handleDelete(slot.id)} style={{ position: 'absolute', top: 5, right: 5, color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14}/></button>
+                                                            <div><strong>{slot.subject?.name || 'Matière'}</strong></div>
+                                                            <div style={{ opacity: 0.8 }}>{slot.teacher?.firstName} {slot.teacher?.lastName}</div>
+                                                            <button onClick={() => handleDelete(slot.id)} style={{ position: 'absolute', top: 8, right: 8, color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer', opacity: 0.6 }}><Trash2 size={14}/></button>
                                                         </div>
                                                     ))}
                                                     {daySlots.length === 0 && <div style={{ textAlign: 'center', opacity: 0.3, fontSize: '12px', marginTop: '20px' }}>Libre</div>}

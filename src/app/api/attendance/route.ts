@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth';
 
 export async function GET(request: Request) {
+  const session = await getSession();
+  if (!session || !session.tenantId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const url = new URL(request.url);
   const classroomId = url.searchParams.get('classroomId');
   const dateStr = url.searchParams.get('date');
@@ -15,7 +21,10 @@ export async function GET(request: Request) {
     
     // On récupère tous les élèves de la classe
     const enrollments = await prisma.enrollment.findMany({
-      where: { classroomId },
+      where: { 
+        classroomId,
+        student: { tenantId: session.tenantId } 
+      },
       include: {
         student: true
       }
@@ -24,6 +33,7 @@ export async function GET(request: Request) {
     // On récupère les présences déjà enregistrées
     const attendances = await prisma.attendance.findMany({
       where: {
+        tenantId: session.tenantId,
         classroomId,
         date: {
           gte: new Date(targetDate.setHours(0, 0, 0, 0)),
@@ -51,6 +61,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session || !session.tenantId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { classroomId, date, records } = await request.json();
     const targetDate = new Date(date);
@@ -60,6 +75,7 @@ export async function POST(request: Request) {
       // Find existing
       const existing = await prisma.attendance.findFirst({
         where: {
+          tenantId: session.tenantId,
           studentId: rec.studentId,
           classroomId,
           date: {
@@ -77,7 +93,7 @@ export async function POST(request: Request) {
       } else {
         return prisma.attendance.create({
           data: {
-            tenantId: '1',
+            tenantId: session.tenantId,
             studentId: rec.studentId,
             classroomId,
             date: targetDate,

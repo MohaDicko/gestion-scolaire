@@ -32,7 +32,7 @@ export default function EmployeesPage() {
         <div className="layout-root">
           <div className="sidebar">
             <div className="sidebar-logo">
-              <div className="logo-title">SchoolERP Vercel</div>
+              <div className="logo-title">SchoolERP Pro</div>
             </div>
             <div className="sidebar-nav">
               <div className="nav-item" onClick={() => router.push('/dashboard')}>Tableau de Bord</div>
@@ -41,7 +41,7 @@ export default function EmployeesPage() {
               <div className="nav-item active">Employés (RH)</div>
             </div>
             <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Migration Vercel en cours...</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Version Stable 1.1.0</div>
             </div>
           </div>
           

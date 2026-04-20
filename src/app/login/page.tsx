@@ -41,10 +41,6 @@ export default function LoginPage() {
         }
     };
 
-    const demoLogin = () => {
-        setEmail('admin@schoolerp.com');
-        setPassword('admin123'); // Matches what we put in our route logic for auto-creation
-    };
 
     return (
         <div className="login-root">
@@ -123,12 +119,8 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    <button type="button" onClick={demoLogin} className="btn-demo">
-                        🎯 Remplir avec le compte (Auto-Create)
-                    </button>
-
-                    <p className="login-footer-note">
-                        SchoolERP &copy; 2026 — Version Next.js
+                    <p className="login-footer-note" style={{ marginTop: '20px' }}>
+                        SchoolERP &copy; 2026 — Version Professionnelle
                     </p>
                 </div>
             </div>

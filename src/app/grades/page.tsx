@@ -29,7 +29,7 @@ export default function GradesPage() {
         <div className="layout-root">
           <div className="sidebar">
             <div className="sidebar-logo">
-              <div className="logo-title">SchoolERP Vercel</div>
+              <div className="logo-title">SchoolERP Pro</div>
             </div>
             <div className="sidebar-nav">
               <div className="nav-item" onClick={() => router.push('/dashboard')}>Tableau de Bord</div>
@@ -52,7 +52,7 @@ export default function GradesPage() {
                 <div className="card shadow-sm" style={{ marginBottom: '20px' }}>
                     <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
                         <div className="form-group">
-                            <label>Classe (Mock)</label>
+                            <label>Classe</label>
                             <select onChange={() => setSelectedStudents(dummyStudents)} className="form-input">
                                 <option value="">Sélectionner...</option>
                                 <option value="1">6ème A</option>

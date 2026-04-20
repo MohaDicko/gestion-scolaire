@@ -33,13 +33,18 @@ export default function DashboardPage() {
     ];
 
     useEffect(() => {
-        // En vrai: fetch. Ici simulé basé sur API endpoints
-        setStats({
-            studentsCount: 348, // ex: await (await fetch('/api/students')).json().totalCount
-            employeesCount: 42,
-            invoicesTotal: 4500000,
-            invoicesPaid: 3200000
-        });
+        const fetchStats = async () => {
+            try {
+                const res = await fetch('/api/dashboard/stats');
+                if (res.ok) {
+                    const data = await res.json();
+                    setStats(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch dashboard stats", err);
+            }
+        };
+        fetchStats();
     }, []);
 
     const paymentRate = Math.round((stats.invoicesPaid / (stats.invoicesTotal || 1)) * 100);
@@ -48,7 +53,7 @@ export default function DashboardPage() {
         <div className="layout-root">
           <div className="sidebar">
             <div className="sidebar-logo">
-              <div className="logo-title">SchoolERP Vercel</div>
+              <div className="logo-title">SchoolERP Pro</div>
             </div>
             <div className="sidebar-nav">
               <div className="nav-item active">Tableau de Bord</div>

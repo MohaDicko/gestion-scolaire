@@ -52,13 +52,13 @@ export default function AttendancePage() {
         <div className="layout-root">
           <div className="sidebar">
             <div className="sidebar-logo">
-              <div className="logo-title">SchoolERP Vercel</div>
+              <div className="logo-title">SchoolERP Pro</div>
             </div>
             <div className="sidebar-nav">
               <div className="nav-item" onClick={() => router.push('/dashboard')}>Tableau de Bord</div>
               <div className="nav-item" onClick={() => router.push('/students')}>Élèves</div>
               <div className="nav-item" onClick={() => router.push('/classrooms')}>Classes</div>
-              <div className="nav-item active">Faire l'Appel</div>
+              <div className="nav-item active">Registre d'Appel</div>
             </div>
           </div>
           
@@ -74,7 +74,7 @@ export default function AttendancePage() {
                 <div className="card shadow-sm" style={{ marginBottom: '20px' }}>
                     <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
                         <div className="form-group">
-                            <label>Classe (Mock pour tester)</label>
+                            <label>Classe</label>
                             {/* Pour tester on met une vraie ID ou on s'attend à ce que l'utilisateur choisisse */}
                             <select value={selectedClassroom} onChange={(e) => setSelectedClassroom(e.target.value)} className="form-input">
                                 <option value="">Sélectionner une classe</option>

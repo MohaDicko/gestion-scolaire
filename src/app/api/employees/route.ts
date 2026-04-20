@@ -1,19 +1,28 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth';
 
 export async function GET(request: Request) {
+  const session = await getSession();
+  if (!session || !session.tenantId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const url = new URL(request.url);
   const search = url.searchParams.get('search') || '';
 
   try {
     const employees = await prisma.employee.findMany({
-      where: search ? {
-        OR: [
-          { firstName: { contains: search, mode: 'insensitive' } },
-          { lastName: { contains: search, mode: 'insensitive' } },
-          { employeeNumber: { contains: search, mode: 'insensitive' } },
-        ],
-      } : {},
+      where: {
+        tenantId: session.tenantId,
+        ...(search ? {
+          OR: [
+            { firstName: { contains: search, mode: 'insensitive' } },
+            { lastName: { contains: search, mode: 'insensitive' } },
+            { employeeNumber: { contains: search, mode: 'insensitive' } },
+          ],
+        } : {}),
+      },
       include: {
         department: true,
       },
@@ -27,13 +36,18 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session || !session.tenantId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const data = await request.json();
     const employeeNumber = `EMP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const newEmployee = await prisma.employee.create({
       data: {
-        tenantId: '1', // Mock tenant
+        tenantId: session.tenantId,
         employeeNumber,
         firstName: data.firstName,
         lastName: data.lastName,
