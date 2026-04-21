@@ -19,17 +19,22 @@ export default function ClassroomsPage() {
   const [acadYears, setAcadYears]   = useState<any[]>([]);
   const [formData, setFormData]     = useState({ ...emptyForm });
   const [search, setSearch]         = useState('');
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
 
   const fetch_ = useCallback(async () => {
     setIsLoading(true);
+    setErrorStatus(null);
     try {
       const res = await fetch('/api/classrooms');
       if (res.status === 401) { router.push('/login'); return; }
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
       setClassrooms(await res.json());
-    } catch { toast.error('Impossible de charger les classes.'); }
+    } catch (err: any) { 
+      toast.error('Impossible de charger les dossiers des classes.'); 
+      setErrorStatus(err.message || 'Erreur de chargement');
+    }
     finally { setIsLoading(false); }
-  }, []);
+  }, [router, toast]);
 
   useEffect(() => { fetch_(); }, [fetch_]);
   useEffect(() => {
@@ -42,16 +47,32 @@ export default function ClassroomsPage() {
     if (!formData.campusId || !formData.academicYearId) { toast.warning('Campus et Année académique sont obligatoires.'); return; }
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/classrooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+      // On s'assure que stream contient la valeur de series si stream est vide
+      const payload = {
+        ...formData,
+        stream: formData.stream || formData.series,
+        maxCapacity: parseInt(formData.maxCapacity)
+      };
+
+      const res = await fetch('/api/classrooms', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(payload) 
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de la création');
       toast.success(`Classe "${formData.name}" créée avec succès.`);
       setShowModal(false); setFormData({ ...emptyForm }); fetch_();
     } catch (err: any) { toast.error(err.message); }
     finally { setIsSubmitting(false); }
   };
 
-  const filtered = classrooms.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.level.toLowerCase().includes(search.toLowerCase()));
+  const filtered = (classrooms || []).filter(c => {
+    const n = (c.name || '').toLowerCase();
+    const l = (c.level || '').toLowerCase();
+    const s = search.toLowerCase();
+    return n.includes(s) || l.includes(s);
+  });
 
   return (
     <AppLayout
@@ -74,12 +95,14 @@ export default function ClassroomsPage() {
                 <div className="form-group">
                   <label>Niveau Scolaire *</label>
                   <select required value={formData.level} onChange={e => setFormData({...formData, level: e.target.value})}>
+                    <option value="PRESCOLAIRE">Maternelle / Préscolaire</option>
                     <option value="PRIMAIRE">Primaire</option>
                     <option value="FONDAMENTAL">Fondamental</option>
                     <option value="LYCEE">Lycée (Général)</option>
                     <option value="TECHNIQUE">Lycée Technique / Pro</option>
                     <option value="SANTE">École de Santé</option>
                     <option value="AGRO">Agro-Pastorale</option>
+                    <option value="UNIVERSITE">Enseignement Supérieur</option>
                   </select>
                 </div>
                 <div className="form-group"><label>Série / Spécialité</label><input value={formData.series} onChange={e => setFormData({...formData, series: e.target.value})} placeholder="Ex: TSE, TSECO, Infirmier..." /></div>
@@ -121,7 +144,13 @@ export default function ClassroomsPage() {
         </div>
         <div className="table-container">
           {isLoading ? (
-            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}><Loader2 size={32} className="spin" style={{ margin: '0 auto 12px', display: 'block' }} /><p>Chargement...</p></div>
+            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}><Loader2 size={32} className="spin" style={{ margin: '0 auto 12px', display: 'block' }} /><p>Chargement des classes en cours...</p></div>
+          ) : errorStatus ? (
+            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--danger)' }}>
+              <X size={48} style={{ opacity: 0.2, margin: '0 auto 16px', display: 'block' }} />
+              <h3 style={{ fontWeight: 600, marginBottom: '8px' }}>{errorStatus}</h3>
+              <button className="btn-ghost" onClick={fetch_} style={{ marginTop: '12px' }}>Réessayer</button>
+            </div>
           ) : filtered.length > 0 ? (
             <table className="data-table">
               <thead><tr><th>Classe</th><th>Niveau</th><th>Filière</th><th>Inscrits / Max</th><th>Taux Remplissage</th></tr></thead>
