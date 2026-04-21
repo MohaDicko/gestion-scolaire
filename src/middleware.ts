@@ -45,8 +45,21 @@ export async function middleware(request: NextRequest) {
     
     await jwtVerify(token, key, { algorithms: ['HS256'] });
 
-    // Le token est valide, on laisse passer la requête
-    return NextResponse.next();
+    // 4. Configuration des headers de sécurité (Niveau Bancaire / ERP)
+    const response = NextResponse.next();
+    
+    response.headers.set('X-DNS-Prefetch-Control', 'on');
+    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+    response.headers.set('X-XSS-Protection', '1; mode=block');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
+    response.headers.set(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data: https:;"
+    );
+
+    return response;
   } catch (error) {
     // Token expiré ou falsifié -> On détruit le cookie suspect et on redirige
     const response = NextResponse.redirect(new URL('/login', request.url));
