@@ -1,174 +1,87 @@
-# 🏫 SchoolERP — SaaS de Gestion Scolaire (ERP/SIS)
+# 🏫 SchoolERP Pro — SaaS de Gestion Scolaire (ERP/SIS)
 
-> Application multi-tenant de gestion globale d'école couvrant la Scolarité, les RH et la Paie.
-
----
-
-## 🏗️ Architecture du Projet
-
-```
-gestion scolaire/
-├── backend/                    # Solution .NET (Clean Architecture)
-│   └── src/
-│       ├── SchoolERP.Domain/   # Entités, Value Objects, Interfaces
-│       ├── SchoolERP.Application/  # CQRS, Commands, Queries, DTOs
-│       ├── SchoolERP.Infrastructure/  # EF Core, Repos, Services
-│       └── SchoolERP.Api/      # Controllers, Middleware, Program.cs
-│
-└── school-erp-frontend/        # React + TypeScript (Vite)
-    └── src/
-        ├── app/                # Layout global
-        ├── components/         # Composants réutilisables
-        ├── features/
-        │   ├── auth/           # Authentification JWT
-        │   ├── academic/       # Scolarité (élèves, notes...)
-        │   ├── hr/             # RH (employés, contrats...)
-        │   └── payroll/        # Paie (fiches de paie...)
-        ├── hooks/              # Hooks globaux
-        ├── lib/                # Axios, QueryClient
-        ├── store/              # Zustand (authStore)
-        └── types/              # TypeScript types
-```
+> Système de gestion intégrée (ERP) multi-tenant pour établissements scolaires (Primaire, Lycée, Technique, Supérieur). Conçu spécifiquement pour répondre aux standards académiques et financiers maliens.
 
 ---
 
-## 🚀 Démarrage Rapide
+## 🏗️ Architecture & Stack
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Base de Données**: [PostgreSQL](https://www.postgresql.org/) (via Supabase)
+- **ORM**: [Prisma](https://www.prisma.io/)
+- **Design System**: Vanilla CSS Premium + Lucide Icons + Recharts
+- **Authentification**: JWT (jose) via HTTPOnly Cookies & Middleware
 
-### Prérequis
-- [.NET 8 SDK](https://dotnet.microsoft.com/download)
-- [Node.js 20+](https://nodejs.org/)
-- [PostgreSQL 15+](https://www.postgresql.org/)
+---
 
-### 1. Configurer la base de données
+## 🚀 Installation & Démarrage
 
-Créer une base de données PostgreSQL :
-```sql
-CREATE DATABASE "SchoolERP_Dev";
+### 1. Variables d'environnement
+Créez un fichier `.env` à la racine :
+```env
+DATABASE_URL="votre_url_supabase_pooler"
+DIRECT_URL="votre_url_supabase_direct"
+JWT_SECRET="une_cle_secrete_de_plus_de_32_caracteres"
 ```
 
-### 2. Lancer le Backend
-
+### 2. Installation des dépendances
 ```bash
-cd backend/src/SchoolERP.Api
-
-# Mettre à jour la connection string dans appsettings.json
-# puis :
-dotnet run
-```
-
-L'API sera disponible sur : `http://localhost:5000`  
-Swagger UI : `http://localhost:5000/swagger`
-
-### 3. Lancer le Frontend
-
-```bash
-cd school-erp-frontend
 npm install
+```
+
+### 3. Initialisation de la Base de Données
+```bash
+# Appliquer le schéma
+npx prisma db push
+
+# Remplir avec les données de test (Etablissement, Admin, Classes, Matières)
+npx prisma db seed
+```
+
+### 4. Lancer l'application
+```bash
 npm run dev
 ```
-
-L'application sera disponible sur : `http://localhost:5173`
-
----
-
-## 🔑 Architecture Multi-Tenant
-
-Chaque école est un **Tenant** identifié par un `TenantId` (Guid).
-
-- Le `TenantId` est inclus dans le **token JWT** à la connexion
-- Il est transmis via le header **`X-Tenant-ID`** sur chaque requête
-- EF Core applique automatiquement un **Global Query Filter** pour isoler les données
-- Les `SuperAdmin` peuvent bypasser le filtre avec `.IgnoreQueryFilters()`
+Accès : `http://localhost:3000`
 
 ---
 
-## 🔐 Rôles Utilisateurs (RBAC)
-
-| Rôle | Accès |
-|------|-------|
-| `SuperAdmin` | Toutes les écoles, toutes les fonctionnalités |
-| `SchoolAdmin` | Administration complète d'une école |
-| `HR_Manager` | RH + Paie |
-| `Accountant` | Paie uniquement |
-| `Teacher` | Notes + Emploi du temps |
-| `Student` | Ses propres données |
-
----
-
-## 📚 Stack Technique
-
-### Backend
-- **ASP.NET Core 8** (C#)
-- **Entity Framework Core** + PostgreSQL
-- **MediatR** (CQRS)
-- **FluentValidation**
-- **JWT** Authentication
-
-### Frontend
-- **React 18** + **TypeScript** (Vite)
-- **TanStack Query** (React Query v5)
-- **Zustand** (état global)
-- **Axios** (intercepteurs JWT)
-- **React Router v6** (routing RBAC)
-- **React Hook Form** + **Zod** (formulaires)
-- **Lucide React** (icônes)
-
----
-
-## 📋 Modules
-
-### ✅ Phase 1 — Fondations (En cours)
-- [x] Structure Clean Architecture backend
-- [x] Entités Domain (Academic, HR, Payroll)
-- [x] AppDbContext + Multi-tenant + Audit Trail
-- [x] Structure React/Vite + Feature-Based Design
-- [x] Auth Store (Zustand) + Axios intercepteurs
-- [x] Routeur RBAC (ProtectedRoute)
-
-### ✅ Phase 2 — Module Academic
-- [x] CRUD Élèves + API
-- [x] Inscriptions + Transferts
-- [x] Notes + Bulletins (PDF)
-- [x] Emploi du Temps
-
-### ✅ Phase 3 — Module RH
-- [x] CRUD Employés
-- [x] Gestion des Contrats
-- [x] Workflow Congés
-- [x] Présences
-
-### ✅ Phase 4 — Module Paie
-- [x] Moteur de calcul
-- [x] Génération Fiches de Paie (PDF)
-- [x] Historique & Exports
-
----
-
-## 🌐 Déploiement Production
-
-Le projet est configuré pour un déploiement optimisé sur **Vercel** et **Supabase**, sans dépendance à Railway.
-
-### 🎨 Frontend & Backend Proxy (Vercel)
-Vercel héberge nativement le frontend React. Pour le backend .NET, il est recommandé d'utiliser un hébergeur compatible .NET (comme Azure ou Render) tout en pointant votre domaine Vercel vers celui-ci via un proxy ou sous-domaine.
-
-1.  Connectez votre repo GitHub à Vercel.
-2.  Configurez les variables d'environnement suivantes dans Vercel :
-    - `VITE_API_URL` : L'URL de votre API de production.
-    - `VITE_SUPABASE_URL` : Votre URL Supabase.
-    - `VITE_SUPABASE_ANON_KEY` : Votre clé publique Supabase.
-
-### 🗄️ Base de Données (Supabase)
-Le projet utilise déjà **PostgreSQL sur Supabase** avec le pooler de transactions (Port 6543) pour une performance maximale.
-
-### 🔑 Variables d'Environnement (Backend)
-Si vous déployez le backend sur un service compatible (ex: App Service), utilisez ces noms :
-| Variable | Valeur recommandée |
+## 🔑 Identifiants de Test (Admin par défaut)
+| Champ | Valeur |
 | :--- | :--- |
-| `ASPNETCORE_ENVIRONMENT` | `Production` |
-| `ConnectionStrings__DefaultConnection` | URL de pooling Supabase (Port 6543) |
-| `Jwt__Key` | Votre clé secrète JWT |
-| `Cors__AllowedOrigins` | Votre domaine Vercel (ex: `https://app.schoolerp.com`) |
+| **Email** | `admin@schoolerp.com` |
+| **Mot de passe** | `admin123` |
+| **Rôle** | `SCHOOL_ADMIN` |
 
 ---
 
-*Projet analysé et optimisé par Antigravity — v1.0 Production Ready*
+## 📋 Modules Implémentés
+
+### 🏛️ Module Académique
+- [x] **Tableau de Bord Exécutif** : KPIs temps réel, Flux de trésorerie, Taux de présence.
+- [x] **Gestion des Élèves** : Inscriptions, Importation Excel en masse.
+- [x] **Cartes Scolaires** : Génération PDF au format CR80 avec **Codes-barres (CODE128)**.
+- [x] **Évaluation** : Saisie des notes, Calcul des bulletins (Norme Malienne : 1/3 classe + 2/3 compo).
+- [x] **Relevés de Notes** : Génération de transcripts annuels officiels avec moyennes consolidées.
+- [x] **Emploi du Temps** : Planning hebdomadaire avec version optimisée pour l'impression.
+
+### 💼 Module RH & Paie
+- [x] **Gestion du Personnel** : Dossiers employés, contrats.
+- [x] **Pointage** : Système de présence staff avec heures d'entrée/sortie.
+- [x] **Congés** : Workflow de demande et validation des absences.
+- [x] **Paie Malienne** : Moteur de calcul (ITS, INPS, AMO) et fiches de paie PDF.
+
+### 💰 Module Finance
+- [x] **Dashboard Financier** : Analyse des recettes vs dépenses.
+- [x] **Facturation** : Émission de factures scolarité, marquage des paiements.
+- [x] **Journal des Charges** : Suivi des dépenses opérationnelles.
+
+---
+
+## 🔐 Sécurité & Conformité
+- **Multi-tenant** : Isolation stricte des données par `tenantId` au niveau du moteur de base de données.
+- **Headers de Sécurité** : CSP, HSTS, X-Frame-Options, XSS Protection activés via middleware.
+- **Protection des Routes** : Accès réservé aux utilisateurs authentifiés avec redirection automatique.
+
+---
+
+*Fait avec ❤️ pour la modernisation du système éducatif malien.*
