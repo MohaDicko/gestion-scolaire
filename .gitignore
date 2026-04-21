@@ -6,6 +6,11 @@ build/
 !.env.example
 .vercel/
 
+# Next.js build output (ne jamais committer)
+.next/
+out/
+*.tsbuildinfo
+
 # .NET
 bin/
 obj/
