@@ -1,23 +1,32 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { calculateMaliPayroll } from '@/lib/maliPayroll';
 
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const url = new URL(request.url);
+  const employeeId = url.searchParams.get('employeeId');
+
   try {
     const payslips = await prisma.payslip.findMany({
-      where: { tenantId: session.tenantId },
+      where: {
+        tenantId: session.tenantId,
+        ...(employeeId ? { employeeId } : {})
+      },
       include: {
-        employee: { select: { firstName: true, lastName: true, employeeNumber: true } }
+        employee: {
+          select: { firstName: true, lastName: true, employeeNumber: true, employeeType: true }
+        }
       },
       orderBy: { periodEnd: 'desc' }
     });
     return NextResponse.json(payslips);
   } catch (error) {
-    console.error('[PAYSLIPS GET]', error instanceof Error ? error.message : 'Unknown error');
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+    console.error('[PAYSLIPS GET]', error instanceof Error ? error.message : 'Unknown');
+    return NextResponse.json({ error: 'Erreur interne' }, { status: 500 });
   }
 }
 
@@ -25,44 +34,100 @@ export async function POST(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Only HR managers and admins can create payslips
   if (!['SUPER_ADMIN', 'SCHOOL_ADMIN', 'HR_MANAGER'].includes(session.role)) {
     return NextResponse.json({ error: 'Accès refusé — droits insuffisants' }, { status: 403 });
   }
 
   try {
-    const { employeeId, periodStart, periodEnd, baseSalary, deductions, bonuses } = await request.json();
+    const body = await request.json();
+    const {
+      employeeId,
+      periodStart,
+      periodEnd,
+      baseSalary,
+      taxableBonuses = 0,
+      nonTaxableBonuses = 0,
+      numberOfChildren = 0,
+      notes
+    } = body;
 
-    if (!employeeId || !periodStart || !periodEnd || !baseSalary) {
-      return NextResponse.json({ error: 'Champs obligatoires manquants' }, { status: 400 });
+    // ── Validation des champs obligatoires ─────────────────────
+    if (!employeeId || !periodStart || !periodEnd || baseSalary === undefined) {
+      return NextResponse.json({ 
+        error: 'Champs obligatoires manquants : employeeId, periodStart, periodEnd, baseSalary' 
+      }, { status: 400 });
     }
-
-    // Verify the employee belongs to this tenant
-    const employee = await prisma.employee.findFirst({ where: { id: employeeId, tenantId: session.tenantId } });
-    if (!employee) return NextResponse.json({ error: 'Employé introuvable ou accès non autorisé' }, { status: 403 });
 
     const numBase = parseFloat(baseSalary);
     if (isNaN(numBase) || numBase < 0) {
       return NextResponse.json({ error: 'Salaire de base invalide' }, { status: 400 });
     }
 
-    const netSalary = numBase + (parseFloat(bonuses) || 0) - (parseFloat(deductions) || 0);
+    // ── Vérification appartenance tenant ───────────────────────
+    const employee = await prisma.employee.findFirst({
+      where: { id: employeeId, tenantId: session.tenantId }
+    });
+    if (!employee) {
+      return NextResponse.json({ error: 'Employé introuvable ou accès non autorisé' }, { status: 403 });
+    }
 
+    // ── Calcul de paie selon le droit malien ───────────────────
+    const payroll = calculateMaliPayroll({
+      baseSalary: numBase,
+      taxableBonuses: parseFloat(taxableBonuses) || 0,
+      nonTaxableBonuses: parseFloat(nonTaxableBonuses) || 0,
+      numberOfChildren: parseInt(numberOfChildren) || 0,
+    });
+
+    // ── Sauvegarde complète en base ────────────────────────────
     const payslip = await prisma.payslip.create({
       data: {
         tenantId: session.tenantId,
         employeeId,
         periodStart: new Date(periodStart),
-        periodEnd: new Date(periodEnd),
-        baseSalary: numBase,
-        netSalary,
-        status: 'FINALIZED'
+        periodEnd:   new Date(periodEnd),
+
+        // Rémunération
+        baseSalary:         payroll.baseSalary,
+        taxableBonuses:     payroll.taxableBonuses,
+        nonTaxableBonuses:  payroll.nonTaxableBonuses,
+        grossSalary:        payroll.grossSalary,
+
+        // Cotisations salariales
+        inpsEmployee:       payroll.inpsEmployee,
+        amoEmployee:        payroll.amoEmployee,
+        totalDeductions:    payroll.totalDeductions,
+
+        // ITS
+        fiscalBase:         payroll.fiscalBase,
+        its:                payroll.its,
+
+        // Net
+        netSalary:          payroll.netSalary,
+
+        // Charges patronales
+        inpsEmployer:        payroll.inpsEmployer,
+        amoEmployer:         payroll.amoEmployer,
+        totalEmployerCharges: payroll.totalEmployerCharges,
+
+        // Méta
+        numberOfChildren,
+        status: 'FINALIZED',
+        notes,
+      },
+      include: {
+        employee: { select: { firstName: true, lastName: true, employeeNumber: true } }
       }
     });
 
-    return NextResponse.json(payslip, { status: 201 });
+    return NextResponse.json({
+      payslip,
+      maliBulletin: payroll,  // Renvoie aussi le détail pour affichage immédiat
+      alerts: payroll.alerts,
+    }, { status: 201 });
+
   } catch (error: any) {
     console.error('[PAYSLIPS POST]', error.message);
-    return NextResponse.json({ error: 'Erreur lors de la création du bulletin' }, { status: 400 });
+    return NextResponse.json({ error: error.message || 'Erreur création bulletin' }, { status: 400 });
   }
 }

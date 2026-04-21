@@ -2,6 +2,40 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
+export async function GET(request: Request) {
+  const session = await getSession();
+  if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const url = new URL(request.url);
+  const classroomId = url.searchParams.get('classroomId');
+  const academicYearId = url.searchParams.get('academicYearId');
+
+  try {
+    const filters: any = {};
+    if (classroomId) filters.classroomId = classroomId;
+    if (academicYearId) filters.academicYearId = academicYearId;
+
+    if (Object.keys(filters).length === 0) {
+      return NextResponse.json({ error: 'Fournissez au moins classroomId ou academicYearId' }, { status: 400 });
+    }
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: filters,
+      include: {
+        student: { select: { id: true, firstName: true, lastName: true, studentNumber: true, tenantId: true } },
+        classroom: { select: { id: true, name: true, tenantId: true } },
+        academicYear: { select: { id: true, name: true } }
+      }
+    });
+
+    const filtered = enrollments.filter(e => e.student.tenantId === session.tenantId && e.classroom.tenantId === session.tenantId);
+    return NextResponse.json(filtered);
+  } catch (error) {
+    console.error('[ENROLLMENTS GET]', error instanceof Error ? error.message : 'Unknown error');
+    return NextResponse.json({ error: 'Erreur interne' }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

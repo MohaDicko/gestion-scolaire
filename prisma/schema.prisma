@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")       // Connexion poolée (PgBouncer) — pour le runtime app
+  directUrl = env("DIRECT_URL")        // Connexion directe — pour les migrations Prisma
 }
 
 // ── ENUMS ─────────────────────────────────────────────────────────
@@ -24,6 +25,19 @@ enum SchoolType {
   CONFESSIONAL
   INTERNATIONAL
   HEALTH
+  PRIMAIRE
+  FONDAMENTAL
+  LYCEE
+  TECHNIQUE
+  SANTE
+  AGRO
+  UNIVERSITE
+}
+
+enum Trimester {
+  T1
+  T2
+  T3
 }
 
 enum EnrollmentStatus {
@@ -67,10 +81,13 @@ model School {
   phoneNumber     String
   email           String
   type            SchoolType
+  drenCode        String?    // Code DREN/CAP (Mali)
   isActive        Boolean    @default(true)
   isSetupComplete Boolean    @default(false)
   logoUrl         String?
   motto           String?
+  nationalRNE     String?    // Numéro d'Identification Nationale / RNE
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -102,13 +119,15 @@ model Campus {
 model AcademicYear {
   id        String   @id @default(uuid())
   tenantId  String
-  name      String // e.g., "2023-2024"
+  name      String // e.g., "2024-2025"
   startDate DateTime
   endDate   DateTime
   isActive  Boolean  @default(false)
 
-  school     School      @relation(fields: [tenantId], references: [id])
-  classrooms Classroom[]
+  school      School       @relation(fields: [tenantId], references: [id])
+  classrooms  Classroom[]
+  enrollments Enrollment[]
+  grades      Grade[]
 }
 
 model Classroom {
@@ -118,8 +137,10 @@ model Classroom {
   academicYearId String
   name           String
   level          String
-  stream         String?
+  stream         String?    // Ex: "Série A", "Série D", "Sélectif"
+  series         String?    // Série officielle Malienne (BAC/BT)
   maxCapacity    Int
+
 
   campus       Campus       @relation(fields: [campusId], references: [id])
   academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
@@ -165,8 +186,9 @@ model Enrollment {
   status         EnrollmentStatus @default(ACTIVE)
   enrollmentDate DateTime         @default(now())
 
-  student   Student   @relation(fields: [studentId], references: [id])
-  classroom Classroom @relation(fields: [classroomId], references: [id])
+  student      Student      @relation(fields: [studentId], references: [id])
+  classroom    Classroom    @relation(fields: [classroomId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
 
   @@unique([studentId, academicYearId])
 }
@@ -282,19 +304,21 @@ model Grade {
   studentId      String
   subjectId      String
   academicYearId String
-  semester       Int      @default(1)
+  trimestre      Int      @default(1) // 1, 2 ou 3 (système trimestriel malien)
   examType       ExamType
   score          Float
   maxScore       Float    @default(20.0)
   comment        String?
 
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student Student @relation(fields: [studentId], references: [id])
-  subject Subject @relation(fields: [subjectId], references: [id])
+  student     Student      @relation(fields: [studentId], references: [id])
+  subject     Subject      @relation(fields: [subjectId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
 }
 
-// ── PAYROLL MODULE ───────────────────────────────────────────────
+// ── PAYROLL MODULE (Conforme Code du Travail Malien) ─────────────
 
 model Payslip {
   id          String   @id @default(uuid())
@@ -302,9 +326,37 @@ model Payslip {
   employeeId  String
   periodStart DateTime
   periodEnd   DateTime
-  baseSalary  Float
-  netSalary   Float
-  status      String   @default("DRAFT")
+
+  // === Éléments de rémunération ===
+  baseSalary          Float  // Salaire de base
+  taxableBonuses      Float  @default(0) // Primes imposables
+  nonTaxableBonuses   Float  @default(0) // Indemnités non imposables (transport, logement)
+  grossSalary         Float  // Salaire brut imposable = base + primes imposables
+
+  // === Cotisations salariales (part employé) ===
+  inpsEmployee        Float  @default(0) // INPS 3.06%
+  amoEmployee         Float  @default(0) // AMO/CANAM 1.5%
+  totalDeductions     Float  @default(0) // Total cotisations salariales
+
+  // === Impôt sur Traitements et Salaires ===
+  fiscalBase          Float  @default(0) // Assiette ITS = brut - INPS
+  its                 Float  @default(0) // ITS (barème progressif malien)
+
+  // === Net à payer ===
+  netSalary           Float  // Net = brut + ind.non imp. - cotisations - ITS
+
+  // === Charges patronales (info employeur) ===
+  inpsEmployer        Float  @default(0) // INPS part patronale 7%
+  amoEmployer         Float  @default(0) // AMO part patronale 4.5%
+  totalEmployerCharges Float @default(0)
+
+  // === Métadonnées ===
+  numberOfChildren    Int    @default(0) // Enfants à charge (déduction ITS)
+  status              String @default("DRAFT") // DRAFT, FINALIZED, PAID
+  notes               String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   employee Employee @relation(fields: [employeeId], references: [id])
 }
@@ -312,12 +364,20 @@ model Payslip {
 // ── BILLING MODULE ───────────────────────────────────────────────
 
 model Invoice {
-  id        String   @id @default(uuid())
-  tenantId  String
-  studentId String
-  amount    Float
-  status    String   @default("UNPAID")
-  dueDate   DateTime
+  id            String   @id @default(uuid())
+  tenantId      String
+  studentId     String
+  invoiceNumber String   @unique
+  title         String   // Libellé: "Scolarité T1 2025", "Frais d'inscription"
+  type          String   @default("TUITION") // TUITION, REGISTRATION, EXAM, CANTEEN, OTHER
+  amount        Float
+  status        String   @default("UNPAID")  // UNPAID, PAID, PARTIAL, CANCELLED
+  dueDate       DateTime
+  paidDate      DateTime?
+  paymentMethod String?  // ESPECES, ORANGE_MONEY, MOOV_MONEY, VIREMENT, CHEQUE
+  notes         String?
+
+  createdAt DateTime @default(now())
 
   student Student @relation(fields: [studentId], references: [id])
 }

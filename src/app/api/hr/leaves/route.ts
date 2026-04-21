@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth';
 
 export async function GET() {
+  const session = await getSession();
+  if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const leaves = await prisma.leaveRequest.findMany({
+      where: {
+        tenantId: session.tenantId
+      },
       include: {
         employee: { select: { firstName: true, lastName: true, employeeNumber: true } }
       },
@@ -16,15 +23,18 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const data = await request.json();
     const leave = await prisma.leaveRequest.create({
       data: {
-        tenantId: '1',
+        tenantId: session.tenantId,
         employeeId: data.employeeId,
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
-        type: data.type,
+        type: data.type, // e.g. SICK, ANNUAL, PERSONAL
         status: 'PENDING',
         reason: data.reason
       }
@@ -36,8 +46,18 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const session = await getSession();
+  if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const { id, status } = await request.json();
+    
+    // Safety check: ensure leave belongs to tenant
+    const existing = await prisma.leaveRequest.findFirst({
+        where: { id, tenantId: session.tenantId }
+    });
+    if (!existing) return NextResponse.json({ error: 'Leave not found' }, { status: 404 });
+
     const leave = await prisma.leaveRequest.update({
       where: { id },
       data: { status }

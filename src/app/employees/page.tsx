@@ -1,107 +1,200 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Briefcase, Plus, Search, User } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Briefcase, Plus, Search, Loader2, X, Users, Mail, Phone, FileDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import AppLayout from '@/components/AppLayout';
+import { useToast } from '@/components/Toast';
+import { exportToExcel } from '@/lib/excelExport';
+
+const EMPLOYEE_TYPES = ['TEACHER', 'ADMIN', 'ACCOUNTANT', 'HR', 'MAINTENANCE', 'SUPPORT'];
+
+const emptyForm = {
+  firstName: '', lastName: '', email: '', phoneNumber: '',
+  dateOfBirth: '', gender: 'MALE', hireDate: new Date().toISOString().split('T')[0],
+  employeeType: 'TEACHER', campusId: ''
+};
 
 export default function EmployeesPage() {
-    const router = useRouter();
-    const [employees, setEmployees] = useState<any[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const toast  = useToast();
 
-    const fetchEmployees = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetch(`/api/employees?search=${searchTerm}`);
-            const data = await res.json();
-            setEmployees(data);
-        } catch (err: any) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [searchTerm]);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [campuses, setCampuses] = useState<any[]>([]);
+  const [formData, setFormData] = useState({ ...emptyForm });
 
-    useEffect(() => {
-        const debounce = setTimeout(fetchEmployees, 300);
-        return () => clearTimeout(debounce);
-    }, [fetchEmployees]);
+  const fetchEmployees = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/employees?search=${encodeURIComponent(searchTerm)}`);
+      if (res.status === 401) { router.push('/login'); return; }
+      if (!res.ok) throw new Error();
+      setEmployees(await res.json());
+    } catch {
+      toast.error('Erreur lors du chargement des employés.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchTerm]);
 
-    return (
-        <div className="layout-root">
-          <div className="sidebar">
-            <div className="sidebar-logo">
-              <div className="logo-title">SchoolERP Pro</div>
+  const handleExport = () => {
+    const data = employees.map(e => ({
+      'Matricule': e.employeeNumber,
+      'Prénom': e.firstName,
+      'Nom': e.lastName,
+      'Email': e.email,
+      'Téléphone': e.phoneNumber,
+      'Poste': e.employeeType,
+      'Embauche': new Date(e.hireDate).toLocaleDateString()
+    }));
+    exportToExcel(data, `Personnel_${new Date().toISOString().split('T')[0]}`);
+    toast.success('Export RH généré.');
+  };
+
+  useEffect(() => {
+    const t = setTimeout(fetchEmployees, 300);
+    return () => clearTimeout(t);
+  }, [fetchEmployees]);
+
+  useEffect(() => {
+    fetch('/api/campuses').then(r => r.json()).then(d => { if (Array.isArray(d)) setCampuses(d); }).catch(() => {});
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      if (!formData.campusId) throw new Error("Veuillez sélectionner un campus.");
+      const res = await fetch('/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur création');
+      toast.success(`L'employé ${formData.firstName} a été ajouté avec succès.`);
+      setShowModal(false);
+      setFormData({ ...emptyForm });
+      fetchEmployees();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <AppLayout
+      title="Ressources Humaines"
+      subtitle="Gestion du personnel, des enseignants et de l'administration"
+      breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Employés' }]}
+      actions={
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-ghost" onClick={handleExport} disabled={employees.length === 0}>
+            <FileDown size={15} /> Exporter
+          </button>
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={15} /> Nouvel Employé
+          </button>
+        </div>
+      }
+    >
+      {/* Modal */}
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border-md)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '650px', maxHeight: '90vh', overflow: 'auto', boxShadow: 'var(--shadow-lg)', animation: 'fadeUp 0.3s var(--ease) both' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--border)' }}>
+              <h2 style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '18px' }}>Ajouter un Employé</h2>
+              <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
             </div>
-            <div className="sidebar-nav">
-              <div className="nav-item" onClick={() => router.push('/dashboard')}>Tableau de Bord</div>
-              <div className="nav-item" onClick={() => router.push('/students')}>Élèves</div>
-              <div className="nav-item" onClick={() => router.push('/classrooms')}>Classes</div>
-              <div className="nav-item active">Employés (RH)</div>
-            </div>
-            <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
-                <div style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Version Stable 1.1.0</div>
-            </div>
-          </div>
-          
-          <div className="main-content">
-            <div className="page">
-                <div className="page-header">
-                    <div>
-                        <h1 className="page-title">Ressources Humaines</h1>
-                        <p className="page-subtitle">Gestion du personnel et des professeurs (Next.js)</p>
-                    </div>
+            <form onSubmit={handleSubmit} style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className="form-grid">
+                <div className="form-group"><label>Prénom *</label><input required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder="Ex: Awa" /></div>
+                <div className="form-group"><label>Nom *</label><input required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder="Ex: Diallo" /></div>
+                <div className="form-group"><label>Email *</label><input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="awa.diallo@ecole.ml" /></div>
+                <div className="form-group"><label>Téléphone *</label><input type="tel" required value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+223 ..." /></div>
+                <div className="form-group"><label>Date de Naissance *</label><input type="date" required value={formData.dateOfBirth} onChange={e => setFormData({...formData, dateOfBirth: e.target.value})} /></div>
+                <div className="form-group">
+                  <label>Genre *</label>
+                  <select required value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
+                    <option value="MALE">Masculin</option><option value="FEMALE">Féminin</option>
+                  </select>
                 </div>
-
-                <div className="card shadow-sm" style={{ padding: '0' }}>
-                    <div className="table-toolbar" style={{ padding: '20px' }}>
-                        <div className="search-box" style={{ maxWidth: '400px' }}>
-                            <Search size={16} />
-                            <input
-                                type="text"
-                                placeholder="Rechercher un employé..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="table-container" style={{ padding: '20px' }}>
-                        {isLoading ? (
-                            <div style={{ textAlign: 'center', padding: '40px' }}>Recherche...</div>
-                        ) : employees.length > 0 ? (
-                            <table className="data-table" style={{ width: '100%', textAlign: 'left' }}>
-                                <thead>
-                                    <tr>
-                                        <th>Matricule</th>
-                                        <th>Employé</th>
-                                        <th>Rôle</th>
-                                        <th>Date d'embauche</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {employees.map(emp => (
-                                        <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                            <td className="text-primary">{emp.employeeNumber}</td>
-                                            <td><strong>{emp.firstName} {emp.lastName}</strong><br/>{emp.email}</td>
-                                            <td>{emp.employeeType}</td>
-                                            <td>{new Date(emp.hireDate).toLocaleDateString()}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        ) : (
-                            <div style={{ padding: '40px', textAlign: 'center' }}>
-                                <Briefcase size={48} style={{ opacity: 0.2, margin: '0 auto 20px' }} />
-                                <h3>Aucun employé trouvé</h3>
-                                <p>Migrez la création RH ou ajoutez les éléments via API.</p>
-                            </div>
-                        )}
-                    </div>
+                <div className="form-group"><label>Date d'embauche *</label><input type="date" required value={formData.hireDate} onChange={e => setFormData({...formData, hireDate: e.target.value})} /></div>
+                <div className="form-group">
+                  <label>Rôle / Fonction *</label>
+                  <select required value={formData.employeeType} onChange={e => setFormData({...formData, employeeType: e.target.value})}>
+                    {EMPLOYEE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
                 </div>
-            </div>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label>Campus d'affectation *</label>
+                  <select required value={formData.campusId} onChange={e => setFormData({...formData, campusId: e.target.value})}>
+                    <option value="">-- Assigner à un campus --</option>
+                    {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
+                <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><Loader2 size={15} className="spin" /> Traitement...</> : 'Créer le Dossier RH'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-    );
+      )}
+
+      {/* Table */}
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }} className="table-toolbar">
+          <div className="search-box" style={{ maxWidth: '400px' }}>
+            <Search size={15} />
+            <input type="text" placeholder="Rechercher un employé, matricule..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          </div>
+        </div>
+        <div className="table-container">
+          {isLoading ? (
+            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <Loader2 size={32} className="spin" style={{ margin: '0 auto 12px', display: 'block' }} />
+              <p>Chargement des dossiers...</p>
+            </div>
+          ) : employees.length > 0 ? (
+            <table className="data-table">
+              <thead><tr><th>Matricule</th><th>Identité</th><th>Contact</th><th>Poste</th><th>Ancienneté</th></tr></thead>
+              <tbody>
+                {employees.map(emp => (
+                  <tr key={emp.id}>
+                    <td><span className="badge badge-purple">{emp.employeeNumber}</span></td>
+                    <td>
+                      <strong style={{ color: 'var(--text)' }}>{emp.firstName} {emp.lastName}</strong>
+                      <br />
+                      <span className={`badge ${emp.gender === 'FEMALE' ? 'badge-purple' : 'badge-info'}`} style={{ marginTop: '4px', fontSize: '10px' }}>{emp.gender === 'FEMALE' ? 'FEME' : 'MASC'}</span>
+                    </td>
+                    <td style={{ fontSize: '13px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}><Mail size={13} className="text-muted" /> {emp.email}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Phone size={13} className="text-muted" /> {emp.phoneNumber}</div>
+                    </td>
+                    <td><span className="badge badge-primary">{emp.employeeType}</span></td>
+                    <td>{new Date(emp.hireDate).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <Briefcase size={48} style={{ opacity: 0.2, margin: '0 auto 16px', display: 'block' }} />
+              <h3 style={{ fontWeight: 600, marginBottom: '8px' }}>Aucun employé trouvé</h3>
+              <p style={{ fontSize: '13px' }}>Ajoutez vos enseignants et votre staff administratif.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </AppLayout>
+  );
 }

@@ -1,156 +1,166 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Layers, Plus, Search } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, Loader2, X, Layers } from 'lucide-react';
+import AppLayout from '@/components/AppLayout';
+import { useToast } from '@/components/Toast';
 import { useRouter } from 'next/navigation';
 
+const emptyForm = { name: '', level: 'LYCEE', stream: '', series: '', maxCapacity: '35', campusId: '', academicYearId: '' };
+
 export default function ClassroomsPage() {
-    const router = useRouter();
-    const [classrooms, setClassrooms] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const toast   = useToast();
+  const router  = useRouter();
+  const [classrooms, setClassrooms] = useState<any[]>([]);
+  const [isLoading, setIsLoading]   = useState(true);
+  const [showModal, setShowModal]   = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [campuses, setCampuses]     = useState<any[]>([]);
+  const [acadYears, setAcadYears]   = useState<any[]>([]);
+  const [formData, setFormData]     = useState({ ...emptyForm });
+  const [search, setSearch]         = useState('');
 
-    const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        level: '',
-        stream: '',
-        maxCapacity: '30',
-        campusId: 'dummy-campus-id', // Would be fetched from /api/campuses in real app
-        academicYearId: 'dummy-year-id' // Would be fetched from /api/academic-years
-    });
+  const fetch_ = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/classrooms');
+      if (res.status === 401) { router.push('/login'); return; }
+      if (!res.ok) throw new Error();
+      setClassrooms(await res.json());
+    } catch { toast.error('Impossible de charger les classes.'); }
+    finally { setIsLoading(false); }
+  }, []);
 
-    const fetchClassrooms = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const res = await fetch('/api/classrooms');
-            if (!res.ok) throw new Error('Erreur de chargement');
-            const data = await res.json();
-            setClassrooms(data);
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+  useEffect(() => { fetch_(); }, [fetch_]);
+  useEffect(() => {
+    fetch('/api/campuses').then(r => r.json()).then(d => { if (Array.isArray(d)) setCampuses(d); }).catch(() => {});
+    fetch('/api/academic-years').then(r => r.json()).then(d => { if (Array.isArray(d)) setAcadYears(d); }).catch(() => {});
+  }, []);
 
-    useEffect(() => {
-        fetchClassrooms();
-    }, [fetchClassrooms]);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.campusId || !formData.academicYearId) { toast.warning('Campus et Année académique sont obligatoires.'); return; }
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/classrooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success(`Classe "${formData.name}" créée avec succès.`);
+      setShowModal(false); setFormData({ ...emptyForm }); fetch_();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setIsSubmitting(false); }
+  };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const res = await fetch('/api/classrooms', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-            if (!res.ok) throw new Error('Erreur lors de la création');
-            
-            setShowForm(false);
-            fetchClassrooms();
-        } catch (err: any) {
-            alert(err.message);
-        }
-    };
+  const filtered = classrooms.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.level.toLowerCase().includes(search.toLowerCase()));
 
-    return (
-        <div className="layout-root">
-          <div className="sidebar">
-            <div className="sidebar-logo">
-              <div className="logo-title">SchoolERP Pro</div>
+  return (
+    <AppLayout
+      title="Gestion des Classes"
+      subtitle="Organisation structurelle des cohortes et niveaux"
+      breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Classes' }]}
+      actions={<button className="btn-primary" onClick={() => setShowModal(true)}><Plus size={15} /> Nouvelle Classe</button>}
+    >
+      {/* Modal */}
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border-md)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '580px', boxShadow: 'var(--shadow-lg)', animation: 'fadeUp 0.3s var(--ease) both' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 26px', borderBottom: '1px solid var(--border)' }}>
+              <h2 style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '17px' }}>Créer une Nouvelle Classe</h2>
+              <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
             </div>
-            <div className="sidebar-nav">
-              <div className="nav-item" onClick={() => router.push('/dashboard')}>Tableau de Bord</div>
-              <div className="nav-item" onClick={() => router.push('/students')}>Élèves</div>
-              <div className="nav-item active">Classes (Next.js)</div>
-            </div>
-          </div>
-          
-          <div className="main-content">
-            <div className="page">
-                <div className="page-header">
-                    <div>
-                        <h1 className="page-title">Gestion des Classes</h1>
-                        <p className="page-subtitle">Organisation structurelle des cohortes</p>
-                    </div>
-                    <button className="btn-primary" onClick={() => setShowForm(true)}>
-                        <Plus size={16} /> Nouvelle Classe
-                    </button>
+            <form onSubmit={handleSubmit} style={{ padding: '26px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className="form-grid">
+                <div className="form-group"><label>Nom de la Classe *</label><input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Ex: Terminale A, 9ème Année" /></div>
+                <div className="form-group">
+                  <label>Niveau Scolaire *</label>
+                  <select required value={formData.level} onChange={e => setFormData({...formData, level: e.target.value})}>
+                    <option value="PRIMAIRE">Primaire</option>
+                    <option value="FONDAMENTAL">Fondamental</option>
+                    <option value="LYCEE">Lycée (Général)</option>
+                    <option value="TECHNIQUE">Lycée Technique / Pro</option>
+                    <option value="SANTE">École de Santé</option>
+                    <option value="AGRO">Agro-Pastorale</option>
+                  </select>
                 </div>
-
-                {showForm && (
-                    <div className="card shadow-lg animate-up" style={{ marginBottom: '25px', border: '1px solid var(--primary-light)' }}>
-                        <div className="card-header" style={{ background: 'var(--bg-2)' }}>
-                            <h2 className="card-title">Créer une Classe</h2>
-                            <button className="btn-ghost" onClick={() => setShowForm(false)}>Fermer</button>
-                        </div>
-                        <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
-                            <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-                                <div className="form-group">
-                                    <label>Nom de la classe (ex: 6ème A)</label>
-                                    <input className="form-input" type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
-                                </div>
-                                <div className="form-group">
-                                    <label>Niveau (ex: 6ème)</label>
-                                    <input className="form-input" type="text" value={formData.level} onChange={e => setFormData({ ...formData, level: e.target.value })} required />
-                                </div>
-                                <div className="form-group">
-                                    <label>Série / Filière (Optionnel)</label>
-                                    <input className="form-input" type="text" value={formData.stream} onChange={e => setFormData({ ...formData, stream: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Capacité maximale</label>
-                                    <input className="form-input" type="number" value={formData.maxCapacity} onChange={e => setFormData({ ...formData, maxCapacity: e.target.value })} required />
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
-                                <button type="button" className="btn-ghost" onClick={() => setShowForm(false)}>Annuler</button>
-                                <button type="submit" className="btn-primary">Créer</button>
-                            </div>
-                        </form>
-                    </div>
-                )}
-
-                <div className="card shadow-sm" style={{ padding: '0' }}>
-                    <div className="table-container" style={{ padding: '20px' }}>
-                        {isLoading ? (
-                            <div style={{ padding: 40, textAlign: 'center' }}>Chargement des classes...</div>
-                        ) : error ? (
-                            <div style={{ color: 'red', textAlign: 'center' }}>{error}</div>
-                        ) : classrooms.length > 0 ? (
-                            <table className="data-table" style={{ width: '100%', textAlign: 'left' }}>
-                                <thead>
-                                    <tr>
-                                        <th>Nom</th>
-                                        <th>Niveau</th>
-                                        <th>Capacité</th>
-                                        <th>Inscrits</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {classrooms.map(c => (
-                                        <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                            <td style={{ padding: '12px 0' }}><strong>{c.name}</strong><br/><small>{c.stream}</small></td>
-                                            <td>{c.level}</td>
-                                            <td>{c.maxCapacity}</td>
-                                            <td>{c._count?.enrollments || 0}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        ) : (
-                            <div style={{ padding: '40px', textAlign: 'center' }}>
-                                <Layers size={48} style={{ opacity: 0.2, margin: '0 auto 20px' }} />
-                                <h3>Aucune classe trouvée</h3>
-                            </div>
-                        )}
-                    </div>
+                <div className="form-group"><label>Série / Spécialité</label><input value={formData.series} onChange={e => setFormData({...formData, series: e.target.value})} placeholder="Ex: TSE, TSECO, Infirmier..." /></div>
+                <div className="form-group"><label>Capacité Max *</label><input type="number" min="1" max="200" required value={formData.maxCapacity} onChange={e => setFormData({...formData, maxCapacity: e.target.value})} /></div>
+                <div className="form-group">
+                  <label>Campus *</label>
+                  <select required value={formData.campusId} onChange={e => setFormData({...formData, campusId: e.target.value})}>
+                    <option value="">-- Sélectionner un campus --</option>
+                    {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
                 </div>
-            </div>
+                <div className="form-group">
+                  <label>Année Académique *</label>
+                  <select required value={formData.academicYearId} onChange={e => setFormData({...formData, academicYearId: e.target.value})}>
+                    <option value="">-- Sélectionner --</option>
+                    {acadYears.map((y: any) => <option key={y.id} value={y.id}>{y.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
+                <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><Loader2 size={15} className="spin" /> Création...</> : 'Créer la Classe'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-    );
+      )}
+
+      {/* Table */}
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }} className="table-toolbar">
+          <div className="search-box">
+            <Search size={15} />
+            <input type="text" placeholder="Rechercher une classe..." value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <span style={{ marginLeft: 'auto', fontSize: '13px', color: 'var(--text-muted)' }}>{filtered.length} classe{filtered.length > 1 ? 's' : ''}</span>
+        </div>
+        <div className="table-container">
+          {isLoading ? (
+            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}><Loader2 size={32} className="spin" style={{ margin: '0 auto 12px', display: 'block' }} /><p>Chargement...</p></div>
+          ) : filtered.length > 0 ? (
+            <table className="data-table">
+              <thead><tr><th>Classe</th><th>Niveau</th><th>Filière</th><th>Inscrits / Max</th><th>Taux Remplissage</th></tr></thead>
+              <tbody>
+                {filtered.map(c => {
+                  const enrolled = c._count?.enrollments || 0;
+                  const rate = Math.round((enrolled / c.maxCapacity) * 100);
+                  return (
+                    <tr key={c.id}>
+                      <td><strong style={{ color: 'var(--text)' }}>{c.name}</strong></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <span className="badge badge-info" style={{ fontSize: '10px' }}>{c.level}</span>
+                          {c.series && <span className="badge badge-warning" style={{ fontSize: '10px' }}>{c.series}</span>}
+                        </div>
+                      </td>
+                      <td>{c.stream || c.series || <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
+                      <td><strong>{enrolled}</strong> / {c.maxCapacity}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ flex: 1, height: '6px', background: 'var(--bg-4)', borderRadius: '99px', overflow: 'hidden' }}>
+                            <div style={{ width: `${rate}%`, height: '100%', background: rate > 90 ? 'var(--danger)' : rate > 70 ? 'var(--warning)' : 'var(--success)', borderRadius: '99px', transition: 'width 0.5s var(--ease)' }} />
+                          </div>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)', width: '35px', textAlign: 'right' }}>{rate}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <Layers size={48} style={{ opacity: 0.2, margin: '0 auto 16px', display: 'block' }} />
+              <h3 style={{ fontWeight: 600, marginBottom: '8px' }}>Aucune classe créée</h3>
+            </div>
+          )}
+        </div>
+      </div>
+    </AppLayout>
+  );
 }

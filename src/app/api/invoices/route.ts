@@ -30,16 +30,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { studentId, amount, dueDate, status } = await request.json();
+    const { studentId, amount, dueDate, status, title, type, paymentMethod } = await request.json();
 
-    if (!studentId || !amount || !dueDate) {
-      return NextResponse.json({ error: 'studentId, amount et dueDate sont requis' }, { status: 400 });
+    if (!studentId || !amount || !dueDate || !title) {
+      return NextResponse.json({ error: 'studentId, amount, title et dueDate sont requis' }, { status: 400 });
     }
 
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       return NextResponse.json({ error: 'Montant invalide' }, { status: 400 });
     }
+
+    // Generate unique invoice number
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
 
     // Verify student belongs to this tenant
     const student = await prisma.student.findFirst({
@@ -51,9 +54,13 @@ export async function POST(request: Request) {
       data: {
         tenantId: session.tenantId,
         studentId,
+        invoiceNumber,
+        title,
+        type: type || 'TUITION',
         amount: parsedAmount,
         status: status || 'UNPAID',
         dueDate: new Date(dueDate),
+        paymentMethod: paymentMethod || 'ESPECES',
       }
     });
 
@@ -61,5 +68,28 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('[INVOICES POST]', error.message);
     return NextResponse.json({ error: 'Erreur lors de la création de la facture' }, { status: 400 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  const session = await getSession();
+  if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  try {
+    const { id, status, paymentMethod } = await request.json();
+
+    const invoice = await prisma.invoice.update({
+      where: { id, tenantId: session.tenantId },
+      data: { 
+        status: status || 'PAID',
+        paymentMethod: paymentMethod || undefined,
+        paidDate: status === 'PAID' ? new Date() : undefined
+      }
+    });
+
+    return NextResponse.json(invoice);
+  } catch (error: any) {
+    console.error('[INVOICES PATCH]', error.message);
+    return NextResponse.json({ error: 'Erreur lors de la mise à jour' }, { status: 400 });
   }
 }
