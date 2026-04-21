@@ -35,6 +35,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Matières',           href: '/subjects',       icon: <BookOpen size={17}/> },
       { label: 'Saisie des Notes',   href: '/grades',         icon: <FileText size={17}/> },
       { label: 'Bulletins & Résultats', href: '/reports/bulletins', icon: <Award size={17}/> },
+      { label: 'Relevés de Notes',   href: '/reports/transcripts', icon: <FileText size={17}/> },
       { label: 'Présences',          href: '/attendance',     icon: <CalendarCheck size={17}/> },
       { label: 'Emploi du Temps',    href: '/timetable',      icon: <Clock size={17}/> },
     ]
