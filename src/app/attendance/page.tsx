@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { CalendarCheck, Save, AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { CalendarCheck, Save, AlertCircle, Loader2, CheckCircle, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 export default function AttendancePage() {
   const router = useRouter();
@@ -18,13 +21,12 @@ export default function AttendancePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving]   = useState(false);
 
-  // Load classrooms on mount
   useEffect(() => {
     fetch('/api/classrooms')
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setClassrooms(d); })
       .catch(() => toast.error('Impossible de charger les classes.'));
-  }, []);
+  }, [toast]);
 
   const loadAttendance = useCallback(async () => {
     if (!selectedClassroom || !selectedDate) {
@@ -44,7 +46,7 @@ export default function AttendancePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedClassroom, selectedDate]);
+  }, [selectedClassroom, selectedDate, router, toast]);
 
   useEffect(() => {
     loadAttendance();
@@ -61,18 +63,12 @@ export default function AttendancePage() {
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          classroomId: selectedClassroom,
-          date: selectedDate,
-          records: students
-        })
+        body: JSON.stringify({ classroomId: selectedClassroom, date: selectedDate, records: students })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'enregistrement');
+      if (!res.ok) throw new Error();
       toast.success('Appel enregistré avec succès !');
-      // Reload to reflect saved state if needed, though state is already updated
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch {
+      toast.error('Erreur lors de l\'enregistrement');
     } finally {
       setIsSaving(false);
     }
@@ -81,102 +77,122 @@ export default function AttendancePage() {
   return (
     <AppLayout
       title="Registre d'Appel"
-      subtitle="Effectuez le suivi journalier des présences par classe"
+      subtitle="Pointage quotidien des présences"
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Présences' }]}
     >
-      <div className="card shadow-sm" style={{ padding: '24px', marginBottom: '8px' }}>
-        <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-          <div className="form-group">
-            <label>Sélectionner une Classe</label>
-            <select value={selectedClassroom} onChange={(e) => setSelectedClassroom(e.target.value)} className="form-input">
-              <option value="">-- Choisir une classe --</option>
-              {classrooms.map(c => (
-                <option key={c.id} value={c.id}>{c.name} {c.stream ? `(${c.stream})` : ''}</option>
-              ))}
+      <div className="flex flex-col gap-6">
+        
+        {/* Filtres Card */}
+        <Card variant="glass" className="flex flex-col sm:flex-row gap-6 items-end">
+          <div className="flex-1 w-full flex flex-col gap-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Classe</label>
+            <select 
+              value={selectedClassroom} 
+              onChange={(e) => setSelectedClassroom(e.target.value)}
+              className="w-full h-11 px-4 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Sélectionner une classe --</option>
+              {classrooms.map(c => <option key={c.id} value={c.id}>{c.name} {c.stream ? `(${c.stream})` : ''}</option>)}
             </select>
           </div>
-          <div className="form-group">
-            <label>Date de l'Appel</label>
+          <div className="flex-1 w-full flex flex-col gap-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Date</label>
             <input 
               type="date" 
               value={selectedDate} 
               onChange={(e) => setSelectedDate(e.target.value)} 
-              className="form-input" 
+              className="w-full h-11 px-4 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500"
             />
           </div>
-        </div>
-      </div>
+        </Card>
 
-      {selectedClassroom && selectedDate ? (
-        <div className="card" style={{ padding: 0 }}>
-          <div className="card-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <CalendarCheck size={18} className="text-primary" /> 
-              Grille d'appel
-            </h3>
-            <button className="btn-primary" onClick={handleSave} disabled={isSaving || students.length === 0}>
-              {isSaving ? <><Loader2 size={16} className="spin" /> Enregistrement...</> : <><Save size={16} /> Valider l'appel</>}
-            </button>
-          </div>
-          
-          <div className="table-container">
+        {/* Grille d'appel */}
+        {selectedClassroom && selectedDate ? (
+          <Card variant="glass" noPadding className="overflow-hidden">
+            <CardHeader className="p-5 border-b border-slate-100 dark:border-slate-800 flex-row items-center justify-between space-y-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg">
+                  <CalendarCheck size={18} />
+                </div>
+                <CardTitle className="text-base uppercase tracking-tight">Liste d'appel</CardTitle>
+              </div>
+              <Button 
+                variant="primary" 
+                size="sm" 
+                onClick={handleSave} 
+                isLoading={isSaving}
+                leftIcon={<Save size={16} />}
+              >
+                Valider l'appel
+              </Button>
+            </CardHeader>
+
             {isLoading ? (
-              <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                <Loader2 size={32} className="spin" style={{ margin: '0 auto 12px', display: 'block' }} />
-                <p>Chargement de l'effectif...</p>
+              <div className="py-20 flex flex-col items-center justify-center text-slate-400">
+                <Loader2 className="animate-spin mb-4" size={32} />
+                <p className="text-sm font-bold">Synchronisation...</p>
               </div>
             ) : students.length > 0 ? (
-              <table className="data-table" style={{ width: '100%', textAlign: 'left' }}>
+              <table className="w-full border-collapse">
                 <thead>
-                  <tr>
-                    <th style={{ padding: '16px 24px' }}>Matricule</th>
-                    <th>Élève</th>
-                    <th>Statut d'Absence</th>
+                  <tr className="text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 dark:border-slate-800/50">
+                    <th className="px-6 py-4">Élève</th>
+                    <th className="px-6 py-4 text-center">Présence</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                   {students.map(s => (
-                    <tr key={s.studentId} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '16px 24px' }}><span className="badge badge-primary">{s.matricule}</span></td>
-                      <td><strong style={{ color: 'var(--text)' }}>{s.studentName}</strong></td>
-                      <td>
-                        <select 
-                          value={s.status} 
-                          onChange={(e) => handleStatusChange(s.studentId, e.target.value)}
-                          className="form-input" 
-                          style={{ 
-                            width: '160px', 
-                            color: s.status === 'PRESENT' ? 'var(--success)' : s.status === 'ABSENT' ? 'var(--danger)' : 'var(--warning)',
-                            fontWeight: 600,
-                            background: 'var(--bg-3)'
-                          }}
-                        >
-                          <option value="PRESENT" style={{ color: 'var(--text)' }}>Présent</option>
-                          <option value="ABSENT" style={{ color: 'var(--text)' }}>Absent</option>
-                          <option value="LATE" style={{ color: 'var(--text)' }}>En Retard</option>
-                          <option value="EXCUSED" style={{ color: 'var(--text)' }}>Excusé</option>
-                        </select>
+                    <tr key={s.studentId} className="group hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                            {s.matricule?.slice(-2)}
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-slate-900 dark:text-white">{s.studentName}</div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">{s.matricule}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 flex justify-center">
+                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1">
+                          {['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'].map((status) => (
+                            <button
+                              key={status}
+                              onClick={() => handleStatusChange(s.studentId, status)}
+                              className={`px-3 py-1.5 rounded-lg text-[9px] font-black transition-all ${
+                                s.status === status 
+                                  ? (status === 'PRESENT' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 
+                                     status === 'ABSENT' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 
+                                     'bg-amber-500 text-white shadow-lg shadow-amber-500/20')
+                                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                              }`}
+                            >
+                              {status === 'PRESENT' ? 'P' : status === 'ABSENT' ? 'A' : status === 'LATE' ? 'R' : 'E'}
+                            </button>
+                          ))}
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                <AlertCircle size={48} style={{ opacity: 0.2, margin: '0 auto 16px', display: 'block' }} />
-                <h3 style={{ fontWeight: 600, marginBottom: '8px' }}>Aucun élève inscrit</h3>
-                <p style={{ fontSize: '13px' }}>Il n'y a pas d'élèves inscrits dans cette classe pour l'instant.</p>
+              <div className="py-20 flex flex-col items-center justify-center text-slate-400 opacity-30 text-center px-10">
+                <AlertCircle size={48} className="mb-4" />
+                <h3 className="text-lg font-black uppercase tracking-widest">Effectif vide</h3>
+                <p className="text-xs max-w-xs mt-2">Vérifiez les inscriptions dans cette classe pour la période sélectionnée.</p>
               </div>
             )}
+          </Card>
+        ) : (
+          <div className="py-24 flex flex-col items-center justify-center text-slate-400/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl">
+            <Users size={64} className="mb-4 opacity-10" />
+            <h3 className="text-sm font-black uppercase tracking-[0.2em]">Sélectionnez une classe</h3>
           </div>
-        </div>
-      ) : (
-        <div className="card" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)', border: '1px dashed var(--border-md)' }}>
-          <CalendarCheck size={48} style={{ margin: '0 auto 16px', opacity: 0.2 }} />
-          <h3 style={{ fontWeight: 600, marginBottom: '8px', color: 'var(--text)' }}>Prêt à faire l'appel ?</h3>
-          <p>Sélectionnez une classe et une date pour afficher la grille de pointage.</p>
-        </div>
-      )}
+        )}
+
+      </div>
     </AppLayout>
   );
 }

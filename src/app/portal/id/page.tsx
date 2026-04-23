@@ -67,8 +67,12 @@ export default function PortalPage() {
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '4px' }}>
                             <span style={{ fontSize: '14px', color: '#7a91b8' }}>Matricule: {student.studentNumber}</span>
                             <span style={{ height: '4px', width: '4px', borderRadius: '50%', background: '#4a5b7a' }}></span>
-                            <span style={{ color: '#10d98e', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase' }}>Élève Actif</span>
+                            <span style={{ color: '#10d98e', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase' }}>Sujet Actif</span>
                         </div>
+                    </div>
+                    <div style={{ marginLeft: 'auto', paddingBottom: '10px', textAlign: 'right' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#4f8ef7', marginBottom: '4px' }}>Dernière Synchronisation</div>
+                        <div style={{ fontSize: '14px', color: '#7a91b8' }}>{new Date().toLocaleDateString('fr-FR')}</div>
                     </div>
                 </div>
             </div>

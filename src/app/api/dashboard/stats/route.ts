@@ -9,25 +9,25 @@ export async function GET() {
   }
 
   try {
-    const [studentsCount, employeesCount, invoices] = await Promise.all([
+    const [studentsCount, employeesCount, invoiceStats] = await Promise.all([
       prisma.student.count({ where: { tenantId: session.tenantId } }),
       prisma.employee.count({ where: { tenantId: session.tenantId } }),
-      prisma.invoice.findMany({
+      prisma.invoice.aggregate({
         where: { tenantId: session.tenantId },
-        select: { amount: true, status: true }
-      })
+        _sum: { amount: true },
+      }),
     ]);
 
-    const invoicesTotal = invoices.reduce((acc, inv) => acc + inv.amount, 0);
-    const invoicesPaid = invoices
-      .filter(inv => inv.status === 'PAID')
-      .reduce((acc, inv) => acc + inv.amount, 0);
+    const paidStats = await prisma.invoice.aggregate({
+      where: { tenantId: session.tenantId, status: 'PAID' },
+      _sum: { amount: true },
+    });
 
     return NextResponse.json({
       studentsCount,
       employeesCount,
-      invoicesTotal,
-      invoicesPaid
+      invoicesTotal: invoiceStats._sum.amount || 0,
+      invoicesPaid: paidStats._sum.amount || 0
     });
   } catch (error) {
     console.error('Dashboard Stats Error:', error);

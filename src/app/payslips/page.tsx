@@ -93,15 +93,49 @@ export default function PayslipsPage() {
 
   const update = (field: string, value: string) => setFormData(f => ({ ...f, [field]: value }));
 
+  const downloadDipe = () => {
+    if (payslips.length === 0) return;
+    
+    let content = "DOCUMENT D'INFORMATION SUR LE PERSONNEL - MALI\n";
+    content += "================================================\n";
+    content += `Date Génération : ${new Date().toLocaleString()}\n`;
+    content += `Nombre de salariés : ${payslips.length}\n\n`;
+    content += "MATRICULE | NOM & PRÉNOM | BRUT IMPOSABLE | INPS (3.06%) | AMO (1.5%) | ITS | NET À PAYER\n";
+    content += "--------------------------------------------------------------------------------------------\n";
+    
+    payslips.forEach(p => {
+      content += `${p.employee?.employeeNumber || 'N/A'} | `;
+      content += `${(p.employee?.firstName + ' ' + p.employee?.lastName).padEnd(20)} | `;
+      content += `${(p.grossSalary || 0).toLocaleString()} | `;
+      content += `${(p.inpsEmployee || 0).toLocaleString()} | `;
+      content += `${(p.amoEmployee || 0).toLocaleString()} | `;
+      content += `${(p.its || 0).toLocaleString()} | `;
+      content += `${(p.netSalary || 0).toLocaleString()}\n`;
+    });
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `DIPE_MALI_${new Date().getFullYear()}_${new Date().getMonth() + 1}.txt`;
+    a.click();
+    toast.success('Fichier DIPE généré pour déclaration.');
+  };
+
   return (
     <AppLayout
       title="Gestion de la Paie"
       subtitle="Bulletins de salaire conformes au Code du Travail Malien (ITS · INPS · AMO/CANAM)"
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Paie' }]}
       actions={
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={15} /> Générer un Bulletin
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-outline" onClick={downloadDipe} disabled={payslips.length === 0}>
+            <Download size={15} /> Télécharger DIPE
+          </button>
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={15} /> Générer un Bulletin
+          </button>
+        </div>
       }
     >
       {/* ── Légende des taux légaux ── */}
