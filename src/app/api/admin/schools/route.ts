@@ -11,14 +11,51 @@ export async function GET() {
   try {
     const schools = await prisma.school.findMany({
       include: {
-        _count: {
-          select: { campuses: true, academicYears: true }
-        }
+        campuses: {
+          include: {
+            _count: { select: { students: true, classrooms: true } }
+          }
+        },
+        _count: { select: { campuses: true, academicYears: true } },
+        academicYears: { where: { isActive: true }, take: 1 }
       },
       orderBy: { createdAt: 'desc' }
     });
-    return NextResponse.json(schools);
+
+    // Enrich each school with aggregated stats
+    const enriched = await Promise.all(schools.map(async (school) => {
+      const campusIds = school.campuses.map(c => c.id);
+      const [studentCount, employeeCount, financialData] = await Promise.all([
+        prisma.student.count({ where: { campusId: { in: campusIds } } }),
+        prisma.employee.count({ where: { tenantId: school.id } }),
+        prisma.invoice.groupBy({
+          by: ['status'],
+          where: { tenantId: school.id },
+          _sum: { amount: true },
+          _count: true
+        })
+      ]);
+
+      const totalInvoiced = financialData.reduce((s, g) => s + (g._sum.amount || 0), 0);
+      const totalPaid = financialData.find(g => g.status === 'PAID')?._sum.amount || 0;
+
+      return {
+        ...school,
+        stats: {
+          studentCount,
+          employeeCount,
+          classroomCount: school.campuses.reduce((s, c) => s + c._count.classrooms, 0),
+          activeYear: school.academicYears[0]?.name || null,
+          collectionRate: totalInvoiced > 0 ? Math.round((totalPaid / totalInvoiced) * 100) : 0,
+          totalInvoiced,
+          totalPaid
+        }
+      };
+    }));
+
+    return NextResponse.json(enriched);
   } catch (error) {
+    console.error('[SCHOOLS_GET]', error);
     return NextResponse.json({ error: 'Erreur lors de la récupération des écoles' }, { status: 500 });
   }
 }
