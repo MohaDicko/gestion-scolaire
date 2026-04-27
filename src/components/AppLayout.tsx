@@ -6,7 +6,8 @@ import {
   LayoutDashboard, Users, School, BookOpen, CalendarCheck,
   Briefcase, FileText, Receipt, Clock, Settings, LogOut,
   ChevronRight, GraduationCap, BadgeDollarSign, BarChart3,
-  UserCog, Menu, X, Bell, Award, ClipboardCheck, Landmark
+  UserCog, Menu, X, Bell, Award, ClipboardCheck, Landmark,
+  Zap, Activity, ShieldAlert
 } from 'lucide-react';
 
 interface NavItem {
@@ -120,7 +121,17 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
       {/* Navigation */}
       <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
-        {NAV_SECTIONS.map(section => (
+        {[
+          ...NAV_SECTIONS,
+          ...(user?.role === 'SUPER_ADMIN' ? [{
+            title: 'Super Admin Lab',
+            items: [
+              { label: 'Gestion Écoles',    href: '/admin/schools',       icon: <Landmark size={17}/> },
+              { label: 'Santé Système',     href: '/admin/system-health', icon: <Activity size={17}/> },
+              { label: 'Stress Test',       href: '/admin/stress-test',   icon: <Zap size={17}/> },
+            ]
+          }] : [])
+        ].map(section => (
           <div key={section.title}>
             <div className="nav-section-label">{section.title}</div>
             {section.items.map(item => (
