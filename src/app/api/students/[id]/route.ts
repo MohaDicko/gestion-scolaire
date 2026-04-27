@@ -22,16 +22,16 @@ export async function GET(
           },
           orderBy: { academicYear: { startDate: 'desc' } }
         },
-        grades: {
+        Grade: {
           include: { subject: true, academicYear: true },
           orderBy: { createdAt: 'desc' }
         },
-        attendance: {
+        Attendance: {
           include: { classroom: true },
           orderBy: { date: 'desc' },
           take: 50 // last 50 records
         },
-        invoices: {
+        Invoice: {
           orderBy: { createdAt: 'desc' }
         }
       }

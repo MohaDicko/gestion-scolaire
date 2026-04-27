@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import {
   LayoutDashboard, Users, School, BookOpen, CalendarCheck,
   Briefcase, FileText, Receipt, Clock, Settings, LogOut,
@@ -215,7 +215,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                   <React.Fragment key={i}>
                     {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: '10px' }}>/</span>}
                     {b.href ? (
-                      <Link href={b.href} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', hover: 'color: var(--primary)' }}>
+                      <Link href={b.href} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>
                         {b.label}
                       </Link>
                     ) : (

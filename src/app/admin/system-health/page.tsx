@@ -134,7 +134,7 @@ export default function SystemHealthPage() {
             <p style={{ fontSize: '12.5px', color: 'var(--text)', lineHeight: 1.6 }}>
               En phase de test profond, assurez-vous d'injecter des données aux limites :
               <ul style={{ paddingLeft: '20px', marginTop: '10px' }}>
-                <li>Salaires > 1.000.000 XOF</li>
+                <li>Salaires &gt; 1.000.000 XOF</li>
                 <li>Élèves avec plus de 20 matières</li>
                 <li>Paiements partiels multiples</li>
               </ul>

@@ -4,8 +4,9 @@ import { getSession } from '@/lib/auth';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getSession();
   if (session?.role !== 'SUPER_ADMIN') {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -14,7 +15,7 @@ export async function PATCH(
   try {
     const body = await request.json();
     const school = await prisma.school.update({
-      where: { id: params.id },
+      where: { id },
       data: body
     });
     return NextResponse.json(school);
@@ -25,17 +26,17 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getSession();
   if (session?.role !== 'SUPER_ADMIN') {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
   try {
-    // Note: In production, you might want to check for cascading deletes or set isActive = false
     await prisma.school.delete({
-      where: { id: params.id }
+      where: { id }
     });
     return NextResponse.json({ success: true });
   } catch (error) {

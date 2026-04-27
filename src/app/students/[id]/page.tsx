@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Loader2, ArrowLeft, GraduationCap, Calendar, 
-  FileText, Receipt, User, Globe, Award, CheckCircle2
+  FileText, Receipt, User, Globe, Award, CheckCircle2, Activity
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 

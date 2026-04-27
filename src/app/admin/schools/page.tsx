@@ -11,7 +11,7 @@ import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useToast } from '@/components/Toast';
-import Modal from '@/components/ui/Modal';
+import { Modal } from '@/components/ui/Modal';
 
 export default function SchoolsManagementPage() {
   const [schools, setSchools] = useState<any[]>([]);
@@ -178,7 +178,7 @@ export default function SchoolsManagementPage() {
                   <div className="flex items-center gap-1">
                     <Button 
                       variant="ghost" 
-                      size="xs" 
+                      size="sm" 
                       onClick={() => { setCurrentSchool(school); setIsModalOpen(true); }}
                       className="text-slate-400 hover:text-blue-400"
                     >
@@ -186,7 +186,7 @@ export default function SchoolsManagementPage() {
                     </Button>
                     <Button 
                       variant="ghost" 
-                      size="xs" 
+                      size="sm" 
                       onClick={() => handleDelete(school.id)}
                       className="text-slate-400 hover:text-red-400"
                     >
@@ -195,7 +195,7 @@ export default function SchoolsManagementPage() {
                   </div>
                   <Button 
                     variant="ghost" 
-                    size="xs" 
+                    size="sm" 
                     className="text-blue-400 font-bold text-[10px] uppercase tracking-wider"
                     rightIcon={<ExternalLink size={12} />}
                   >

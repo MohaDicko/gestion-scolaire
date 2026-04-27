@@ -174,13 +174,13 @@ export default function TranscriptsPage() {
             doc.setFont('helvetica', 'normal');
             doc.text(`Fait à Bamako, le ${today}`, 130, finalY + 60);
             
-            doc.setFontStyle('bold');
+            doc.setFont('helvetica', 'bold');
             doc.text('Le Directeur des Études', 140, finalY + 68);
 
             // Watermark (Official feel)
             doc.setTextColor(200, 200, 200);
             doc.setFontSize(50);
-            doc.text('COPIE ORIGINALE', 105, 180, { angle: 45, align: 'center', opacity: 0.1 });
+            doc.text('COPIE ORIGINALE', 105, 180, { angle: 45, align: 'center' });
 
             // Sauvegarde
             doc.save(`Releve_Notes_${student.studentNumber || student.lastName}.pdf`);

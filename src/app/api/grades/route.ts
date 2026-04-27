@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { grades, subjectId, academicYearId, examType, semester, maxScore } = await request.json();
+    const { grades, subjectId, academicYearId, examType, trimestre, maxScore } = await request.json();
 
     if (!grades || !Array.isArray(grades) || !subjectId || !academicYearId || !examType) {
       return NextResponse.json({ error: 'Données de notes invalides ou incomplètes' }, { status: 400 });
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
           subjectId,
           academicYearId,
           examType: resolvedExamType as any,
-          semester: semester || 1,
+          trimestre: trimestre || 1,
           score: parseFloat(grade.score),
           maxScore: parseFloat(maxScore) || 20.0,
           comment: grade.comment?.substring(0, 500) // cap comment length

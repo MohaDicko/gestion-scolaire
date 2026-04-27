@@ -13,19 +13,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Aucune donnée valide trouvée' }, { status: 400 });
     }
 
-    // Traitement par lots pour la performance
+    // Récupérer un campus par défaut pour ce tenant
+    const campus = await prisma.campus.findFirst({
+        where: { tenantId: session.tenantId }
+    });
+
+    if (!campus) {
+        return NextResponse.json({ error: 'Aucun campus configuré pour cet établissement.' }, { status: 400 });
+    }
+
     const results = await prisma.student.createMany({
       data: students.map((s: any) => ({
         tenantId: session.tenantId,
+        campusId: campus.id,
         firstName: s.Prenom || s.firstName || 'Inconnu',
         lastName: s.Nom || s.lastName || 'Inconnu',
-        studentNumber: s.Matricule || s.studentNumber || `MAT-${Math.floor(Math.random() * 10000)}`,
-        gender: s.Genre || s.gender || 'M',
+        studentNumber: s.Matricule || s.studentNumber || `MAT-${Math.floor(Math.random() * 90000)}`,
+        gender: (s.Genre || s.gender || 'MALE').toUpperCase(),
         dateOfBirth: s.DateNaissance ? new Date(s.DateNaissance) : new Date('2010-01-01'),
-        placeOfBirth: s.LieuNaissance || s.placeOfBirth || '',
+        nationalId: s.nationalId || 'N/A',
+        parentName: s.parentName || 'À préciser',
+        parentPhone: s.parentPhone || '00000000',
+        parentEmail: s.parentEmail || '',
+        parentRelationship: s.parentRelationship || 'PERE',
         isActive: true
       })),
-      skipDuplicates: true // Éviter les erreurs sur les matricules existants
+      skipDuplicates: true
     });
 
     return NextResponse.json({ 
