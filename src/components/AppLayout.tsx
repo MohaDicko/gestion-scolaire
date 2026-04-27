@@ -220,6 +220,10 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             <button className="btn-icon" title="Notifications">
               <Bell size={18} />
             </button>
+            <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 4px' }} />
+            <button className="btn-icon" onClick={handleLogout} title="Déconnexion" style={{ color: 'var(--danger)' }}>
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
 
