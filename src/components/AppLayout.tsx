@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { ReactNode, useEffect, useState } from 'react';
 import {
   LayoutDashboard, Users, School, BookOpen, CalendarCheck,
@@ -72,7 +73,6 @@ interface AppLayoutProps {
   title?: string;
   subtitle?: string;
   actions?: ReactNode;
-  /** The breadcrumb trail */
   breadcrumbs?: { label: string; href?: string }[];
 }
 
@@ -98,24 +98,22 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
     router.push('/login');
   };
 
-  const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : 'A';
-  const displayName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Utilisateur';
-
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === href;
     return pathname.startsWith(href);
   };
 
-  const Sidebar = () => (
-    <div className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+  const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : 'A';
+  const displayName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Utilisateur';
+
+  const SidebarContent = () => (
+    <>
       {/* Logo */}
       <div className="sidebar-logo">
-        <div className="logo-icon">
-          <GraduationCap size={20} style={{ color: '#fff' }} />
-        </div>
+        <div className="logo-icon"><GraduationCap size={22} /></div>
         <div>
           <div className="logo-title">SchoolERP <span style={{ color: 'var(--primary)' }}>Pro</span></div>
-          <div className="logo-school">Gestion scolaire</div>
+          <div className="logo-school">Mali Educational System</div>
         </div>
       </div>
 
@@ -135,15 +133,16 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           <div key={section.title}>
             <div className="nav-section-label">{section.title}</div>
             {section.items.map(item => (
-              <div
+              <Link
                 key={item.href}
+                href={item.href}
                 className={`nav-item${isActive(item.href) ? ' active' : ''}`}
-                onClick={() => { router.push(item.href); setSidebarOpen(false); }}
+                onClick={() => setSidebarOpen(false)}
               >
                 <span style={{ flexShrink: 0 }}>{item.icon}</span>
                 <span style={{ flex: 1 }}>{item.label}</span>
                 {isActive(item.href) && <ChevronRight size={14} className="nav-arrow" />}
-              </div>
+              </Link>
             ))}
           </div>
         ))}
@@ -160,61 +159,69 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           <LogOut size={15} />
         </button>
       </div>
-    </div>
+    </>
   );
 
   return (
     <div className="layout-root">
       {/* Desktop Sidebar */}
-      <Sidebar />
+      <aside className="sidebar">
+        <SidebarContent />
+      </aside>
 
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 50,
-          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-          display: 'flex'
-        }} onClick={() => setSidebarOpen(false)}>
-          <div style={{ width: 'var(--sidebar-w)', height: '100%', background: 'var(--bg-2)' }} onClick={e => e.stopPropagation()}>
-            <Sidebar />
+        <div 
+          style={{
+            position: 'fixed', inset: 0, zIndex: 50,
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+            display: 'flex'
+          }} 
+          onClick={() => setSidebarOpen(false)}
+        >
+          <div 
+            className="sidebar"
+            style={{ width: 'var(--sidebar-w)', height: '100%', borderRadius: 0 }} 
+            onClick={e => e.stopPropagation()}
+          >
+            <SidebarContent />
           </div>
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="main-content">
+      {/* Main Content Area */}
+      <main className="main-content">
         {/* Top Bar */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '16px',
           padding: '16px 28px', borderBottom: '1px solid var(--border)',
           background: 'var(--bg-2)', flexShrink: 0
         }}>
-          {/* Mobile menu button */}
-          <button
-            className="btn-icon"
+          {/* Mobile Menu Trigger */}
+          <button 
+            id="mobile-menu-btn"
+            className="btn-icon" 
             style={{ display: 'none' }}
             onClick={() => setSidebarOpen(true)}
-            id="mobile-menu-btn"
           >
             <Menu size={20} />
           </button>
 
-          {/* Breadcrumbs */}
-          <div style={{ flex: 1 }}>
+          {/* Breadcrumbs / Page Title */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
             {breadcrumbs && breadcrumbs.length > 0 ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {breadcrumbs.map((b, i) => (
-                  <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    {i > 0 && <ChevronRight size={13} />}
+                  <React.Fragment key={i}>
+                    {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: '10px' }}>/</span>}
                     {b.href ? (
-                      <button
-                        onClick={() => router.push(b.href!)}
-                        style={{ color: i === breadcrumbs.length - 1 ? 'var(--text)' : 'var(--text-muted)', fontWeight: i === breadcrumbs.length - 1 ? 600 : 400, background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}
-                      >{b.label}</button>
+                      <Link href={b.href} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', hover: 'color: var(--primary)' }}>
+                        {b.label}
+                      </Link>
                     ) : (
-                      <span style={{ color: i === breadcrumbs.length - 1 ? 'var(--text)' : 'var(--text-muted)', fontWeight: i === breadcrumbs.length - 1 ? 600 : 400 }}>{b.label}</span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text)' }}>{b.label}</span>
                     )}
-                  </span>
+                  </React.Fragment>
                 ))}
               </div>
             ) : title ? (
@@ -245,19 +252,19 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               <h1 className="page-title">{title}</h1>
               {subtitle && <p className="page-subtitle">{subtitle}</p>}
             </div>
+            {actions && <div style={{ display: 'flex', gap: '12px' }}>{actions}</div>}
           </div>
         )}
 
-        {/* Page Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="page" style={{ flex: 1, overflowY: 'auto' }}>
           {children}
         </div>
-      </div>
+      </main>
 
-      <style>{`
+      <style jsx>{`
         @media (max-width: 768px) {
           #mobile-menu-btn { display: grid !important; }
-          .layout-root > .sidebar { display: none !important; }
+          .sidebar { display: none !important; }
         }
       `}</style>
     </div>
