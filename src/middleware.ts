@@ -4,6 +4,7 @@ import { jwtVerify } from 'jose';
 
 // Liste des routes accessibles sans être connecté
 const publicPaths = [
+  '/',
   '/login',
   '/api/auth/login',
   '/portal',
