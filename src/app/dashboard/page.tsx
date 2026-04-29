@@ -64,6 +64,9 @@ export default function DashboardPage() {
           case 'SUPER_ADMIN':
             router.push('/admin/schools');
             return;
+          case 'PARENT':
+            router.push('/parent/dashboard');
+            return;
           case 'CENSEUR':
           case 'SURVEILLANT':
             router.push('/attendance');
