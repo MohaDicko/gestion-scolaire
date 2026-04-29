@@ -53,13 +53,13 @@ export default function DashboardPage() {
             router.push('/student/dashboard');
             return;
           case 'TEACHER':
-            router.push('/classrooms');
+            router.push('/teacher/dashboard');
             return;
           case 'ACCOUNTANT':
-            router.push('/finance');
+            router.push('/finance/dashboard');
             return;
           case 'HR_MANAGER':
-            router.push('/employees');
+            router.push('/hr/dashboard');
             return;
           case 'SUPER_ADMIN':
             router.push('/admin/schools');
