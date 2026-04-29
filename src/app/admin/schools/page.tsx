@@ -279,6 +279,32 @@ export default function SchoolsManagementPage() {
                 >
                   <Trash2 size={13} /> Supprimer
                 </button>
+                <button
+                  className="btn-primary"
+                  style={{ fontSize: 12, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}
+                  onClick={async () => {
+                    toast.success('Connexion à l\'établissement en cours...');
+                    try {
+                      const res = await fetch('/api/admin/switch-tenant', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ schoolId: selectedSchool.id })
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        localStorage.setItem('auth_token', data.accessToken);
+                        localStorage.setItem('auth_user', JSON.stringify(data.user));
+                        window.location.href = '/students';
+                      } else {
+                        toast.error('Erreur lors du changement d\'espace');
+                      }
+                    } catch {
+                      toast.error('Erreur réseau');
+                    }
+                  }}
+                >
+                  <ExternalLink size={13} /> Accéder
+                </button>
               </div>
             </div>
 
