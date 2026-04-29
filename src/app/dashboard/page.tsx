@@ -43,7 +43,19 @@ export default function DashboardPage() {
     }
   }, [toast]);
 
-  useEffect(() => { fetchStats(); }, [fetchStats]);
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('auth_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        if (u.role === 'STUDENT') {
+           router.push('/student/dashboard');
+           return;
+        }
+      }
+    } catch {}
+    fetchStats(); 
+  }, [fetchStats, router]);
 
   const secondaryKpis = [
     { label: 'Congés en attente', value: stats.pendingLeaves || 3, icon: Clock, color: 'text-amber-500', href: '/hr/leaves' },

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -72,6 +73,18 @@ export async function POST(request: Request) {
         parentRelationship: body.parentRelationship,
         campusId: body.campusId,
       },
+    });
+
+    const pass = await bcrypt.hash(uniqueNumber, 10);
+    await prisma.user.create({
+      data: {
+        tenantId: session.tenantId,
+        email: `${uniqueNumber.toLowerCase()}@student.schoolerp.com`,
+        password: pass,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        role: 'STUDENT',
+      }
     });
 
     return NextResponse.json({ id: newStudent.id, studentNumber: newStudent.studentNumber }, { status: 201 });

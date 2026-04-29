@@ -68,6 +68,23 @@ const NAV_SECTIONS: NavSection[] = [
   }
 ];
 
+const STUDENT_NAV_SECTIONS: NavSection[] = [
+  {
+    title: 'Vue Générale',
+    items: [
+      { label: 'Mon Espace',        href: '/dashboard',       icon: <LayoutDashboard size={17}/> },
+    ]
+  },
+  {
+    title: 'Scolarité',
+    items: [
+      { label: 'Emploi du Temps',   href: '/timetable',       icon: <Clock size={17}/> },
+      { label: 'Mes Notes',         href: '/reports/bulletins', icon: <Award size={17}/> },
+      { label: 'Factures & Frais',  href: '/invoices',        icon: <Receipt size={17}/> },
+    ]
+  }
+];
+
 interface AppLayoutProps {
   children: ReactNode;
   title?: string;
@@ -119,7 +136,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
       {/* Navigation */}
       <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
-        {[
+        {(user?.role === 'STUDENT' ? STUDENT_NAV_SECTIONS : [
           ...NAV_SECTIONS,
           ...(user?.role === 'SUPER_ADMIN' ? [{
             title: 'Super Admin Lab',
@@ -129,7 +146,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               { label: 'Stress Test',       href: '/admin/stress-test',   icon: <Zap size={17}/> },
             ]
           }] : [])
-        ].map(section => (
+        ]).map(section => (
           <div key={section.title}>
             <div className="nav-section-label">{section.title}</div>
             {section.items.map(item => (

@@ -131,6 +131,20 @@ async function main() {
       }
     });
 
+    const studentEmail = `${sNumber.toLowerCase()}@student.schoolerp.com`;
+    await prisma.user.upsert({
+      where: { email: studentEmail },
+      update: { tenantId: school.id, password: pass },
+      create: {
+        tenantId: school.id,
+        email: studentEmail,
+        password: pass,
+        firstName: `Elève_${i}`,
+        lastName: `Diallo`,
+        role: 'STUDENT',
+      }
+    });
+
     // Notes
     for (const sub of subjects) {
       await prisma.grade.create({
