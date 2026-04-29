@@ -48,9 +48,27 @@ export default function DashboardPage() {
       const stored = localStorage.getItem('auth_user');
       if (stored) {
         const u = JSON.parse(stored);
-        if (u.role === 'STUDENT') {
-           router.push('/student/dashboard');
-           return;
+        switch (u.role) {
+          case 'STUDENT':
+            router.push('/student/dashboard');
+            return;
+          case 'TEACHER':
+            router.push('/classrooms');
+            return;
+          case 'ACCOUNTANT':
+            router.push('/finance');
+            return;
+          case 'HR_MANAGER':
+            router.push('/employees');
+            return;
+          case 'SUPER_ADMIN':
+            router.push('/admin/schools');
+            return;
+          case 'CENSEUR':
+          case 'SURVEILLANT':
+            router.push('/attendance');
+            return;
+          // SCHOOL_ADMIN and others stay on /dashboard
         }
       }
     } catch {}
