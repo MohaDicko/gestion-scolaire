@@ -61,6 +61,22 @@ export const sendInvoiceNotification = async (parentEmail: string, studentName: 
   return sendEmail({ to: parentEmail, subject: `Facture de scolarité - ${studentName}`, html });
 };
 
+// 2. Alerte d'Absence
+export const sendAbsenceAlert = async (parentEmail: string, studentName: string, date: string) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+      <h2 style="color: #f43f5e;">Alerte d'Absence</h2>
+      <p>Bonjour,</p>
+      <p>Nous vous informons de l'absence de <strong>${studentName}</strong> en date du <strong>${date}</strong>.</p>
+      <p>Merci de contacter la vie scolaire pour justifier cette absence dans les plus brefs délais.</p>
+      <a href="https://gestion-scolaire-livid.vercel.app/login" style="display: inline-block; background-color: #1e293b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin-top: 10px;">Voir les détails</a>
+      <p style="margin-top: 30px; font-size: 12px; color: #64748b;">Direction des Études - SchoolERP Pro</p>
+    </div>
+  `;
+  
+  return sendEmail({ to: parentEmail, subject: `Alerte Absence - ${studentName}`, html });
+};
+
 // 3. Envoi de Bulletin de Notes
 export const sendReportCardEmail = async (parentEmail: string, studentName: string, average: number, rank: number, trimestre: string) => {
   const isPassing = average >= 10;

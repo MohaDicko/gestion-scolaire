@@ -1,17 +1,317 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")       // Connexion poolée (PgBouncer) — pour le runtime app
-  directUrl = env("DIRECT_URL")        // Connexion directe — pour les migrations Prisma
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-// ── ENUMS ─────────────────────────────────────────────────────────
+model School {
+  id              String         @id @default(uuid())
+  name            String
+  code            String         @unique
+  address         String
+  city            String
+  country         String
+  phoneNumber     String
+  email           String
+  type            SchoolType
+  drenCode        String?
+  isActive        Boolean        @default(true)
+  isSetupComplete Boolean        @default(false)
+  logoUrl         String?
+  motto           String?
+  nationalRNE     String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  academicYears   AcademicYear[]
+  campuses        Campus[]
+}
+
+model Campus {
+  id          String      @id @default(uuid())
+  tenantId    String
+  name        String
+  address     String
+  city        String
+  region      String
+  phoneNumber String
+  email       String?
+  managerName String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  school      School      @relation(fields: [tenantId], references: [id])
+  classrooms  Classroom[]
+  students    Student[]
+}
+
+model AcademicYear {
+  id          String       @id @default(uuid())
+  tenantId    String
+  name        String
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean      @default(false)
+  school      School       @relation(fields: [tenantId], references: [id])
+  classrooms  Classroom[]
+  enrollments Enrollment[]
+  grades      Grade[]
+}
+
+model Classroom {
+  id             String       @id @default(uuid())
+  tenantId       String
+  campusId       String
+  academicYearId String
+  name           String
+  level          String
+  stream         String?
+  series         String?
+  maxCapacity    Int
+  Attendance     Attendance[]
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  campus         Campus       @relation(fields: [campusId], references: [id])
+  enrollments    Enrollment[]
+  Timetable      Timetable[]
+}
+
+model Student {
+  id                 String       @id @default(uuid())
+  tenantId           String
+  campusId           String
+  studentNumber      String       @unique
+  firstName          String
+  lastName           String
+  dateOfBirth        DateTime
+  gender             Gender
+  photoUrl           String?
+  nationalId         String
+  parentName         String
+  parentPhone        String
+  parentEmail        String
+  parentRelationship String
+  isActive           Boolean      @default(true)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  Attendance         Attendance[]
+  enrollments        Enrollment[]
+  Grade              Grade[]
+  Invoice            Invoice[]
+  campus             Campus       @relation(fields: [campusId], references: [id])
+}
+
+model Enrollment {
+  id             String           @id @default(uuid())
+  studentId      String
+  classroomId    String
+  academicYearId String
+  status         EnrollmentStatus @default(ACTIVE)
+  enrollmentDate DateTime         @default(now())
+  academicYear   AcademicYear     @relation(fields: [academicYearId], references: [id])
+  classroom      Classroom        @relation(fields: [classroomId], references: [id])
+  student        Student          @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, academicYearId])
+}
+
+model User {
+  id        String   @id @default(uuid())
+  tenantId  String?
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Department {
+  id          String     @id @default(uuid())
+  tenantId    String
+  name        String
+  code        String
+  description String?
+  employees   Employee[]
+}
+
+model Employee {
+  id              String            @id @default(uuid())
+  tenantId        String
+  employeeNumber  String            @unique
+  firstName       String
+  lastName        String
+  email           String
+  phoneNumber     String
+  dateOfBirth     DateTime
+  gender          Gender
+  hireDate        DateTime
+  employeeType    EmployeeType
+  photoUrl        String?
+  isActive        Boolean           @default(true)
+  departmentId    String
+  campusId        String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  contracts       Contract[]
+  department      Department        @relation(fields: [departmentId], references: [id])
+  LeaveRequest    LeaveRequest[]
+  Payslip         Payslip[]
+  StaffAttendance StaffAttendance[]
+  Timetable       Timetable[]
+}
+
+model Contract {
+  id           String         @id @default(uuid())
+  tenantId     String
+  employeeId   String
+  contractType ContractType
+  startDate    DateTime
+  endDate      DateTime?
+  baseSalary   Float
+  currency     String         @default("XOF")
+  status       ContractStatus @default(ACTIVE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  employee     Employee       @relation(fields: [employeeId], references: [id])
+}
+
+model Subject {
+  id          String      @id @default(uuid())
+  tenantId    String
+  name        String
+  code        String
+  coefficient Float       @default(1.0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  grades      Grade[]
+  Timetable   Timetable[]
+}
+
+model Grade {
+  id             String       @id @default(uuid())
+  studentId      String
+  subjectId      String
+  academicYearId String
+  trimestre      Int          @default(1)
+  examType       ExamType
+  score          Float
+  maxScore       Float        @default(20.0)
+  comment        String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  student        Student      @relation(fields: [studentId], references: [id])
+  subject        Subject      @relation(fields: [subjectId], references: [id])
+}
+
+model Payslip {
+  id                   String   @id @default(uuid())
+  tenantId             String
+  employeeId           String
+  periodStart          DateTime
+  periodEnd            DateTime
+  baseSalary           Float
+  taxableBonuses       Float    @default(0)
+  nonTaxableBonuses    Float    @default(0)
+  grossSalary          Float
+  inpsEmployee         Float    @default(0)
+  amoEmployee          Float    @default(0)
+  totalDeductions      Float    @default(0)
+  fiscalBase           Float    @default(0)
+  its                  Float    @default(0)
+  netSalary            Float
+  inpsEmployer         Float    @default(0)
+  amoEmployer          Float    @default(0)
+  totalEmployerCharges Float    @default(0)
+  numberOfChildren     Int      @default(0)
+  status               String   @default("DRAFT")
+  notes                String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  employee             Employee @relation(fields: [employeeId], references: [id])
+}
+
+model Invoice {
+  id            String    @id @default(uuid())
+  tenantId      String
+  studentId     String
+  invoiceNumber String    @unique
+  title         String
+  type          String    @default("TUITION")
+  amount        Float
+  status        String    @default("UNPAID")
+  dueDate       DateTime
+  paidDate      DateTime?
+  paymentMethod String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  student       Student   @relation(fields: [studentId], references: [id])
+}
+
+model Timetable {
+  id          String    @id @default(uuid())
+  tenantId    String
+  classroomId String
+  subjectId   String
+  employeeId  String
+  dayOfWeek   Int
+  startTime   String
+  endTime     String
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  teacher     Employee  @relation(fields: [employeeId], references: [id])
+  subject     Subject   @relation(fields: [subjectId], references: [id])
+}
+
+model Attendance {
+  id          String    @id @default(uuid())
+  tenantId    String
+  studentId   String
+  classroomId String
+  date        DateTime
+  status      String    @default("PRESENT")
+  notes       String?
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  student     Student   @relation(fields: [studentId], references: [id])
+}
+
+model StaffAttendance {
+  id         String   @id @default(uuid())
+  tenantId   String
+  employeeId String
+  date       DateTime
+  checkIn    String?
+  checkOut   String?
+  status     String   @default("PRESENT")
+  employee   Employee @relation(fields: [employeeId], references: [id])
+}
+
+model LeaveRequest {
+  id         String   @id @default(uuid())
+  tenantId   String
+  employeeId String
+  startDate  DateTime
+  endDate    DateTime
+  type       String
+  status     String   @default("PENDING")
+  reason     String?
+  employee   Employee @relation(fields: [employeeId], references: [id])
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  tenantId    String
+  description String
+  amount      Float
+  date        DateTime @default(now())
+  category    String
+  status      String   @default("PAID")
+  createdAt   DateTime @default(now())
+}
 
 enum Gender {
   MALE
@@ -70,156 +370,6 @@ enum UserRole {
   PARENT
 }
 
-// ── CORE MODELS ──────────────────────────────────────────────────
-
-model School {
-  id              String     @id @default(uuid())
-  name            String
-  code            String     @unique
-  address         String
-  city            String
-  country         String
-  phoneNumber     String
-  email           String
-  type            SchoolType
-  drenCode        String?    // Code DREN/CAP (Mali)
-  isActive        Boolean    @default(true)
-  isSetupComplete Boolean    @default(false)
-  logoUrl         String?
-  motto           String?
-  nationalRNE     String?    // Numéro d'Identification Nationale / RNE
-
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  campuses      Campus[]
-  academicYears AcademicYear[]
-}
-
-model Campus {
-  id          String  @id @default(uuid())
-  tenantId    String // Link to School.id
-  name        String
-  address     String
-  city        String
-  region      String
-  phoneNumber String
-  email       String?
-  managerName String?
-  isActive    Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  school     School      @relation(fields: [tenantId], references: [id])
-  classrooms Classroom[]
-  students   Student[]
-}
-
-model AcademicYear {
-  id        String   @id @default(uuid())
-  tenantId  String
-  name      String // e.g., "2024-2025"
-  startDate DateTime
-  endDate   DateTime
-  isActive  Boolean  @default(false)
-
-  school      School       @relation(fields: [tenantId], references: [id])
-  classrooms  Classroom[]
-  enrollments Enrollment[]
-  grades      Grade[]
-}
-
-model Classroom {
-  id             String  @id @default(uuid())
-  tenantId       String
-  campusId       String
-  academicYearId String
-  name           String
-  level          String
-  stream         String?    // Ex: "Série A", "Série D", "Sélectif"
-  series         String?    // Série officielle Malienne (BAC/BT)
-  maxCapacity    Int
-
-
-  campus       Campus       @relation(fields: [campusId], references: [id])
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-  enrollments  Enrollment[]
-  Timetable    Timetable[]
-  Attendance   Attendance[]
-}
-
-model Student {
-  id            String   @id @default(uuid())
-  tenantId      String
-  campusId      String
-  studentNumber String   @unique
-  firstName     String
-  lastName      String
-  dateOfBirth   DateTime
-  gender        Gender
-  photoUrl      String?
-  nationalId    String
-
-  parentName         String
-  parentPhone        String
-  parentEmail        String
-  parentRelationship String
-
-  isActive Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  campus      Campus       @relation(fields: [campusId], references: [id])
-  enrollments Enrollment[]
-  Grade       Grade[]
-  Invoice     Invoice[]
-  Attendance  Attendance[]
-}
-
-model Enrollment {
-  id             String           @id @default(uuid())
-  studentId      String
-  classroomId    String
-  academicYearId String
-  status         EnrollmentStatus @default(ACTIVE)
-  enrollmentDate DateTime         @default(now())
-
-  student      Student      @relation(fields: [studentId], references: [id])
-  classroom    Classroom    @relation(fields: [classroomId], references: [id])
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-
-  @@unique([studentId, academicYearId])
-}
-
-model User {
-  id        String   @id @default(uuid())
-  tenantId  String?
-  email     String   @unique
-  password  String // Hashed
-  firstName String
-  lastName  String
-  role      UserRole
-  isActive  Boolean  @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// ── HR & PAYROLL MODELS ──────────────────────────────────────────
-
-model Department {
-  id          String  @id @default(uuid())
-  tenantId    String
-  name        String
-  code        String
-  description String?
-
-  employees Employee[]
-}
-
 enum ContractType {
   CDI
   CDD
@@ -234,234 +384,8 @@ enum ContractStatus {
   SUSPENDED
 }
 
-model Employee {
-  id             String       @id @default(uuid())
-  tenantId       String
-  employeeNumber String       @unique
-  firstName      String
-  lastName       String
-  email          String
-  phoneNumber    String
-  dateOfBirth    DateTime
-  gender         Gender
-  hireDate       DateTime
-  employeeType   EmployeeType
-  photoUrl       String?
-  isActive       Boolean      @default(true)
-
-  departmentId String
-  campusId     String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  department      Department        @relation(fields: [departmentId], references: [id])
-  contracts       Contract[]
-  Payslip         Payslip[]
-  Timetable       Timetable[]
-  StaffAttendance StaffAttendance[]
-  LeaveRequest    LeaveRequest[]
-}
-
-model Contract {
-  id           String         @id @default(uuid())
-  tenantId     String
-  employeeId   String
-  contractType ContractType
-  startDate    DateTime
-  endDate      DateTime?
-  baseSalary   Float
-  currency     String         @default("XOF")
-  status       ContractStatus @default(ACTIVE)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  employee Employee @relation(fields: [employeeId], references: [id])
-}
-
-model Subject {
-  id          String @id @default(uuid())
-  tenantId    String
-  name        String
-  code        String
-  coefficient Float  @default(1.0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  grades    Grade[]
-  Timetable Timetable[]
-}
-
 enum ExamType {
   CONTINUOUS
   MIDTERM
   FINAL
-}
-
-model Grade {
-  id             String   @id @default(uuid())
-  studentId      String
-  subjectId      String
-  academicYearId String
-  trimestre      Int      @default(1) // 1, 2 ou 3 (système trimestriel malien)
-  examType       ExamType
-  score          Float
-  maxScore       Float    @default(20.0)
-  comment        String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  student     Student      @relation(fields: [studentId], references: [id])
-  subject     Subject      @relation(fields: [subjectId], references: [id])
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-}
-
-// ── PAYROLL MODULE (Conforme Code du Travail Malien) ─────────────
-
-model Payslip {
-  id          String   @id @default(uuid())
-  tenantId    String
-  employeeId  String
-  periodStart DateTime
-  periodEnd   DateTime
-
-  // === Éléments de rémunération ===
-  baseSalary          Float  // Salaire de base
-  taxableBonuses      Float  @default(0) // Primes imposables
-  nonTaxableBonuses   Float  @default(0) // Indemnités non imposables (transport, logement)
-  grossSalary         Float  // Salaire brut imposable = base + primes imposables
-
-  // === Cotisations salariales (part employé) ===
-  inpsEmployee        Float  @default(0) // INPS 3.06%
-  amoEmployee         Float  @default(0) // AMO/CANAM 1.5%
-  totalDeductions     Float  @default(0) // Total cotisations salariales
-
-  // === Impôt sur Traitements et Salaires ===
-  fiscalBase          Float  @default(0) // Assiette ITS = brut - INPS
-  its                 Float  @default(0) // ITS (barème progressif malien)
-
-  // === Net à payer ===
-  netSalary           Float  // Net = brut + ind.non imp. - cotisations - ITS
-
-  // === Charges patronales (info employeur) ===
-  inpsEmployer        Float  @default(0) // INPS part patronale 7%
-  amoEmployer         Float  @default(0) // AMO part patronale 4.5%
-  totalEmployerCharges Float @default(0)
-
-  // === Métadonnées ===
-  numberOfChildren    Int    @default(0) // Enfants à charge (déduction ITS)
-  status              String @default("DRAFT") // DRAFT, FINALIZED, PAID
-  notes               String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  employee Employee @relation(fields: [employeeId], references: [id])
-}
-
-// ── BILLING MODULE ───────────────────────────────────────────────
-
-model Invoice {
-  id            String   @id @default(uuid())
-  tenantId      String
-  studentId     String
-  invoiceNumber String   @unique
-  title         String   // Libellé: "Scolarité T1 2025", "Frais d'inscription"
-  type          String   @default("TUITION") // TUITION, REGISTRATION, EXAM, CANTEEN, OTHER
-  amount        Float
-  status        String   @default("UNPAID")  // UNPAID, PAID, PARTIAL, CANCELLED
-  dueDate       DateTime
-  paidDate      DateTime?
-  paymentMethod String?  // ESPECES, ORANGE_MONEY, MOOV_MONEY, VIREMENT, CHEQUE
-  notes         String?
-
-  createdAt DateTime @default(now())
-
-  student  Student   @relation(fields: [studentId], references: [id])
-  payments Payment[]
-}
-
-model Payment {
-  id            String   @id @default(uuid())
-  tenantId      String
-  invoiceId     String
-  amount        Float
-  paymentDate   DateTime @default(now())
-  method        String   @default("ESPECES") // ESPECES, ORANGE_MONEY, MOOV_MONEY, VIREMENT, CHEQUE
-  reference     String?  // Numéro de reçu, ID de transaction
-  notes         String?
-  
-  createdAt     DateTime @default(now())
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
-}
-
-// ── DAILY ACTIVITY ───────────────────────────────────────────────
-
-model Timetable {
-  id          String @id @default(uuid())
-  tenantId    String
-  classroomId String
-  subjectId   String
-  employeeId  String // Teacher
-  dayOfWeek   Int // 1=Monday...
-  startTime   String // "08:00"
-  endTime     String // "10:00"
-
-  classroom Classroom @relation(fields: [classroomId], references: [id])
-  subject   Subject   @relation(fields: [subjectId], references: [id])
-  teacher   Employee  @relation(fields: [employeeId], references: [id])
-}
-
-model Attendance {
-  id          String   @id @default(uuid())
-  tenantId    String
-  studentId   String
-  classroomId String
-  date        DateTime
-  status      String   @default("PRESENT") // PRESENT, ABSENT, LATE, EXCUSED
-  notes       String?
-
-  student   Student   @relation(fields: [studentId], references: [id])
-  classroom Classroom @relation(fields: [classroomId], references: [id])
-}
-
-model StaffAttendance {
-  id         String   @id @default(uuid())
-  tenantId   String
-  employeeId String
-  date       DateTime
-  checkIn    String? // "08:15"
-  checkOut   String? // "17:30"
-  status     String   @default("PRESENT") // PRESENT, ABSENT, ON_LEAVE
-
-  employee Employee @relation(fields: [employeeId], references: [id])
-}
-
-model LeaveRequest {
-  id         String   @id @default(uuid())
-  tenantId   String
-  employeeId String
-  startDate  DateTime
-  endDate    DateTime
-  type       String // SICK, ANNUAL, PERSONAL
-  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  reason     String?
-
-  employee Employee @relation(fields: [employeeId], references: [id])
-}
-
-model Expense {
-  id          String   @id @default(uuid())
-  tenantId    String
-  description String
-  amount      Float
-  date        DateTime @default(now())
-  category    String // UTILITIES, SUPPLIES, SALARIES, OTHER
-  status      String   @default("PAID") // PAID, PENDING
-
-  createdAt DateTime @default(now())
 }
