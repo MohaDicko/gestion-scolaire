@@ -97,7 +97,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [user, setUser] = useState<{ firstName?: string; lastName?: string; role?: string; email?: string } | null>(null);
+  const [user, setUser] = useState<{ firstName?: string; lastName?: string; role?: string; email?: string; schoolName?: string } | null>(null);
 
   useEffect(() => {
     try {
@@ -130,7 +130,9 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
         <div className="logo-icon"><GraduationCap size={22} /></div>
         <div>
           <div className="logo-title">SchoolERP <span style={{ color: 'var(--primary)' }}>Pro</span></div>
-          <div className="logo-school">Mali Educational System</div>
+          <div className="logo-school" style={{ color: user?.schoolName ? 'var(--primary)' : 'var(--text-dim)', fontWeight: user?.schoolName ? 700 : 500 }}>
+            {user?.schoolName || 'Mali Educational System'}
+          </div>
         </div>
       </div>
 
@@ -251,6 +253,15 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
           {/* Top actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {user?.role === 'SUPER_ADMIN' && user.schoolName && (
+               <div style={{ 
+                 background: 'rgba(79, 142, 247, 0.1)', border: '1px solid rgba(79, 142, 247, 0.2)', 
+                 padding: '4px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', marginRight: '12px'
+               }}>
+                  <ShieldAlert size={14} className="text-primary" />
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mode Impersonnalisation</span>
+               </div>
+            )}
             {actions}
             <button className="btn-icon" title="Notifications">
               <Bell size={18} />

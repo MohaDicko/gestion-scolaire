@@ -34,6 +34,12 @@ export async function POST(request: Request) {
     const accessToken = await encrypt(sessionPayload, '15m');
     const refreshToken = await encrypt(sessionPayload, '7d');
 
+    // Récupérer le nom de l'école pour l'affichage
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+      select: { name: true }
+    });
+
     const response = NextResponse.json({
       success: true,
       accessToken,
@@ -44,6 +50,7 @@ export async function POST(request: Request) {
         lastName: updatedUser.lastName,
         role: updatedUser.role,
         tenantId: updatedUser.tenantId,
+        schoolName: school?.name || 'SchoolERP Pro'
       }
     });
 
