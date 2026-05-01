@@ -12,6 +12,12 @@ import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 
 const SCHOOL_TYPES = ['PRIMAIRE','FONDAMENTAL','LYCEE','TECHNIQUE','SANTE','UNIVERSITE'];
+const PLANS = ['STARTER', 'BUSINESS', 'ELITE'];
+const PLAN_COLORS: Record<string, string> = {
+  STARTER: '#94a3b8',
+  BUSINESS: '#4f8ef7',
+  ELITE: '#a855f7'
+};
 const TYPE_COLORS: Record<string, string> = {
   LYCEE: '#6366f1', SANTE: '#10b981', TECHNIQUE: '#f59e0b',
   FONDAMENTAL: '#3b82f6', PRIMAIRE: '#ec4899', UNIVERSITE: '#8b5cf6'
@@ -217,6 +223,7 @@ export default function SchoolsManagementPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                         <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{school.name}</span>
                         <span style={{ fontSize: 10, fontWeight: 700, background: color + '20', color, padding: '2px 7px', borderRadius: 6, flexShrink: 0 }}>{school.type}</span>
+                        <span style={{ fontSize: 10, fontWeight: 800, background: (PLAN_COLORS[school.plan] || '#4f8ef7') + '20', color: PLAN_COLORS[school.plan] || '#4f8ef7', padding: '2px 7px', borderRadius: 6, flexShrink: 0, border: `1px solid ${PLAN_COLORS[school.plan] || '#4f8ef7'}40` }}>{school.plan}</span>
                         {!school.isActive && <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--danger-dim)', color: 'var(--danger)', padding: '2px 7px', borderRadius: 6 }}>INACTIF</span>}
                       </div>
                       <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-muted)' }}>
@@ -364,6 +371,19 @@ export default function SchoolsManagementPage() {
                   </div>
                 </div>
 
+                {/* Subscription Plan Card */}
+                <div className="card" style={{ padding: '18px 20px', background: (PLAN_COLORS[selectedSchool.plan] || '#4f8ef7') + '08', border: `1px solid ${PLAN_COLORS[selectedSchool.plan] || '#4f8ef7'}30` }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h4 style={{ fontSize: 13, fontWeight: 700 }}>Abonnement Actif</h4>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: PLAN_COLORS[selectedSchool.plan] || '#4f8ef7' }}>{selectedSchool.plan}</span>
+                   </div>
+                   <p style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
+                      {selectedSchool.plan === 'STARTER' && 'Max 250 élèves, Fonctions de base.'}
+                      {selectedSchool.plan === 'BUSINESS' && 'Max 750 élèves, Emails, Reçus PDF, Cartes ID.'}
+                      {selectedSchool.plan === 'ELITE' && 'Illimité, Module Paie, Multi-Campus.'}
+                   </p>
+                </div>
+
                 {/* Contact Info */}
                 <div className="card" style={{ padding: '18px 20px' }}>
                   <h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Informations</h4>
@@ -455,6 +475,14 @@ export default function SchoolsManagementPage() {
                 <div className="form-group">
                   <label className="form-label">Devise / Slogan</label>
                   <input name="motto" className="form-input" defaultValue={editSchool?.motto} />
+                </div>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="form-label" style={{ color: 'var(--primary)', fontWeight: 800 }}>Abonnement (Plan) *</label>
+                  <select name="plan" required className="form-input" style={{ border: '1px solid var(--primary)' }} defaultValue={editSchool?.plan || 'STARTER'}>
+                    <option value="STARTER">Pack STARTER (Limitée)</option>
+                    <option value="BUSINESS">Pack BUSINESS (Standard)</option>
+                    <option value="ELITE">Pack ELITE (Complet)</option>
+                  </select>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 24 }}>
