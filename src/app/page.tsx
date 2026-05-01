@@ -171,6 +171,72 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Pricing Section ─────────────────────────────────────── */}
+      <section id="pricing" className="pricing">
+        <div className="container">
+          <div className="section-header text-center animate-up">
+            <h2 className="section-title">Des Tarifs Transparents</h2>
+            <p className="section-subtitle">
+              Choisissez le pack adapté à la taille de votre établissement.
+            </p>
+          </div>
+
+          <div className="pricing-grid">
+            {/* Starter */}
+            <div className="pricing-card animate-up">
+              <div className="p-header">
+                <h3 className="p-name">Starter</h3>
+                <div className="p-price">150.000 <span>FCFA / an</span></div>
+                <p className="p-target">Idéal pour les structures de moins de 250 élèves.</p>
+              </div>
+              <ul className="p-features">
+                <li><CheckCircle2 size={18} className="text-primary" /> Inscriptions & Dossiers élèves</li>
+                <li><CheckCircle2 size={18} className="text-primary" /> Bulletins de notes digitaux</li>
+                <li><CheckCircle2 size={18} className="text-primary" /> Suivi des frais de scolarité</li>
+                <li className="disabled"><X size={18} /> Module RH & Paie Mali</li>
+                <li className="disabled"><X size={18} /> Notifications Automatiques</li>
+              </ul>
+              <button className="btn-p-outline" onClick={() => router.push('/login')}>Démarrer</button>
+            </div>
+
+            {/* Business */}
+            <div className="pricing-card featured animate-up">
+              <div className="p-badge">Plus Populaire</div>
+              <div className="p-header">
+                <h3 className="p-name">Business</h3>
+                <div className="p-price">350.000 <span>FCFA / an</span></div>
+                <p className="p-target">Pour les écoles de 250 à 750 élèves.</p>
+              </div>
+              <ul className="p-features">
+                <li><CheckCircle2 size={18} className="text-primary" /> <strong>Tout du pack Starter</strong></li>
+                <li><CheckCircle2 size={18} className="text-primary" /> Reçus de paiement PDF</li>
+                <li><CheckCircle2 size={18} className="text-primary" /> Cartes ID avec Code-Barres</li>
+                <li><CheckCircle2 size={18} className="text-primary" /> Notifications Emails & SMS</li>
+                <li><CheckCircle2 size={18} className="text-primary" /> Emplois du temps avancés</li>
+              </ul>
+              <button className="btn-p-primary" onClick={() => router.push('/login')}>Choisir Business</button>
+            </div>
+
+            {/* Elite */}
+            <div className="pricing-card animate-up">
+              <div className="p-header">
+                <h3 className="p-name">Elite</h3>
+                <div className="p-price">750.000 <span>FCFA / an</span></div>
+                <p className="p-target">Complexes scolaires & Multi-Campus.</p>
+              </div>
+              <ul className="p-features">
+                <li><CheckCircle2 size={18} className="text-primary" /> <strong>Tout du pack Business</strong></li>
+                <li><CheckCircle2 size={18} className="text-primary" /> Paie Malienne (ITS, INPS, AMO)</li>
+                <li><CheckCircle2 size={18} className="text-primary" /> Gestion Multi-Campus centralisée</li>
+                <li><CheckCircle2 size={18} className="text-primary" /> Audit Santé & Stress Test</li>
+                <li><CheckCircle2 size={18} className="text-primary" /> Support VIP 24h/24</li>
+              </ul>
+              <button className="btn-p-outline" onClick={() => router.push('/login')}>Démarrer Elite</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA Section ───────────────────────────────────────── */}
       <section className="cta animate-fade">
         <div className="cta-container">
@@ -476,6 +542,78 @@ export default function LandingPage() {
           position: fixed; top: 80px; left: 0; right: 0; background: #0b1225;
           padding: 24px; display: flex; flexDirection: column; gap: 20px;
           z-index: 999; border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* ── PRICING STYLES ── */
+        .pricing { padding: 120px 0; background: #060b18; position: relative; }
+        .pricing-grid { 
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 60px; 
+          align-items: stretch;
+        }
+        .pricing-card {
+          background: rgba(15, 24, 48, 0.5);
+          border: 1px solid rgba(255,255,255,0.05);
+          border-radius: 32px;
+          padding: 48px 32px;
+          position: relative;
+          transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+          display: flex;
+          flex-direction: column;
+        }
+        .pricing-card:hover {
+          transform: translateY(-12px);
+          background: rgba(15, 24, 48, 0.8);
+          border-color: rgba(79, 142, 247, 0.3);
+          box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        }
+        .pricing-card.featured {
+          background: #0f1830;
+          border: 1px solid #4f8ef7;
+          box-shadow: 0 20px 50px rgba(79, 142, 247, 0.15);
+          transform: scale(1.05);
+          z-index: 2;
+        }
+        .pricing-card.featured:hover {
+          transform: scale(1.05) translateY(-12px);
+        }
+        .p-badge {
+          position: absolute; top: 20px; right: 20px;
+          background: #4f8ef7; color: #fff; padding: 4px 12px;
+          border-radius: 99px; font-size: 11px; font-weight: 800;
+          text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .p-header { margin-bottom: 32px; }
+        .p-name { font-size: 24px; font-weight: 800; margin-bottom: 16px; color: #fff; }
+        .p-price { font-size: 36px; font-weight: 900; color: #fff; margin-bottom: 8px; }
+        .p-price span { font-size: 14px; font-weight: 500; color: #7a91b8; }
+        .p-target { font-size: 14px; color: #7a91b8; line-height: 1.5; }
+        
+        .p-features { list-style: none; padding: 0; margin: 0 0 40px 0; flex: 1; }
+        .p-features li { 
+          display: flex; align-items: center; gap: 12px; 
+          font-size: 14px; color: #c8d6f5; margin-bottom: 16px; 
+        }
+        .p-features li.disabled { color: #4a5b7a; opacity: 0.5; }
+        
+        .btn-p-outline {
+          width: 100%; padding: 14px; border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.1); color: #fff;
+          font-weight: 700; transition: all 0.2s;
+        }
+        .btn-p-outline:hover { background: rgba(255,255,255,0.05); border-color: #4f8ef7; }
+        
+        .btn-p-primary {
+          width: 100%; padding: 14px; border-radius: 12px;
+          background: #4f8ef7; color: #fff;
+          font-weight: 700; transition: all 0.2s;
+          box-shadow: 0 4px 12px rgba(79, 142, 247, 0.3);
+        }
+        .btn-p-primary:hover { background: #3b82f6; transform: scale(1.02); }
+
+        @media (max-width: 992px) {
+          .pricing-grid { grid-template-columns: 1fr; max-width: 450px; margin-left: auto; margin-right: auto; }
+          .pricing-card.featured { transform: scale(1); }
+          .pricing-card.featured:hover { transform: translateY(-12px); }
         }
       `}</style>
     </div>
