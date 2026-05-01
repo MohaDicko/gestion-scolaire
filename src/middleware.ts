@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
     const { payload } = await jwtVerify(token, key, { algorithms: ['HS256'] });
 
     // Autorisation spécifique pour les APIs de stats/diagnostics
-    if (pathname.startsWith('/api/stats') || pathname.startsWith('/api/diagnostics')) {
+    if (pathname.startsWith('/api/admin/dashboard/stats') || pathname.startsWith('/api/admin/diagnostics')) {
       if (payload.role !== 'SUPER_ADMIN') {
         return NextResponse.json({ error: 'Accès refusé. Réservé au Super Admin.' }, { status: 403 });
       }
