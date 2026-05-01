@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getSession } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
+  const session = await getSession();
+  if (session?.role !== 'SUPER_ADMIN') {
+    return NextResponse.json({ error: 'Accès refusé. Réservé au Super Admin.' }, { status: 403 });
+  }
+
   try {
     // Dans une vraie application, on vérifierait ici le token JWT
     // pour s'assurer que l'utilisateur est bien un SUPER_ADMIN.

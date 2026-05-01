@@ -12,11 +12,12 @@ export async function GET() {
 
   try {
     const diagnostics = [];
+    const baseWhere = tenantId ? { tenantId } : {};
 
     // 1. Students without active enrollment
     const orphanStudents = await prisma.student.count({
       where: {
-        tenantId,
+        ...baseWhere,
         enrollments: { none: {} }
       }
     });
@@ -31,7 +32,7 @@ export async function GET() {
     // 2. Payslips with negative or zero net salary
     const criticalPayslips = await prisma.payslip.count({
       where: {
-        tenantId,
+        ...baseWhere,
         netSalary: { lte: 0 }
       }
     });
@@ -44,10 +45,8 @@ export async function GET() {
     });
 
     // 3. Teachers with possible timetable conflicts (simplified check)
-    // We check if any teacher has more than one slot at the same day/time
-    // Note: Real deep check requires complex group by, here we look for any slots on same day/time
     const timetableEntries = await prisma.timetable.findMany({
-        where: { tenantId }
+        where: baseWhere
     });
     
     let conflicts = 0;
@@ -69,7 +68,7 @@ export async function GET() {
     // 4. Invoices overdue (Unpaid and past due date)
     const overdueInvoices = await prisma.invoice.count({
       where: {
-        tenantId,
+        ...baseWhere,
         status: 'UNPAID',
         dueDate: { lt: new Date() }
       }
@@ -85,7 +84,7 @@ export async function GET() {
     // 5. Missing Grades (Active students with 0 grades)
     const studentsWithNoGrades = await prisma.student.count({
         where: {
-            tenantId,
+            ...baseWhere,
             Grade: { none: {} }
         }
     });

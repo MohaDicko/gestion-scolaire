@@ -41,10 +41,21 @@ export async function middleware(request: NextRequest) {
 
   try {
     // 3. Validation Cryptographique du JWT sur le "Edge Runtime"
-    const secretKey = process.env.JWT_SECRET || 'secret';
+    const secretKey = process.env.JWT_SECRET;
+    if (!secretKey) {
+        console.error('FATAL: JWT_SECRET missing in Middleware');
+        return NextResponse.redirect(new URL('/login', request.url));
+    }
     const key = new TextEncoder().encode(secretKey);
     
-    await jwtVerify(token, key, { algorithms: ['HS256'] });
+    const { payload } = await jwtVerify(token, key, { algorithms: ['HS256'] });
+
+    // Autorisation spécifique pour les APIs de stats/diagnostics
+    if (pathname.startsWith('/api/stats') || pathname.startsWith('/api/diagnostics')) {
+      if (payload.role !== 'SUPER_ADMIN') {
+        return NextResponse.json({ error: 'Accès refusé. Réservé au Super Admin.' }, { status: 403 });
+      }
+    }
 
     // 4. Configuration des headers de sécurité (Niveau Bancaire / ERP)
     const response = NextResponse.next();
