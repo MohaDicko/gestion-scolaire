@@ -8,36 +8,26 @@ services:
     environment:
       POSTGRES_USER: schooladmin
       POSTGRES_PASSWORD: schoolpassword
-      POSTGRES_DB: SchoolERP_Dev
+      POSTGRES_DB: schoolerp_dev
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  backend:
+  app:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
-    container_name: schoolerp-api
+    container_name: schoolerp-app
+    restart: always
     depends_on:
       - db
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=db;Database=SchoolERP_Dev;Username=schooladmin;Password=schoolpassword
-      - Jwt__Key=SchoolERP_SuperSecret_JWT_Key_2025_Min32Chars!
-      - Cors__AllowedOrigins=http://localhost:80
+      DATABASE_URL: postgresql://schooladmin:schoolpassword@db:5432/schoolerp_dev?schema=public
+      JWT_SECRET: ${JWT_SECRET:-super-secret-key-change-me-in-production}
+      NODE_ENV: development
     ports:
-      - "5000:8080"
-
-  frontend:
-    build:
-      context: ./school-erp-frontend
-      dockerfile: Dockerfile
-    container_name: schoolerp-web
-    depends_on:
-      - backend
-    ports:
-      - "80:80"
+      - "3000:3000"
 
 volumes:
   postgres_data:

@@ -45,12 +45,24 @@ Accès : `http://localhost:3000`
 
 ---
 
-## 🔑 Identifiants de Test (Admin par défaut)
-| Champ | Valeur |
-| :--- | :--- |
-| **Email** | `admin@schoolerp.com` |
-| **Mot de passe** | `admin123` |
-| **Rôle** | `SCHOOL_ADMIN` |
+### 5. Docker Deployment (Recommended for Production)
+```bash
+# Lancer l'environnement complet (App + Postgres)
+docker-compose up --build -d
+
+# Initialiser la base de données Docker
+docker-compose exec app npx prisma db push
+docker-compose exec app npx prisma db seed
+```
+
+---
+
+## 🔑 Identifiants de Test
+| Champ | Valeur | Rôle |
+| :--- | :--- | :--- |
+| **Email** | `superadmin@schoolerp.com` | `SUPER_ADMIN` (Global SaaS Control) |
+| **Email** | `admin@schoolerp.com` | `SCHOOL_ADMIN` (Local School Control) |
+| **Mot de passe** | `admin123` | (Commun aux deux) |
 
 ---
 

@@ -11,7 +11,8 @@ export default function StudentCardsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState<any>(null);
+    const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+    const [showPreview, setShowPreview] = useState(false);
 
     useEffect(() => {
         setIsLoading(true);
@@ -42,7 +43,9 @@ export default function StudentCardsPage() {
             let x = marginX;
             let y = marginY;
 
-            students.forEach((student, index) => {
+            const studentsToPrint = students.filter(s => selectedStudents.size === 0 || selectedStudents.has(s.id));
+
+            studentsToPrint.forEach((student, index) => {
                 if (index > 0 && index % 10 === 0) {
                     doc.addPage();
                     x = marginX;
@@ -61,15 +64,23 @@ export default function StudentCardsPage() {
                     doc.line(x + i, y, x + cardWidth - i, y + cardHeight);
                 }
 
+                // --- Bandeau Couleurs Mali (Subtil en haut) ---
+                doc.setFillColor(0, 154, 68); // Vert
+                doc.rect(x, y, cardWidth/3, 1, 'F');
+                doc.setFillColor(252, 209, 22); // Jaune
+                doc.rect(x + cardWidth/3, y, cardWidth/3, 1, 'F');
+                doc.setFillColor(206, 17, 38); // Rouge
+                doc.rect(x + 2*cardWidth/3, y, cardWidth/3, 1, 'F');
+
                 // --- Header de la carte ---
                 doc.setFillColor(30, 41, 59); // Dark slate for premium feel
-                doc.roundedRect(x, y, cardWidth, 14, 4, 4, 'F');
+                doc.roundedRect(x, y + 1, cardWidth, 13, 4, 4, 'F');
                 doc.rect(x, y + 7, cardWidth, 7, 'F');
                 
                 doc.setTextColor(255, 255, 255);
                 doc.setFontSize(7);
                 doc.setFont('helvetica', 'normal');
-                doc.text('RÉPUBLIQUE DU MALI', x + cardWidth / 2, y + 4.5, { align: 'center' });
+                doc.text('RÉPUBLIQUE DU MALI', x + cardWidth / 2, y + 5.5, { align: 'center' });
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'bold');
                 doc.text('CARTE D\'IDENTITÉ SCOLAIRE', x + cardWidth / 2, y + 10, { align: 'center' });
@@ -200,19 +211,23 @@ export default function StudentCardsPage() {
                 </div>
                 
                 <div style={{ display: 'flex', gap: '12px' }}>
-                    <button className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Eye size={18} /> Aperçu
+                    <button 
+                        className="btn-outline" 
+                        onClick={() => setSelectedStudents(new Set(students.map(s => s.id)))}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                        <Users size={18} /> Tout sélectionner
                     </button>
                     <button 
                         className="btn-primary" 
                         onClick={generatePDF} 
                         disabled={students.length === 0 || isGenerating}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '12px', fontWeight: 600 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '12px', fontWeight: 600, background: selectedStudents.size > 0 ? '#10b981' : '#4f8ef7' }}
                     >
                         {isGenerating ? (
                             <><Loader2 size={18} className="spin" /> Génération...</>
                         ) : (
-                            <><Printer size={18} /> Imprimer en PDF</>
+                            <><Printer size={18} /> Imprimer {selectedStudents.size > 0 ? `(${selectedStudents.size})` : 'Tout'} en PDF</>
                         )}
                     </button>
                 </div>
@@ -238,9 +253,21 @@ export default function StudentCardsPage() {
                         </div>
                     ) : students.length > 0 ? (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '32px' }}>
-                            {students.map(student => (
-                                <div key={student.id} className="id-card-visual">
+                            {students.map(student => {
+                                const isSelected = selectedStudents.has(student.id);
+                                return (
+                                <div 
+                                    key={student.id} 
+                                    className={`id-card-visual ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => {
+                                        const newSelected = new Set(selectedStudents);
+                                        if (isSelected) newSelected.delete(student.id);
+                                        else newSelected.add(student.id);
+                                        setSelectedStudents(newSelected);
+                                    }}
+                                >
                                     <div className="id-card-inner">
+                                        <div className="id-card-mali-strip"></div>
                                         <div className="id-card-header">
                                             <div className="school-logo-mini"></div>
                                             <div className="id-card-header-text">
@@ -281,11 +308,14 @@ export default function StudentCardsPage() {
                                     </div>
                                     
                                     <div className="id-card-actions">
-                                        <button className="id-card-btn"><Eye size={14} /> Voir</button>
-                                        <button className="id-card-btn"><Download size={14} /> PNG</button>
+                                        <div style={{ fontSize: '11px', color: isSelected ? '#10b981' : '#94a3b8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            {isSelected ? <ShieldCheck size={14} /> : null}
+                                            {isSelected ? 'SÉLECTIONNÉ' : 'CLIQUEZ POUR SÉLECTIONNER'}
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div style={{ padding: '80px', textAlign: 'center', opacity: 0.5 }}>

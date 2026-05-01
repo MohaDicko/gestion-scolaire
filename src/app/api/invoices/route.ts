@@ -6,9 +6,15 @@ export async function GET(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const { searchParams } = new URL(request.url);
+  const studentId = searchParams.get('studentId');
+
   try {
     const invoices = await prisma.invoice.findMany({
-      where: { tenantId: session.tenantId },
+      where: { 
+        tenantId: session.tenantId,
+        studentId: studentId || undefined
+      },
       include: {
         student: { select: { firstName: true, lastName: true, studentNumber: true } }
       },

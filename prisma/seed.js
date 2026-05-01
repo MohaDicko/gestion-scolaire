@@ -50,8 +50,23 @@ async function main() {
     },
   });
 
-  // 2. Utilisateur Admin
+  // 2. Utilisateurs (Super Admin et Admin Ecole)
   const pass = await bcrypt.hash('admin123', 10);
+  
+  // Super Admin (SaaS Controller)
+  await prisma.user.upsert({
+    where: { email: 'superadmin@schoolerp.com' },
+    update: { password: pass },
+    create: {
+      email: 'superadmin@schoolerp.com',
+      password: pass,
+      firstName: 'Mohamed',
+      lastName: 'Dicko',
+      role: 'SUPER_ADMIN',
+    },
+  });
+
+  // Admin École 1
   await prisma.user.upsert({
     where: { email: 'admin@schoolerp.com' },
     update: { tenantId: school.id, password: pass },
@@ -62,6 +77,23 @@ async function main() {
       firstName: 'Directeur',
       lastName: 'Maïga',
       role: 'SCHOOL_ADMIN',
+    },
+  });
+
+  // 2b. Deuxième École pour test Multi-tenant
+  const school2 = await prisma.school.upsert({
+    where: { code: 'SCH-002' },
+    update: {},
+    create: {
+      name: 'Lycée Massa Makan Diabaté',
+      code: 'SCH-002',
+      address: 'Sébénikoro, Bamako',
+      city: 'Bamako',
+      country: 'Mali',
+      phoneNumber: '+223 20 22 11 00',
+      email: 'massa@makan.ml',
+      type: 'LYCEE',
+      isSetupComplete: true,
     },
   });
 
@@ -159,6 +191,68 @@ async function main() {
       });
     }
   }
+  
+  // 5. Personnel et Paie (Test Malien)
+  console.log('💰 Génération du personnel et de la paie...');
+  const dept = await prisma.department.create({
+    data: {
+      tenantId: school.id,
+      name: 'Corps Enseignant',
+      code: 'TEACH',
+    }
+  });
+
+  const employee = await prisma.employee.create({
+    data: {
+      tenantId: school.id,
+      employeeNumber: 'EMP-2025-001',
+      firstName: 'Ibrahim',
+      lastName: 'Keita',
+      email: 'i.keita@excellence.ml',
+      phoneNumber: '+223 76 00 11 22',
+      dateOfBirth: new Date('1985-05-15'),
+      gender: 'MALE',
+      hireDate: new Date('2020-01-01'),
+      employeeType: 'TEACHER',
+      departmentId: dept.id,
+      campusId: campus.id,
+      contracts: {
+        create: {
+          tenantId: school.id,
+          contractType: 'CDI',
+          startDate: new Date('2020-01-01'),
+          baseSalary: 450000,
+          status: 'ACTIVE'
+        }
+      }
+    }
+  });
+
+  // Création d'un bulletin (Simulation calculs Mali)
+  // Brut: 450000
+  // INPS (3.06%): 13770
+  // AMO (1.5%): 6750
+  // ITS (Estimé): ~45000
+  await prisma.payslip.create({
+    data: {
+      tenantId: school.id,
+      employeeId: employee.id,
+      periodStart: new Date('2025-03-01'),
+      periodEnd: new Date('2025-03-31'),
+      baseSalary: 450000,
+      taxableBonuses: 0,
+      nonTaxableBonuses: 25000, // Indemnité transport
+      grossSalary: 450000,
+      inpsEmployee: 13770,
+      amoEmployee: 6750,
+      totalDeductions: 20520,
+      fiscalBase: 429480,
+      its: 44250,
+      netSalary: 410230,
+      status: 'FINALIZED',
+      numberOfChildren: 2
+    }
+  });
 
   console.log('✅ RE-SEEDING TERMINÉ !');
 }

@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env
+.env*.local
+.vercel
+README.md
+README_VERCEL.md
+docker-compose*.yml
+Dockerfile
+.legacy-frontend-archive
+scratch
+scripts

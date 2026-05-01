@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Printer, Loader2, AlertCircle, FileText, CheckCircle2 } from 'lucide-react';
+import { Printer, Loader2, AlertCircle, FileText, CheckCircle2, Mail } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 
@@ -12,6 +12,7 @@ export default function BatchBulletinsPage() {
   const [form, setForm] = useState({ classroomId: '', academicYearId: '', trimestre: '1' });
   const [reportData, setReportData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -35,34 +36,16 @@ export default function BatchBulletinsPage() {
     
     setIsLoading(true);
     try {
-      // Dans un vrai cas, on ferait un endpoint dédié qui renvoie les notes agrégées par élève.
-      // Ici, on va d'abord chercher les élèves de la classe
-      const res = await fetch(`/api/enrollments?classroomId=${form.classroomId}&academicYearId=${form.academicYearId}`);
+      const res = await fetch(`/api/reports/bulletins?classroomId=${form.classroomId}&academicYearId=${form.academicYearId}&trimestre=${form.trimestre}`);
       if (!res.ok) throw new Error();
-      const students = await res.json();
+      const data = await res.json();
       
-      // On mock les données de bulletins pour la démonstration du batch print
-      // (Dans la vraie vie on ferait un /api/reports/bulletins?classId=...)
-      const generatedReports = students.map((e: any) => ({
-        student: e.student,
-        classroom: classrooms.find(c => c.id === form.classroomId)?.name,
-        trimestre: form.trimestre,
-        year: years.find(y => y.id === form.academicYearId)?.name,
-        grades: [
-          { subject: 'Mathématiques', score: (Math.random() * 10 + 10).toFixed(2), coeff: 4 },
-          { subject: 'Français', score: (Math.random() * 10 + 10).toFixed(2), coeff: 3 },
-          { subject: 'Physique-Chimie', score: (Math.random() * 10 + 10).toFixed(2), coeff: 3 },
-          { subject: 'SVT', score: (Math.random() * 10 + 10).toFixed(2), coeff: 2 },
-          { subject: 'Anglais', score: (Math.random() * 10 + 10).toFixed(2), coeff: 2 },
-          { subject: 'Histoire-Géo', score: (Math.random() * 10 + 10).toFixed(2), coeff: 2 },
-        ],
-        generalAverage: (Math.random() * 5 + 12).toFixed(2),
-        rank: Math.floor(Math.random() * 30) + 1,
-        totalStudents: students.length
-      }));
+      if (data.length === 0) {
+        toast.info('Aucune note trouvée pour cette classe et ce trimestre.');
+      }
       
-      setReportData(generatedReports);
-      toast.success(`${generatedReports.length} bulletins générés.`);
+      setReportData(data);
+      toast.success(`${data.length} bulletins générés.`);
     } catch {
       toast.error('Erreur lors de la génération.');
     } finally {
@@ -72,6 +55,31 @@ export default function BatchBulletinsPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const sendByEmail = async () => {
+    if (reportData.length === 0) return;
+    
+    setIsSending(true);
+    try {
+      const trimestreLabel = form.trimestre === '1' ? '1er Trimestre' : form.trimestre === '2' ? '2ème Trimestre' : '3ème Trimestre';
+      const res = await fetch('/api/reports/bulletins/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bulletins: reportData, trimestreLabel })
+      });
+      
+      const result = await res.json();
+      if (result.success) {
+        toast.success(`${result.sent} emails envoyés sur ${result.total}.`);
+      } else {
+        toast.error('Échec de l\'envoi des emails.');
+      }
+    } catch {
+      toast.error('Erreur réseau lors de l\'envoi.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -170,10 +178,18 @@ export default function BatchBulletinsPage() {
             <button 
               onClick={handlePrint} 
               disabled={reportData.length === 0}
-              className="flex-1 bg-blue-600 text-white p-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 bg-white text-slate-800 border border-slate-300 p-2 rounded-lg font-semibold hover:bg-slate-50 transition flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Printer size={18} />
               Imprimer
+            </button>
+            <button 
+              onClick={sendByEmail} 
+              disabled={reportData.length === 0 || isSending}
+              className="flex-1 bg-blue-600 text-white p-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {isSending ? <Loader2 size={18} className="animate-spin" /> : <Mail size={18} />}
+              Envoyer (Email)
             </button>
           </div>
         </div>
@@ -186,72 +202,116 @@ export default function BatchBulletinsPage() {
             <div key={idx} className="bulletin-page bulletin-card text-slate-800">
               {/* En-tête officiel Malien */}
               <div className="bulletin-header">
-                <div className="text-center">
-                  <h4 className="font-bold text-sm">RÉPUBLIQUE DU MALI</h4>
-                  <p className="text-xs italic">Un Peuple - Un But - Une Foi</p>
-                  <p className="text-xs mt-2 font-bold">MINISTÈRE DE L'ÉDUCATION NATIONALE</p>
+                <div className="text-center" style={{ width: '30%' }}>
+                  <h4 className="font-bold text-[10px]">RÉPUBLIQUE DU MALI</h4>
+                  <p className="text-[8px] italic">Un Peuple - Un But - Une Foi</p>
+                  <div className="my-2 border-b border-slate-300 w-10 mx-auto"></div>
+                  <p className="text-[9px] font-bold">MINISTÈRE DE L'ÉDUCATION NATIONALE</p>
+                  <p className="text-[8px] font-semibold mt-1">ACADÉMIE D'ENSEIGNEMENT DE BAMAKO</p>
                 </div>
-                <div className="text-right">
-                  <h2 className="text-xl font-black text-slate-900 tracking-tight">BULLETIN DE NOTES</h2>
-                  <p className="text-sm font-semibold mt-1">Année Scolaire : {report.year}</p>
-                  <p className="text-sm font-semibold">Trimestre {report.trimestre}</p>
+                
+                <div className="text-center" style={{ width: '40%' }}>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tighter">BULLETIN DE NOTES</h2>
+                  <div className="bg-slate-900 text-white text-[10px] py-1 px-3 rounded-full inline-block mt-2 font-bold uppercase tracking-widest">
+                    {form.trimestre === '1' ? '1er Trimestre' : form.trimestre === '2' ? '2ème Trimestre' : '3ème Trimestre'}
+                  </div>
+                  <p className="text-xs font-bold mt-2">Année Scolaire : {years.find(y => y.id === form.academicYearId)?.name}</p>
+                </div>
+
+                <div className="text-right" style={{ width: '30%' }}>
+                   <div className="w-16 h-16 bg-slate-100 border border-slate-200 rounded-lg ml-auto mb-2 flex items-center justify-center">
+                      <span className="text-[8px] text-slate-400">LOGO ÉCOLE</span>
+                   </div>
                 </div>
               </div>
 
               {/* Infos de l'élève */}
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6 grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm"><span className="font-semibold text-slate-500">Nom & Prénoms:</span> <strong className="text-lg">{report.student.firstName} {report.student.lastName}</strong></p>
-                  <p className="text-sm"><span className="font-semibold text-slate-500">Matricule:</span> {report.student.studentNumber}</p>
+              <div className="grid grid-cols-2 gap-8 mb-6 mt-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Élève</p>
+                  <p className="text-lg font-black text-slate-900">{report.studentName}</p>
+                  <div className="flex gap-4 text-xs">
+                    <p><span className="text-slate-500">Matricule:</span> <span className="font-bold">{report.studentNumber}</span></p>
+                    <p><span className="text-slate-500">Sexe:</span> <span className="font-bold">M</span></p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm"><span className="font-semibold text-slate-500">Classe:</span> <strong>{report.classroom}</strong></p>
-                  <p className="text-sm"><span className="font-semibold text-slate-500">Effectif:</span> {report.totalStudents} élèves</p>
+                <div className="text-right space-y-1">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Classe & Effectif</p>
+                  <p className="text-lg font-black text-slate-900">{classrooms.find(c => c.id === form.classroomId)?.name}</p>
+                  <p className="text-xs"><span className="text-slate-500">Effectif de la classe:</span> <span className="font-bold">{report.classSize} élèves</span></p>
                 </div>
               </div>
 
               {/* Tableau des notes */}
               <table className="bulletin-table">
                 <thead>
-                  <tr>
-                    <th className="text-left w-1/3">Matière</th>
+                  <tr className="bg-slate-900 text-white">
+                    <th className="text-left w-1/4">Matières</th>
                     <th>Coeff</th>
-                    <th>Moyenne (sur 20)</th>
-                    <th>Moy. x Coeff</th>
-                    <th className="w-1/3">Appréciation du Professeur</th>
+                    <th>Moy. Classe (1/3)</th>
+                    <th>Moy. Compo (2/3)</th>
+                    <th>Moy. Matière</th>
+                    <th>Moy. Pondérée</th>
+                    <th>Appréciation</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {report.grades.map((g: any, i: number) => (
-                    <tr key={i}>
-                      <td className="text-left font-semibold">{g.subject}</td>
-                      <td>{g.coeff}</td>
-                      <td className="font-bold">{g.score}</td>
-                      <td className="font-bold bg-slate-50">{(parseFloat(g.score) * g.coeff).toFixed(2)}</td>
-                      <td className="text-xs text-slate-600 italic text-left">Travail satisfaisant dans l'ensemble.</td>
+                  {report.subjects.map((s: any, i: number) => (
+                    <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                      <td className="text-left font-bold text-slate-800">{s.subjectName}</td>
+                      <td className="font-bold">{s.coefficient}</td>
+                      <td className="text-slate-500">{s.moyenneClasse}</td>
+                      <td className="text-slate-500">{s.moyenneComposition}</td>
+                      <td className="bg-blue-50/30 font-black text-slate-900">{s.average}</td>
+                      <td className="font-black">{(s.average * s.coefficient).toFixed(2)}</td>
+                      <td className="text-[10px] italic text-slate-500 text-left">{s.mention}</td>
                     </tr>
                   ))}
-                  <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                    <td className="text-right" colSpan={3}>Moyenne Générale du Trimestre :</td>
-                    <td className="text-lg text-blue-600">{report.generalAverage}</td>
-                    <td></td>
+                  <tr className="bg-slate-900 text-white font-black">
+                    <td className="text-right" colSpan={4}>TOTAL GÉNÉRAL</td>
+                    <td>—</td>
+                    <td>{report.totalPoints}</td>
+                    <td>/ {report.totalCoefficients * 20}</td>
                   </tr>
                 </tbody>
               </table>
 
-              {/* Bilan & Signatures */}
-              <div className="mt-8 flex justify-between">
-                <div className="w-1/3 border border-slate-300 rounded p-3">
-                  <h5 className="font-bold text-sm border-b border-slate-200 pb-2 mb-2">Bilan Trimestriel</h5>
-                  <p className="text-sm flex justify-between">Rang: <strong>{report.rank}e / {report.totalStudents}</strong></p>
-                  <p className="text-sm flex justify-between mt-1">Conduite: <strong>Très Bien</strong></p>
-                  <p className="text-sm flex justify-between mt-1">Absences: <strong>0h</strong></p>
+              {/* Résultats & Bilan */}
+              <div className="grid grid-cols-3 gap-6 mt-8">
+                <div className="col-span-1 border-2 border-slate-900 rounded-xl p-4 bg-slate-50">
+                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Résultats du Trimestre</h4>
+                   <div className="space-y-2">
+                      <div className="flex justify-between items-end border-b border-slate-200 pb-1">
+                         <span className="text-xs font-bold">MOYENNE GÉNÉRALE</span>
+                         <span className="text-xl font-black text-blue-600">{report.generalAverage}</span>
+                      </div>
+                      <div className="flex justify-between items-end border-b border-slate-200 pb-1">
+                         <span className="text-xs font-bold">RANG</span>
+                         <span className="text-lg font-black">{report.rank}<sup>{report.rank === 1 ? 'er' : 'ème'}</sup> / {report.classSize}</span>
+                      </div>
+                      <div className="flex justify-between items-end">
+                         <span className="text-xs font-bold">MENTION</span>
+                         <span className="text-sm font-black uppercase">{report.mention}</span>
+                      </div>
+                   </div>
                 </div>
-                
-                <div className="w-1/3 text-center">
-                  <p className="font-bold text-sm underline mb-16">Le Directeur des Études</p>
-                  <p className="text-xs text-slate-400">(Signature et Cachet)</p>
+
+                <div className="col-span-1 flex flex-col items-center justify-start pt-4">
+                  <div className="w-24 h-24 border-2 border-slate-200 rounded-full flex items-center justify-center text-[8px] text-slate-300 uppercase font-black text-center p-4">
+                    Cachet de l'établissement
+                  </div>
                 </div>
+
+                <div className="col-span-1 text-center pt-4">
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-16">Le Directeur des Études</p>
+                  <div className="w-40 h-0.5 bg-slate-900 mx-auto"></div>
+                  <p className="text-[9px] font-bold mt-2">M. Abdoulaye DIARRA</p>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+                <span>Généré par SchoolERP Pro — {new Date().toLocaleDateString('fr-FR')}</span>
+                <span>Page {idx + 1} / {reportData.length}</span>
               </div>
             </div>
           ))}

@@ -61,17 +61,46 @@ export const sendInvoiceNotification = async (parentEmail: string, studentName: 
   return sendEmail({ to: parentEmail, subject: `Facture de scolarité - ${studentName}`, html });
 };
 
-// 2. Alerte d'absence
-export const sendAbsenceAlert = async (parentEmail: string, studentName: string, date: string) => {
+// 3. Envoi de Bulletin de Notes
+export const sendReportCardEmail = async (parentEmail: string, studentName: string, average: number, rank: number, trimestre: string) => {
+  const isPassing = average >= 10;
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
-      <h2 style="color: #f43f5e;">Alerte Absence</h2>
-      <p>Bonjour,</p>
-      <p>Nous vous informons que votre enfant <strong>${studentName}</strong> a été marqué(e) <strong>absent(e)</strong> aujourd'hui (${date}).</p>
-      <p>Veuillez contacter l'administration de l'établissement pour justifier cette absence.</p>
-      <p style="margin-top: 30px; font-size: 12px; color: #64748b;">L'équipe Vie Scolaire - SchoolERP Pro</p>
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+      <div style="background-color: #1e293b; color: white; padding: 30px; text-align: center;">
+        <h1 style="margin: 0; font-size: 20px;">Bulletin de Notes Officiel</h1>
+        <p style="margin: 5px 0 0 0; opacity: 0.8; font-size: 14px;">${trimestre} — Année Scolaire 2024-2025</p>
+      </div>
+      <div style="padding: 30px; line-height: 1.6; color: #334155;">
+        <p>Chers parents,</p>
+        <p>Le bulletin de notes de <strong>${studentName}</strong> est désormais disponible. Voici un résumé des résultats :</p>
+        
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
+          <div style="display: inline-block; margin: 0 15px;">
+            <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase;">Moyenne</p>
+            <p style="margin: 0; font-size: 28px; font-weight: 800; color: ${isPassing ? '#10b981' : '#f43f5e'};">${average.toFixed(2)}</p>
+          </div>
+          <div style="display: inline-block; margin: 0 15px; border-left: 1px solid #e2e8f0; padding-left: 30px;">
+            <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase;">Rang</p>
+            <p style="margin: 0; font-size: 28px; font-weight: 800; color: #1e293b;">${rank}<sup>${rank === 1 ? 'er' : 'ème'}</sup></p>
+          </div>
+        </div>
+
+        <p>Vous pouvez consulter le détail complet des notes, les appréciations des professeurs et télécharger le bulletin au format PDF via votre espace parent.</p>
+        
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="https://gestion-scolaire-livid.vercel.app/login" style="background-color: #4f8ef7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Accéder au Portail Parent</a>
+        </div>
+      </div>
+      <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
+        Ce message est une notification automatique. Merci de ne pas y répondre directement.<br>
+        <strong>© 2025 SchoolERP Pro — Modernisation de l'Éducation</strong>
+      </div>
     </div>
   `;
   
-  return sendEmail({ to: parentEmail, subject: `Alerte Absence - ${studentName}`, html });
+  return sendEmail({ 
+    to: parentEmail, 
+    subject: `Résultats Scolaires - ${studentName} (${trimestre})`, 
+    html 
+  });
 };
