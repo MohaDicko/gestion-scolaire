@@ -250,7 +250,24 @@ model Invoice {
   paymentMethod String?
   notes         String?
   createdAt     DateTime  @default(now())
-  student       Student   @relation(fields: [studentId], references: [id])
+
+  student  Student   @relation(fields: [studentId], references: [id])
+  payments Payment[]
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  tenantId      String
+  invoiceId     String
+  amount        Float
+  paymentDate   DateTime @default(now())
+  method        String   @default("ESPECES") // ESPECES, ORANGE_MONEY, MOOV_MONEY, VIREMENT, CHEQUE
+  reference     String?  // Numéro de reçu, ID de transaction
+  notes         String?
+  
+  createdAt     DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
 }
 
 model Timetable {
