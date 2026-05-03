@@ -413,3 +413,35 @@ enum Plan {
   BUSINESS
   ELITE
 }
+
+model AuditLog {
+  id           String      @id @default(uuid())
+  tenantId     String      // Pour isoler les logs par école
+  userId       String?     // L'utilisateur qui a fait l'action (peut être null si système)
+  userRole     String?     // Le rôle de l'utilisateur au moment de l'action
+  userEmail    String?
+  action       AuditAction
+  entityType   String      // ex: "Payment", "Grade", "Student", "Payslip"
+  entityId     String      // l'ID de l'objet modifié
+  oldValues    Json?       // Valeurs avant modification (pour l'historique)
+  newValues    Json?       // Valeurs après modification
+  ipAddress    String?
+  userAgent    String?
+  description  String?     // Description lisible de l'action
+  createdAt    DateTime    @default(now())
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  APPROVE
+  REJECT
+}

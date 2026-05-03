@@ -2,12 +2,18 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMaliPayroll } from '@/lib/maliPayroll';
 import { getSession } from '@/lib/auth';
+import { isFeatureAllowed } from '@/lib/plans';
 
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
+    const school = await prisma.school.findUnique({ where: { id: session.tenantId } });
+    if (!school || !isFeatureAllowed(school.plan, 'hasHR')) {
+      return NextResponse.json({ error: 'Le module Paie/RH n\'est pas inclus dans votre plan actuel.' }, { status: 403 });
+    }
+
     const { periodStart, periodEnd } = await request.json();
 
     if (!periodStart || !periodEnd) {

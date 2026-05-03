@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { isFeatureAllowed } from '@/lib/plans';
 
 export async function GET() {
   const session = await getSession();
@@ -23,6 +24,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
   }
   try {
+    const school = await prisma.school.findUnique({ where: { id: session.tenantId } });
+    if (!school) return NextResponse.json({ error: 'École non trouvée' }, { status: 404 });
+
+    if (!isFeatureAllowed(school.plan, 'hasMultiCampus')) {
+      const campusCount = await prisma.campus.count({ where: { tenantId: session.tenantId } });
+      if (campusCount >= 1) {
+        return NextResponse.json({ error: `Le plan ${school.plan} ne permet pas de créer plusieurs campus.` }, { status: 403 });
+      }
+    }
+
     const { name, address, city, region, phoneNumber, email, managerName } = await request.json();
     if (!name || !address || !city || !region || !phoneNumber) {
       return NextResponse.json({ error: 'Champs obligatoires manquants' }, { status: 400 });

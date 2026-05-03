@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
+import { getStudentLimit } from '@/lib/plans';
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -55,6 +56,16 @@ export async function POST(request: Request) {
   }
 
   try {
+    const school = await prisma.school.findUnique({ where: { id: session.tenantId } });
+    if (!school) return NextResponse.json({ error: 'École non trouvée' }, { status: 404 });
+
+    const currentStudentCount = await prisma.student.count({ where: { tenantId: session.tenantId } });
+    const limit = getStudentLimit(school.plan);
+    
+    if (currentStudentCount >= limit) {
+      return NextResponse.json({ error: `Le plan ${school.plan} est limité à ${limit} élèves. Veuillez passer au niveau supérieur.` }, { status: 403 });
+    }
+
     const body = await request.json();
     const uniqueNumber = `STU-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
 

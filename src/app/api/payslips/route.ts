@@ -2,10 +2,17 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { calculateMaliPayroll } from '@/lib/maliPayroll';
+import { isFeatureAllowed } from '@/lib/plans';
+import { logAudit } from '@/lib/audit';
 
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const school = await prisma.school.findUnique({ where: { id: session.tenantId } });
+  if (!school || !isFeatureAllowed(school.plan, 'hasHR')) {
+    return NextResponse.json({ error: 'Le module Paie/RH n\'est pas inclus dans votre plan actuel.' }, { status: 403 });
+  }
 
   const url = new URL(request.url);
   const employeeId = url.searchParams.get('employeeId');
@@ -33,6 +40,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const school = await prisma.school.findUnique({ where: { id: session.tenantId } });
+  if (!school || !isFeatureAllowed(school.plan, 'hasHR')) {
+    return NextResponse.json({ error: 'Le module Paie/RH n\'est pas inclus dans votre plan actuel.' }, { status: 403 });
+  }
 
   if (!['SUPER_ADMIN', 'SCHOOL_ADMIN', 'HR_MANAGER'].includes(session.role)) {
     return NextResponse.json({ error: 'Accès refusé — droits insuffisants' }, { status: 403 });
@@ -118,6 +130,15 @@ export async function POST(request: Request) {
       include: {
         employee: { select: { firstName: true, lastName: true, employeeNumber: true } }
       }
+    });
+
+    // ── Enregistrement dans la piste d'audit Enterprise ────────
+    await logAudit({
+      action: 'CREATE',
+      entityType: 'Payslip',
+      entityId: payslip.id,
+      description: `Génération fiche de paie pour l'employé ${employee.firstName} ${employee.lastName} (Net: ${payroll.netSalary} FCFA)`,
+      request,
     });
 
     return NextResponse.json({
