@@ -2,297 +2,287 @@
 
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { FileText, Download, Search, Loader2, Award, ChevronsRight } from 'lucide-react';
+import { FileText, Download, Search, Loader2, Award } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useToast } from '@/components/Toast';
 
+interface TranscriptData {
+  school: { name: string; city: string; motto: string };
+  student: { studentNumber: string; firstName: string; lastName: string; dateOfBirth: string; gender: string; campus: string };
+  enrollment: { classroom: string; level: string; series: string; academicYear: string };
+  subjectResults: {
+    subjectName: string; subjectCode: string; coefficient: number;
+    t1?: number; t2?: number; t3?: number; annualAvg: number | null; weighted: number | null; mention: string;
+  }[];
+  summary: { generalAverage: number | null; generalMention: string; totalCoeff: number; subjectCount: number };
+}
+
 export default function TranscriptsPage() {
-    const [students, setStudents] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-    const [isGenerating, setIsGenerating] = useState(false);
-    const toast = useToast();
+  const [students, setStudents] = useState<any[]>([]);
+  const [years, setYears] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedYearId, setSelectedYearId] = useState('');
+  const [isGenerating, setIsGenerating] = useState<string | null>(null);
+  const toast = useToast();
 
-    // Récupérer la liste des élèves
-    useEffect(() => {
-        setIsLoading(true);
-        fetch(`/api/students?search=${searchTerm}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.items) setStudents(data.items);
-                setIsLoading(false);
-            })
-            .catch(() => {
-                toast.error("Erreur de chargement des élèves");
-                setIsLoading(false);
-            });
-    }, [searchTerm, toast]);
+  useEffect(() => {
+    fetch('/api/academic-years').then(r => r.json()).then(d => {
+      if (Array.isArray(d)) {
+        setYears(d);
+        const active = d.find((y: any) => y.isActive);
+        if (active) setSelectedYearId(active.id);
+      }
+    });
+  }, []);
 
-    const handleGenerateTranscript = async (studentId: string) => {
-        setIsGenerating(true);
-        setSelectedStudentId(studentId);
-        
-        try {
-            // MOCK DATA FETCH (A remplacer par un vrai endpoint API /api/reports/transcripts?studentId=...)
-            // Normalement, ça devrait inclure toutes les notes classées par matière pour l'année
-            const res = await fetch(`/api/students`); // Dummy call
-            const student = students.find(s => s.id === studentId);
-            
-            if (!student) throw new Error("Élève introuvable");
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setIsLoading(true);
+      fetch(`/api/students?search=${encodeURIComponent(searchTerm)}&pageSize=30`)
+        .then(r => r.json())
+        .then(d => { setStudents(d.items || []); setIsLoading(false); })
+        .catch(() => setIsLoading(false));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-            // --- GÉNÉRATION DU PDF (RELEVÉ DE NOTES OFFICIEL) ---
-            const doc = new jsPDF();
-            
-            // Formatage de la date en français
-            const today = new Date().toLocaleDateString('fr-FR', {
-                year: 'numeric', month: 'long', day: 'numeric'
-            });
+  const handleGenerate = async (student: any) => {
+    if (!selectedYearId) { toast.warning('Veuillez sélectionner une année académique.'); return; }
+    setIsGenerating(student.id);
+    try {
+      const r = await fetch(`/api/reports/transcripts?studentId=${student.id}&academicYearId=${selectedYearId}`);
+      if (!r.ok) throw new Error('Données insuffisantes pour ce relevé.');
+      const data: TranscriptData = await r.json();
 
-            // 1. En-tête Institutionnel
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(16);
-            doc.setTextColor(30, 45, 74);
-            doc.text('RÉPUBLIQUE DU MALI', 105, 20, { align: 'center' });
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Un Peuple - Un But - Une Foi', 105, 26, { align: 'center' });
-            
-            doc.setDrawColor(30, 45, 74);
-            doc.setLineWidth(0.5);
-            doc.line(80, 29, 130, 29);
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+      const pageW = 210; const margin = 14;
+      const today = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-            // 2. Info de l'Établissement (Haut Gauche)
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.text('SCHOOL ERP PRO', 14, 40);
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Ministère de l\'Éducation Nationale', 14, 45);
-            doc.text('Année Académique: 2024 - 2025', 14, 50);
+      // ── En-tête ──────────────────────────────────────────────────────
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, pageW, 32, 'F');
+      doc.setFillColor(0, 154, 68); doc.rect(0, 0, pageW / 3, 2.5, 'F');
+      doc.setFillColor(252, 209, 22); doc.rect(pageW / 3, 0, pageW / 3, 2.5, 'F');
+      doc.setFillColor(206, 17, 38); doc.rect(2 * pageW / 3, 0, pageW / 3, 2.5, 'F');
 
-            // 3. Titre du Document
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(79, 142, 247); // Primary color
-            const title = 'RELEVÉ DE NOTES OFFICIEL';
-            doc.text(title, 105, 70, { align: 'center' });
-            
-            doc.setDrawColor(79, 142, 247);
-            doc.line(60, 72, 150, 72);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
+      doc.text('RÉPUBLIQUE DU MALI — MINISTÈRE DE L\'ÉDUCATION NATIONALE', pageW / 2, 9, { align: 'center' });
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      doc.text(data.school.name.toUpperCase(), pageW / 2, 17, { align: 'center' });
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      doc.text('RELEVÉ DE NOTES ANNUEL OFFICIEL', pageW / 2, 24, { align: 'center' });
 
-            // 4. Identité de l'apprenant
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(11);
-            
-            doc.setFillColor(245, 248, 255);
-            doc.rect(14, 80, 182, 35, 'F');
-            
-            doc.text('Identification de l\'étudiant(e)', 18, 87);
-            doc.setLineWidth(0.2);
-            doc.line(18, 89, 65, 89);
-            
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Nom : ${student.lastName}`, 20, 97);
-            doc.text(`Prénom(s) : ${student.firstName}`, 20, 104);
-            
-            // Colonne 2 du bloc Info
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Matricule :`, 120, 97);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`${student.studentNumber || 'Non attribué'}`, 150, 97);
+      let y = 40;
 
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Série/Filière :`, 120, 104);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Sciences Exactes (Ex)`, 150, 104); 
-            
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Statut :`, 120, 111);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Régulier`, 150, 111);
+      // ── Bloc identité ─────────────────────────────────────────────────
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.3);
+      doc.roundedRect(margin, y, pageW - 2 * margin, 30, 2, 2, 'FD');
 
-            // 5. Tableau des Notes (Transcripts Data)
-            // Dans un vrai système, ces données viendront des Grade / Subject de la DB
-            const tableData = [
-                ['Mathématiques', '14.50', '15.00', '13.50', '4', '14.33'],
-                ['Physique-Chimie', '12.00', '11.50', '13.00', '4', '12.16'],
-                ['Biologie (SVT)', '16.00', '14.50', '15.50', '3', '15.33'],
-                ['Français', '10.50', '12.00', '11.00', '2', '11.16'],
-                ['Philosophie', '09.50', '10.00', '11.50', '2', '10.33'],
-                ['Histoire-Géo', '13.00', '14.00', '12.50', '2', '13.16'],
-                ['Anglais', '15.00', '16.50', '14.00', '2', '15.16'],
-                ['Éducation Physique', '18.00', '17.50', '18.00', '1', '17.83'],
-            ];
+      doc.setTextColor(15, 23, 42); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+      doc.text('IDENTIFICATION DE L\'ÉLÈVE', margin + 5, y + 7);
 
-            autoTable(doc, {
-                startY: 125,
-                head: [['Matières', 'Note T1 (/20)', 'Note T2 (/20)', 'Note T3 (/20)', 'Coef.', 'Moy. Annuelle']],
-                body: tableData,
-                theme: 'grid',
-                headStyles: { fillColor: [79, 142, 247], textColor: 255, fontStyle: 'bold', halign: 'center' },
-                columnStyles: {
-                    0: { fontStyle: 'bold', halign: 'left' },
-                    1: { halign: 'center' },
-                    2: { halign: 'center' },
-                    3: { halign: 'center' },
-                    4: { halign: 'center', fontStyle: 'bold' },
-                    5: { halign: 'center', fontStyle: 'bold', textColor: [0, 100, 0] }
-                },
-                alternateRowStyles: { fillColor: [248, 250, 255] }
-            });
+      const idFields = [
+        ['Nom', data.student.lastName.toUpperCase()],
+        ['Prénom(s)', data.student.firstName],
+        ['Matricule', data.student.studentNumber],
+        ['Classe', data.enrollment.classroom],
+        ['Filière/Série', data.enrollment.series || data.enrollment.level || '—'],
+        ['Année Scolaire', data.enrollment.academicYear],
+        ['Campus', data.student.campus],
+        ['Date de naissance', new Date(data.student.dateOfBirth).toLocaleDateString('fr-FR')],
+      ];
 
-            const finalY = (doc as any).lastAutoTable.finalY + 10;
+      const half = Math.ceil(idFields.length / 2);
+      idFields.slice(0, half).forEach(([label, value], i) => {
+        doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
+        doc.text(`${label} :`, margin + 5, y + 14 + i * 5);
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
+        doc.text(value, margin + 30, y + 14 + i * 5);
+      });
+      idFields.slice(half).forEach(([label, value], i) => {
+        doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
+        doc.text(`${label} :`, pageW / 2 + 5, y + 14 + i * 5);
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
+        doc.text(value, pageW / 2 + 32, y + 14 + i * 5);
+      });
 
-            // 6. Tableau Récapitulatif
-            autoTable(doc, {
-                startY: finalY,
-                body: [
-                    ['Total des Coefficients', '20'],
-                    ['Moyenne Générale Annuelle', '13.68 / 20'],
-                    ['Mention', 'Assez Bien']
-                ],
-                theme: 'plain',
-                styles: { fontSize: 11, fontStyle: 'bold' },
-                columnStyles: {
-                    0: { halign: 'right', cellWidth: 100 },
-                    1: { halign: 'left', textColor: [79, 142, 247] }
-                }
-            });
+      y += 38;
 
-            // 7. Pied de page & Signatures
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(0, 0, 0);
-            
-            doc.text('Décision du conseil des professeurs :', 14, finalY + 40);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Admis(e) en classe supérieure.', 75, finalY + 40);
+      // ── Tableau des notes ─────────────────────────────────────────────
+      const tableRows = data.subjectResults.map(r => [
+        r.subjectName,
+        r.coefficient.toString(),
+        r.t1 !== undefined ? r.t1.toFixed(2) : '—',
+        r.t2 !== undefined ? r.t2.toFixed(2) : '—',
+        r.t3 !== undefined ? r.t3.toFixed(2) : '—',
+        r.annualAvg !== null ? r.annualAvg.toFixed(2) : '—',
+        r.mention,
+      ]);
 
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Fait à Bamako, le ${today}`, 130, finalY + 60);
-            
-            doc.setFont('helvetica', 'bold');
-            doc.text('Le Directeur des Études', 140, finalY + 68);
+      autoTable(doc, {
+        startY: y,
+        head: [['MATIÈRE', 'COEFF', 'T1/20', 'T2/20', 'T3/20', 'MOY. ANNUELLE', 'MENTION']],
+        body: tableRows,
+        theme: 'grid',
+        headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold', fontSize: 7.5, halign: 'center', cellPadding: 4 },
+        bodyStyles: { fontSize: 7, cellPadding: 3 },
+        columnStyles: {
+          0: { fontStyle: 'bold', halign: 'left', cellWidth: 60 },
+          1: { halign: 'center', cellWidth: 14 },
+          2: { halign: 'center', cellWidth: 20 },
+          3: { halign: 'center', cellWidth: 20 },
+          4: { halign: 'center', cellWidth: 20 },
+          5: { halign: 'center', fontStyle: 'bold', cellWidth: 24, textColor: [15, 100, 60] },
+          6: { halign: 'center', cellWidth: 28 },
+        },
+        alternateRowStyles: { fillColor: [248, 250, 255] },
+        didParseCell: (data) => {
+          if (data.column.index === 5 && data.section === 'body') {
+            const val = parseFloat(data.cell.text[0]);
+            if (!isNaN(val)) {
+              data.cell.styles.textColor = val >= 14 ? [21, 128, 61] : val >= 10 ? [30, 41, 59] : [185, 28, 28];
+            }
+          }
+        },
+      });
 
-            // Watermark (Official feel)
-            doc.setTextColor(200, 200, 200);
-            doc.setFontSize(50);
-            doc.text('COPIE ORIGINALE', 105, 180, { angle: 45, align: 'center' });
+      const finalY = (doc as any).lastAutoTable.finalY + 8;
 
-            // Sauvegarde
-            doc.save(`Releve_Notes_${student.studentNumber || student.lastName}.pdf`);
-            toast.success("Relevé de notes généré avec succès !");
+      // ── Récapitulatif ─────────────────────────────────────────────────
+      const avg = data.summary.generalAverage;
+      const avgColor: [number, number, number] = avg !== null && avg >= 14 ? [21, 128, 61] : avg !== null && avg >= 10 ? [30, 41, 59] : [185, 28, 28];
+      doc.setFillColor(avgColor[0], avgColor[1], avgColor[2]);
+      doc.roundedRect(margin, finalY, pageW - 2 * margin, 14, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+      doc.text(`MOYENNE GÉNÉRALE ANNUELLE : ${avg !== null ? avg.toFixed(2) : '—'} / 20`, margin + 6, finalY + 6);
+      doc.text(`MENTION : ${data.summary.generalMention || '—'}`, margin + 6, finalY + 11);
+      doc.setFontSize(8);
+      doc.text(`${data.summary.subjectCount} matière(s) — Total coeff. : ${data.summary.totalCoeff}`, pageW - margin - 4, finalY + 8.5, { align: 'right' });
 
-        } catch (error) {
-            toast.error("Erreur durant la génération du relevé.");
-            console.error(error);
-        } finally {
-            setIsGenerating(false);
-            setSelectedStudentId(null);
-        }
-    };
+      // ── Décision + Signatures ─────────────────────────────────────────
+      const sigY = finalY + 26;
+      doc.setTextColor(15, 23, 42); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      doc.text('Décision du Conseil :', margin, sigY);
+      doc.setFont('helvetica', 'bold');
+      doc.text(avg !== null && avg >= 10 ? 'Admis(e) en classe supérieure.' : 'Passage en conseil de classe.', margin + 35, sigY);
 
-    return (
-        <AppLayout
-            title="Relevés de Notes (Transcripts)"
-            subtitle="Génération des fiches officielles de parcours complet pour dossiers académiques"
-            breadcrumbs={[{ label: 'Évaluation', href: '/grades' }, { label: 'Relevés de Notes' }]}
-        >
-            {/* Search & Stats Bar */}
-            <div className="card shadow-md" style={{ padding: '20px', marginBottom: '24px', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
-                <div className="search-box" style={{ maxWidth: '350px', flex: 1 }}>
-                    <Search size={16} />
-                    <input
-                        type="text"
-                        placeholder="Rechercher un élève / un étudiant..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                
-                <div style={{ display: 'flex', gap: '20px', marginLeft: 'auto' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'var(--bg-fluid)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                        <Award size={18} className="text-purple" />
-                        <div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Format Saisonal</div>
-                            <div style={{ fontSize: '13px', fontWeight: 700 }}>Norme DREN/DEF</div>
-                        </div>
-                    </div>
-                </div>
+      [['Le Directeur', margin + 10], ['Le Censeur', pageW / 2 - 15], ['Signature Parent', pageW - margin - 50]].forEach(([label, x]) => {
+        doc.setDrawColor(200, 210, 220); doc.setLineWidth(0.3);
+        doc.line(+x, sigY + 20, +x + 42, sigY + 20);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(100, 116, 139);
+        doc.text(label as string, +x + 21, sigY + 25, { align: 'center' });
+      });
+
+      // ── Filigrane ─────────────────────────────────────────────────────
+      doc.setTextColor(230, 235, 245); doc.setFontSize(44);
+      doc.text('ORIGINAL', pageW / 2, 160, { align: 'center', angle: 45 });
+
+      // ── Pied de page ──────────────────────────────────────────────────
+      doc.setFillColor(248, 250, 252);
+      doc.rect(0, 282, pageW, 15, 'F');
+      doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(148, 163, 184);
+      doc.text(`Édité le ${today} — ${data.school.name} — Confidentiel — Document officiel`, pageW / 2, 289, { align: 'center' });
+
+      doc.save(`Releve_Annuel_${data.student.lastName}_${data.student.firstName}_${data.enrollment.academicYear}.pdf`);
+      toast.success('Relevé de notes généré avec succès !');
+    } catch (e: any) {
+      toast.error(e.message || 'Erreur lors de la génération.');
+    } finally {
+      setIsGenerating(null);
+    }
+  };
+
+  return (
+    <AppLayout
+      title="Relevés de Notes Annuels"
+      subtitle="Documents officiels agrégés sur les 3 trimestres — Format DREN/DEF Mali"
+      breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Relevés de Notes' }]}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+        {/* Toolbar */}
+        <div style={{ background: 'white', borderRadius: '16px', padding: '20px 24px', border: '1px solid #f1f5f9', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '0 16px', flex: 1, maxWidth: '380px' }}>
+            <Search size={15} color="#94a3b8" />
+            <input type="text" placeholder="Rechercher un élève..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+              style={{ border: 'none', background: 'transparent', padding: '11px 0', fontSize: '13px', outline: 'none', width: '100%' }} />
+          </div>
+          <div>
+            <select value={selectedYearId} onChange={e => setSelectedYearId(e.target.value)}
+              style={{ padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: '12px', fontSize: '13px', outline: 'none', background: 'white', fontWeight: 600 }}>
+              <option value="">-- Année --</option>
+              {years.map((y: any) => <option key={y.id} value={y.id}>{y.name} {y.isActive ? '★' : ''}</option>)}
+            </select>
+          </div>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(139,92,246,0.08)', borderRadius: '10px', padding: '8px 14px' }}>
+            <Award size={15} color="#8b5cf6" />
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#8b5cf6' }}>Format Officiel DREN • Notes Réelles DB</span>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
+          <div style={{ padding: '18px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '32px', height: '32px', background: 'rgba(79,142,247,0.1)', borderRadius: '8px', display: 'grid', placeItems: 'center' }}>
+              <FileText size={16} color="#4f8ef7" />
             </div>
-
-            {/* Students List for Transcript Generation */}
-            <div className="card" style={{ padding: 0 }}>
-                <div className="card-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', marginBottom: 0 }}>
-                    <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <FileText size={18} className="text-primary" /> Impression des Relevés
-                    </h3>
-                </div>
-
-                <div className="table-container">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>Matricule</th>
-                                <th>Nom de Famille</th>
-                                <th>Prénom(s)</th>
-                                <th>Genre</th>
-                                <th>Statut</th>
-                                <th style={{ textAlign: 'right' }}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {isLoading ? (
-                                <tr>
-                                    <td colSpan={6} style={{ textAlign: 'center', padding: '40px' }}>
-                                        <Loader2 size={24} className="spin text-primary" style={{ margin: '0 auto 10px' }} />
-                                        Chargement des dossiers académiques...
-                                    </td>
-                                </tr>
-                            ) : students.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                                        Aucun dossier trouvé pour cette recherche.
-                                    </td>
-                                </tr>
-                            ) : (
-                                students.map(student => (
-                                    <tr key={student.id}>
-                                        <td style={{ fontWeight: 600 }}>{student.studentNumber || '---'}</td>
-                                        <td style={{ fontWeight: 700, color: 'var(--text)' }}>{student.lastName.toUpperCase()}</td>
-                                        <td>{student.firstName}</td>
-                                        <td>
-                                            <span className={`badge ${student.gender === 'MALE' ? 'badge-info' : 'badge-purple'}`}>
-                                                {student.gender === 'MALE' ? 'M' : 'F'}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className="badge badge-success">Actif</span>
-                                        </td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <button 
-                                                className="btn-primary" 
-                                                style={{ padding: '6px 12px', fontSize: '12px' }}
-                                                onClick={() => handleGenerateTranscript(student.id)}
-                                                disabled={isGenerating && selectedStudentId !== student.id}
-                                            >
-                                                {isGenerating && selectedStudentId === student.id ? (
-                                                    <><Loader2 size={14} className="spin" /> Extraction...</>
-                                                ) : (
-                                                    <><Download size={14} /> Relevé PDF</>
-                                                )}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </AppLayout>
-    );
+            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700 }}>Impression des Relevés</h3>
+            <span style={{ marginLeft: 'auto', background: '#f1f5f9', padding: '4px 12px', borderRadius: '99px', fontSize: '12px', fontWeight: 700, color: '#64748b' }}>
+              {students.length} dossiers
+            </span>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc' }}>
+                  {['Matricule', 'Nom', 'Prénom', 'Genre', 'Statut', 'Action'].map(h => (
+                    <th key={h} style={{ padding: '12px 16px', fontSize: '10px', fontWeight: 700, color: '#64748b', textAlign: h === 'Action' ? 'right' : 'left', textTransform: 'uppercase', borderBottom: '1px solid #f1f5f9' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td colSpan={6} style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>
+                    <Loader2 size={28} color="#4f8ef7" style={{ animation: 'spin 1s linear infinite', marginBottom: '8px' }} />
+                    <br />Chargement...
+                  </td></tr>
+                ) : students.length === 0 ? (
+                  <tr><td colSpan={6} style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>Aucun dossier trouvé.</td></tr>
+                ) : students.map(student => (
+                  <tr key={student.id} style={{ borderBottom: '1px solid #f8fafc' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#fafbff')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'white')}>
+                    <td style={{ padding: '14px 16px' }}><span style={{ background: '#f1f5f9', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: '#475569' }}>{student.studentNumber}</span></td>
+                    <td style={{ padding: '14px 16px', fontWeight: 800, color: '#1e293b' }}>{student.lastName.toUpperCase()}</td>
+                    <td style={{ padding: '14px 16px', color: '#475569' }}>{student.firstName}</td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{ background: student.gender === 'MALE' ? 'rgba(59,130,246,0.1)' : 'rgba(236,72,153,0.1)', color: student.gender === 'MALE' ? '#3b82f6' : '#ec4899', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 700 }}>
+                        {student.gender === 'MALE' ? 'M' : 'F'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 700 }}>Actif</span>
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                      <button onClick={() => handleGenerate(student)} disabled={isGenerating === student.id || !selectedYearId}
+                        style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #4f8ef7, #3b6fd4)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: !selectedYearId ? 0.5 : 1 }}>
+                        {isGenerating === student.id
+                          ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Export...</>
+                          : <><Download size={13} /> Relevé PDF</>}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </AppLayout>
+  );
 }

@@ -64,6 +64,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Tableau de Bord BI', href: '/reports',        icon: <BarChart3 size={17}/> },
       { label: 'Bulletins de Notes', href: '/reports/bulletins', icon: <Award size={17}/> },
+      { label: 'Relevés Annuels',   href: '/reports/transcripts', icon: <FileText size={17}/> },
       { label: 'Piste d\'Audit',     href: '/settings/audit', icon: <ShieldAlert size={17}/> },
     ]
   },
