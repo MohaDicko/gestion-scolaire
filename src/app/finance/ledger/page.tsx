@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Landmark, ArrowUpRight, ArrowDownRight, Search, Download, Filter, Loader2, Calendar, FileText, ChevronRight } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { exportToExcel } from '@/lib/exportUtils';
 import { motion } from 'framer-motion';
 
 export default function GeneralLedgerPage() {
@@ -11,6 +12,26 @@ export default function GeneralLedgerPage() {
   const [ledger, setLedger] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  const handleExport = () => {
+    if (ledger.length === 0) {
+      toast.warning('Aucune donnée à exporter');
+      return;
+    }
+
+    const exportData = ledger.map(l => ({
+      'Date': new Date(l.date).toLocaleDateString('fr-FR'),
+      'Description': l.description,
+      'Catégorie': l.category,
+      'Méthode': l.method,
+      'Type': l.type === 'REVENUE' ? 'Crédit (+)' : 'Débit (-)',
+      'Montant (FCFA)': Math.abs(l.amount),
+      'Référence': l.reference || ''
+    }));
+
+    exportToExcel(exportData, `Grand_Livre_Comptable_${new Date().toISOString().split('T')[0]}`, 'Journal_Financier');
+    toast.success('Journal exporté au format Excel (.xlsx)');
+  };
 
   const fetchLedger = useCallback(async () => {
     setLoading(true);
@@ -38,8 +59,8 @@ export default function GeneralLedgerPage() {
       subtitle="Historique universel des flux de trésorerie (Recettes & Dépenses)"
       breadcrumbs={[{ label: 'Finance', href: '/finance' }, { label: 'Grand Livre' }]}
       actions={
-        <button className="btn-primary" onClick={() => toast.info('Export PDF bientôt disponible')}>
-          <Download size={16} /> Exporter Journal
+        <button className="btn-primary" onClick={handleExport}>
+          <Download size={16} /> Exporter Journal (Excel)
         </button>
       }
     >
@@ -155,7 +176,7 @@ export default function GeneralLedgerPage() {
               Ce grand livre certifie l'intégralité des flux financiers pour l'exercice en cours.
             </span>
           </div>
-          <button className="btn-outline" style={{ fontSize: '12px' }}>Télécharger le Registre</button>
+          <button className="btn-outline" onClick={handleExport} style={{ fontSize: '12px' }}>Télécharger le Registre (.xlsx)</button>
         </div>
 
       </div>

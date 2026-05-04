@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { calculateMaliPayroll, formatXOF, MALI_RATES } from '@/lib/maliPayroll';
+import { exportToExcel } from '@/lib/exportUtils';
 
 const emptyForm = {
   employeeId: '',
@@ -93,6 +94,30 @@ export default function PayslipsPage() {
 
   const update = (field: string, value: string) => setFormData(f => ({ ...f, [field]: value }));
 
+  const handleExportExcel = () => {
+    if (payslips.length === 0) {
+      toast.warning('Aucune donnée à exporter');
+      return;
+    }
+
+    const exportData = payslips.map(p => ({
+      'Matricule': p.employee?.employeeNumber || 'N/A',
+      'Nom': p.employee?.lastName || '',
+      'Prénom': p.employee?.firstName || '',
+      'Période': new Date(p.periodStart).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+      'Salaire de Base': p.baseSalary,
+      'Brut Imposable': p.grossSalary,
+      'INPS Salarié': p.inpsEmployee,
+      'AMO Salarié': p.amoEmployee,
+      'ITS': p.its,
+      'Net à Payer': p.netSalary,
+      'Coût Employeur': (p.grossSalary || 0) + (p.nonTaxableBonuses || 0) + (p.totalEmployerCharges || 0)
+    }));
+
+    exportToExcel(exportData, `Journal_Paie_Mali_${new Date().toISOString().split('T')[0]}`, 'Paie');
+    toast.success('Journal de paie exporté (Excel)');
+  };
+
   const downloadDipe = () => {
     if (payslips.length === 0) return;
     
@@ -129,6 +154,9 @@ export default function PayslipsPage() {
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Paie' }]}
       actions={
         <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-outline" onClick={handleExportExcel} disabled={payslips.length === 0}>
+            <Download size={15} /> Exporter Excel
+          </button>
           <button className="btn-outline" onClick={downloadDipe} disabled={payslips.length === 0}>
             <Download size={15} /> Télécharger DIPE
           </button>

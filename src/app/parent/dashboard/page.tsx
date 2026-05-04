@@ -184,14 +184,17 @@ export default function ParentDashboardPage() {
         {isLoading ? (
           <div style={{ padding: '80px', textAlign: 'center' }}>
             <Loader2 size={40} color="#4f8ef7" style={{ animation: 'spin 1s linear infinite', marginBottom: '12px' }} />
-            <p style={{ color: '#94a3b8', margin: 0 }}>Chargement du dossier scolaire...</p>
+            <p style={{ color: '#94a3b8', margin: 0 }}>{`Chargement du dossier scolaire...`}</p>
           </div>
         ) : error || children.length === 0 ? (
           <div style={{ padding: '60px', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px dashed #e2e8f0' }}>
             <AlertTriangle size={48} color="#f59e0b" style={{ marginBottom: '16px' }} />
-            <h3 style={{ margin: '0 0 8px', color: '#475569' }}>Aucun enfant trouvé</h3>
+            <h3 style={{ margin: '0 0 8px', color: '#475569' }}>{`Aucun enfant trouvé`}</h3>
             <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>
-              Aucun élève n'est lié à votre adresse email. Contactez l'administration de l'école.
+              {`Aucun enfant n'est encore associé à votre compte parent.`}
+            </p>
+            <p style={{ fontSize: '13px', maxWidth: '300px', margin: '8px auto', opacity: 0.7 }}>
+              {`Veuillez contacter l'administration de l'école pour lier vos enfants à votre profil.`}
             </p>
           </div>
         ) : (
