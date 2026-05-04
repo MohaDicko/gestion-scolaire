@@ -1,62 +1,91 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { calculateClassBulletins, GradeInput } from '@/lib/grading';
+import { getSession } from '@/lib/auth';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const classroomId = searchParams.get('classroomId');
-  const academicYearId = searchParams.get('academicYearId');
-  const trimestre = parseInt(searchParams.get('trimestre') || '1');
+  const session = await getSession();
+  if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (!classroomId || !academicYearId) {
-    return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 });
+  const url = new URL(request.url);
+  const studentId = url.searchParams.get('studentId');
+  const academicYearId = url.searchParams.get('academicYearId');
+  const trimestre = parseInt(url.searchParams.get('trimestre') || '1');
+
+  if (!studentId || !academicYearId) {
+    return NextResponse.json({ error: 'studentId et academicYearId requis' }, { status: 400 });
   }
 
-  try {
-    // 1. Récupérer toutes les notes de la classe pour le trimestre donné
-    const grades = await prisma.grade.findMany({
-      where: {
-        academicYearId,
-        trimestre,
-        student: {
-          enrollments: {
-            some: {
-              classroomId,
-              academicYearId
-            }
-          }
-        }
-      },
-      include: {
-        student: true,
-        subject: true
-      }
-    });
+  const [student, grades, enrollment, school] = await Promise.all([
+    prisma.student.findUnique({
+      where: { id: studentId },
+      include: { campus: { select: { name: true } } },
+    }),
+    prisma.grade.findMany({
+      where: { studentId, academicYearId, trimestre },
+      include: { subject: true },
+      orderBy: { subject: { name: 'asc' } },
+    }),
+    prisma.enrollment.findFirst({
+      where: { studentId, academicYearId },
+      include: { classroom: { select: { name: true, level: true } }, academicYear: { select: { name: true } } },
+    }),
+    prisma.school.findUnique({ where: { id: session.tenantId } }),
+  ]);
 
-    if (grades.length === 0) {
-      return NextResponse.json([]);
-    }
+  if (!student) return NextResponse.json({ error: 'Élève non trouvé' }, { status: 404 });
 
-    // 2. Transformer pour le moteur de calcul
-    const input: GradeInput[] = grades.map(g => ({
-      studentId: g.studentId,
-      studentName: `${g.student.firstName} ${g.student.lastName}`,
-      studentNumber: g.student.studentNumber,
-      subjectId: g.subjectId,
+  // Calcul moyennes pondérées par coefficient
+  const subjectResults = grades.map(g => {
+    const avg = (g.score / g.maxScore) * 20;
+    let mention = '';
+    if (avg >= 16) mention = 'Très Bien';
+    else if (avg >= 14) mention = 'Bien';
+    else if (avg >= 12) mention = 'Assez Bien';
+    else if (avg >= 10) mention = 'Passable';
+    else mention = 'Insuffisant';
+    return {
       subjectName: g.subject.name,
+      subjectCode: g.subject.code,
       coefficient: g.subject.coefficient,
       score: g.score,
       maxScore: g.maxScore,
-      examType: g.examType as any,
-      trimestre: g.trimestre
-    }));
+      average: Math.round(avg * 100) / 100,
+      weighted: Math.round(avg * g.subject.coefficient * 100) / 100,
+      mention,
+      comment: g.comment,
+      examType: g.examType,
+    };
+  });
 
-    // 3. Calculer les bulletins (Moyennes, Rangs, Mentions)
-    const bulletins = calculateClassBulletins(input);
+  const totalCoeff = subjectResults.reduce((s, r) => s + r.coefficient, 0);
+  const totalWeighted = subjectResults.reduce((s, r) => s + r.weighted, 0);
+  const generalAverage = totalCoeff > 0 ? Math.round((totalWeighted / totalCoeff) * 100) / 100 : 0;
 
-    return NextResponse.json(bulletins);
-  } catch (error) {
-    console.error('Erreur lors de la génération des bulletins:', error);
-    return NextResponse.json({ error: 'Erreur interne' }, { status: 500 });
-  }
+  let generalMention = '';
+  if (generalAverage >= 16) generalMention = 'Très Bien';
+  else if (generalAverage >= 14) generalMention = 'Bien';
+  else if (generalAverage >= 12) generalMention = 'Assez Bien';
+  else if (generalAverage >= 10) generalMention = 'Passable';
+  else generalMention = 'Insuffisant';
+
+  return NextResponse.json({
+    school: { name: school?.name || '', motto: school?.motto || '', logoUrl: school?.logoUrl },
+    student: {
+      id: student.id,
+      studentNumber: student.studentNumber,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      dateOfBirth: student.dateOfBirth,
+      gender: student.gender,
+      campus: student.campus?.name || '',
+    },
+    enrollment: {
+      classroom: enrollment?.classroom?.name || '',
+      level: enrollment?.classroom?.level || '',
+      academicYear: enrollment?.academicYear?.name || '',
+    },
+    trimestre,
+    subjectResults,
+    summary: { generalAverage, generalMention, totalCoeff, totalWeighted, subjectCount: subjectResults.length },
+  });
 }
