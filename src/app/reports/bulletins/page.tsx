@@ -46,20 +46,25 @@ export default function BulletinsPage() {
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    fetch('/api/academic-years').then(r => r.json()).then(d => {
-      if (Array.isArray(d)) {
-        setYears(d);
-        const active = d.find((y: any) => y.isActive);
-        if (active) setSelectedYearId(active.id);
-      }
-    });
+    fetch('/api/academic-years')
+      .then(r => r.json())
+      .then(d => {
+        if (Array.isArray(d)) {
+          setYears(d);
+          const active = d.find((y: any) => y.isActive);
+          if (active) setSelectedYearId(active.id);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!search.trim()) { setStudents([]); return; }
     const t = setTimeout(() => {
       fetch(`/api/students?search=${encodeURIComponent(search)}&pageSize=10`)
-        .then(r => r.json()).then(d => setStudents(d.items || []));
+        .then(r => r.json())
+        .then(d => setStudents(d.items || []))
+        .catch(() => {});
     }, 300);
     return () => clearTimeout(t);
   }, [search]);

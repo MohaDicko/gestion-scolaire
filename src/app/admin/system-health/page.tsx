@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   ShieldAlert, Activity, CheckCircle2, AlertTriangle, 
   Search, RefreshCw, Database, Users, GraduationCap, 
@@ -23,7 +23,7 @@ export default function SystemHealthPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [lastScan, setLastScan] = useState<Date | null>(null);
 
-  const runDiagnostics = async () => {
+  const runDiagnostics = useCallback(async () => {
     setIsScanning(true);
     try {
       const res = await fetch('/api/admin/diagnostics');
@@ -37,11 +37,11 @@ export default function SystemHealthPage() {
     } finally {
       setIsScanning(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     runDiagnostics();
-  }, []);
+  }, [runDiagnostics]);
 
   return (
     <AppLayout

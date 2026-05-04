@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
     Wallet, TrendingUp, TrendingDown, Landmark, 
@@ -17,7 +17,7 @@ export default function FinanceOverviewPage() {
     const [stats, setStats] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchFinancialData = async () => {
+    const fetchFinancialData = useCallback(async () => {
         setIsLoading(true);
         try {
             const [invRes, expRes] = await Promise.all([
@@ -57,11 +57,11 @@ export default function FinanceOverviewPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
         fetchFinancialData();
-    }, []);
+    }, [fetchFinancialData]);
 
     if (isLoading) return (
         <AppLayout title="Chargement..." subtitle="Préparation du bilan financier">

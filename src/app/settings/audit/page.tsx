@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { ShieldAlert, Search, Filter, Clock, User, Activity, FileText, ChevronRight, Hash } from 'lucide-react';
@@ -22,11 +22,7 @@ export default function AuditLogsPage() {
   const [search, setSearch] = useState('');
   const toast = useToast();
 
-  useEffect(() => {
-    fetchLogs();
-  }, []);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/audit?limit=100');
@@ -40,7 +36,11 @@ export default function AuditLogsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
 
   const filteredLogs = logs.filter(log => 
     JSON.stringify(log).toLowerCase().includes(search.toLowerCase())

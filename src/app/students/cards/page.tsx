@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, Users, AlertCircle, Loader2, ShieldCheck, Printer, QrCode, Download, CheckSquare, Square } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -110,10 +111,11 @@ function StudentCardPreview({ student, qrDataUrl, isSelected, onToggle }: {
             background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.12)',
             display: 'grid', placeItems: 'center',
-            color: 'rgba(255,255,255,0.2)', marginRight: '12px'
+            color: 'rgba(255,255,255,0.2)', marginRight: '12px',
+            position: 'relative', overflow: 'hidden'
           }}>
             {student.photoUrl
-              ? <img src={student.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '7px' }} />
+              ? <Image src={student.photoUrl} alt="" width={56} height={68} style={{ objectFit: 'cover', borderRadius: '7px' }} />
               : <Users size={20} />
             }
           </div>
@@ -140,10 +142,11 @@ function StudentCardPreview({ student, qrDataUrl, isSelected, onToggle }: {
             width: '56px', height: '56px', borderRadius: '8px', flexShrink: 0,
             background: 'white', padding: '4px',
             display: 'grid', placeItems: 'center',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            position: 'relative', overflow: 'hidden'
           }}>
             {qrDataUrl
-              ? <img src={qrDataUrl} alt="QR" style={{ width: '100%', height: '100%' }} />
+              ? <Image src={qrDataUrl} alt="QR" width={52} height={52} />
               : <QrCode size={40} color="#1e293b" />
             }
           </div>

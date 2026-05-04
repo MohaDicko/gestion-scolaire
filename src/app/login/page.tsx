@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -579,10 +580,12 @@ export default function LoginPage() {
             {/* Branding Personnalisé */}
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
               {schoolInfo?.logoUrl ? (
-                <img 
+                <Image 
                   src={schoolInfo.logoUrl} 
                   alt={schoolInfo.name} 
-                  style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '16px', borderRadius: '12px' }} 
+                  width={80}
+                  height={80}
+                  style={{ objectFit: 'contain', marginBottom: '16px', borderRadius: '12px' }} 
                 />
               ) : (
                 <div className="form-badge">

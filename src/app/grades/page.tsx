@@ -38,7 +38,7 @@ export default function GradesPage() {
         if (active) setForm(f => ({ ...f, academicYearId: active.id }));
       }
     }).catch(() => toast.error('Erreur lors du chargement des modules.'));
-  }, []);
+  }, [toast]);
 
   const loadStudents = useCallback(async () => {
     if (!form.classroomId || !form.academicYearId) {
@@ -65,7 +65,7 @@ export default function GradesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [form.classroomId, form.academicYearId]);
+  }, [form.classroomId, form.academicYearId, router, toast]);
 
   useEffect(() => { loadStudents(); }, [loadStudents]);
 

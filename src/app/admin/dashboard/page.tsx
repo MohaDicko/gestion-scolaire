@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Building2, Users, CreditCard, Activity, ShieldCheck, ArrowRight, Server } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -26,18 +26,7 @@ export default function SuperAdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<{ firstName?: string; lastName?: string } | null>(null);
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('auth_user');
-      if (stored) {
-        setUser(JSON.parse(stored));
-      }
-    } catch {}
-    
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/admin/dashboard/stats');
@@ -52,7 +41,18 @@ export default function SuperAdminDashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('auth_user');
+      if (stored) {
+        setUser(JSON.parse(stored));
+      }
+    } catch {}
+    
+    fetchStats();
+  }, [fetchStats]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount);

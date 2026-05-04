@@ -1,9 +1,8 @@
-'use client';
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Users, BookOpen, Clock, FileText, TrendingUp, AlertTriangle, Loader2, ChevronRight, CheckCircle, XCircle, Bell, ClipboardList } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
+import Image from 'next/image';
 
 interface ChildSummary {
   id: string; studentNumber: string; firstName: string; lastName: string;
@@ -50,10 +49,11 @@ function ChildCard({ child, onViewBulletin, onViewInvoices }: { child: ChildSumm
             background: 'linear-gradient(135deg, #4f8ef7, #8b5cf6)',
             display: 'grid', placeItems: 'center',
             fontSize: '20px', fontWeight: 900, color: 'white',
-            boxShadow: '0 8px 20px rgba(79,142,247,0.3)'
+            boxShadow: '0 8px 20px rgba(79,142,247,0.3)',
+            position: 'relative', overflow: 'hidden'
           }}>
             {child.photoUrl
-              ? <img src={child.photoUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              ? <Image src={child.photoUrl} alt="" width={56} height={56} style={{ borderRadius: '50%', objectFit: 'cover' }} />
               : initials}
           </div>
           <div style={{ flex: 1 }}>
@@ -134,21 +134,27 @@ export default function ParentDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const fetchChildren = useCallback(async () => {
+    try {
+      const res = await fetch('/api/parent/children');
+      const d = await res.json();
+      if (Array.isArray(d)) setChildren(d);
+      else setError('Aucun enfant lié à ce compte.');
+    } catch {
+      setError('Erreur de chargement.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem('auth_user');
       if (stored) setUser(JSON.parse(stored));
     } catch {}
 
-    fetch('/api/parent/children')
-      .then(r => r.json())
-      .then(d => {
-        if (Array.isArray(d)) setChildren(d);
-        else setError('Aucun enfant lié à ce compte.');
-        setIsLoading(false);
-      })
-      .catch(() => { setError('Erreur de chargement.'); setIsLoading(false); });
-  }, []);
+    fetchChildren();
+  }, [fetchChildren]);
 
   return (
     <AppLayout
