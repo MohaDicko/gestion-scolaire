@@ -8,7 +8,7 @@ import {
   Briefcase, FileText, Receipt, Clock, Settings, LogOut,
   ChevronRight, GraduationCap, BadgeDollarSign, BarChart3,
   UserCog, Menu, X, Bell, Award, ClipboardCheck, Landmark,
-  Zap, Activity, ShieldAlert, Plus, Package
+  Zap, Activity, ShieldAlert, Plus, Package, Loader2
 } from 'lucide-react';
 
 interface NavItem {
