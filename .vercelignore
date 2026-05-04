@@ -1,0 +1,5 @@
+scripts/
+*.ts-node
+diagnostic-pro.ts
+security-audit.ts
+master-seeder.ts

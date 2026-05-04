@@ -1,4 +1,4 @@
-import { encrypt } from './src/lib/auth'; // On simule la génération de token
+import { encrypt } from '../src/lib/auth'; // On simule la génération de token
 import axios from 'axios';
 
 async function securityAudit() {
