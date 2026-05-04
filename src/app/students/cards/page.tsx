@@ -1,542 +1,468 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { CreditCard, Download, Search, Users, AlertCircle, Loader2, ShieldCheck, Printer, Eye } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, Users, AlertCircle, Loader2, ShieldCheck, Printer, QrCode, Download, CheckSquare, Square } from 'lucide-react';
 import jsPDF from 'jspdf';
-import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode';
 import AppLayout from '@/components/AppLayout';
 
+interface Student {
+  id: string;
+  studentNumber: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: string;
+  photoUrl?: string;
+  classroom?: { name: string };
+  campus?: { name: string };
+  parentName?: string;
+}
+
+// ─── Composant carte visuelle (preview) ────────────────────────────────────────
+function StudentCardPreview({ student, qrDataUrl, isSelected, onToggle }: {
+  student: Student;
+  qrDataUrl: string;
+  isSelected: boolean;
+  onToggle: () => void;
+}) {
+  const year = new Date(student.dateOfBirth).getFullYear();
+  const age = new Date().getFullYear() - year;
+
+  return (
+    <div onClick={onToggle} style={{ cursor: 'pointer', userSelect: 'none' }}>
+      {/* Sélection indicator */}
+      <div style={{
+        display: 'flex', justifyContent: 'flex-end', marginBottom: '6px',
+        color: isSelected ? '#10b981' : '#94a3b8', fontSize: '12px',
+        fontWeight: 700, gap: '4px', alignItems: 'center'
+      }}>
+        {isSelected
+          ? <><CheckSquare size={14} /> SÉLECTIONNÉ</>
+          : <><Square size={14} /> Cliquer pour sélectionner</>}
+      </div>
+
+      {/* Carte recto */}
+      <div style={{
+        width: '100%', aspectRatio: '85.6/54',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%)',
+        borderRadius: '16px',
+        boxShadow: isSelected
+          ? '0 0 0 3px #10b981, 0 20px 40px rgba(16,185,129,0.2)'
+          : '0 20px 40px rgba(0,0,0,0.2)',
+        position: 'relative', overflow: 'hidden',
+        transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+        transform: isSelected ? 'translateY(-4px) scale(1.01)' : 'none',
+        fontFamily: "'Inter', sans-serif",
+        display: 'flex', flexDirection: 'column',
+        padding: '0',
+      }}>
+        {/* Bandeau tricolore Mali */}
+        <div style={{ display: 'flex', height: '4px', flexShrink: 0 }}>
+          <div style={{ flex: 1, background: '#009a44' }} />
+          <div style={{ flex: 1, background: '#fcd116' }} />
+          <div style={{ flex: 1, background: '#ce1126' }} />
+        </div>
+
+        {/* Motif diagonal décoratif */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 12px)',
+          pointerEvents: 'none'
+        }} />
+
+        {/* Cercle décoratif */}
+        <div style={{
+          position: 'absolute', right: '-30px', top: '-30px',
+          width: '140px', height: '140px',
+          background: 'radial-gradient(circle, rgba(79,142,247,0.15) 0%, transparent 70%)',
+          pointerEvents: 'none'
+        }} />
+
+        {/* Header */}
+        <div style={{
+          padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px',
+          borderBottom: '1px solid rgba(255,255,255,0.08)'
+        }}>
+          <div style={{
+            width: '28px', height: '28px', borderRadius: '6px',
+            background: 'linear-gradient(135deg, #4f8ef7, #3b6fd4)',
+            display: 'grid', placeItems: 'center', flexShrink: 0,
+            fontSize: '12px', fontWeight: 900, color: 'white'
+          }}>E</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.5)', letterSpacing: '1.5px', fontWeight: 700 }}>RÉPUBLIQUE DU MALI</div>
+            <div style={{ fontSize: '9px', color: 'white', fontWeight: 800, letterSpacing: '0.5px' }}>CARTE D'IDENTITÉ SCOLAIRE</div>
+          </div>
+          <div style={{
+            width: '22px', height: '22px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #fcd116, #f59e0b)',
+            boxShadow: '0 0 8px rgba(252,209,22,0.4)',
+            flexShrink: 0
+          }} />
+        </div>
+
+        {/* Corps */}
+        <div style={{ flex: 1, display: 'flex', gap: '0', padding: '8px 12px', alignItems: 'center' }}>
+          {/* Photo placeholder */}
+          <div style={{
+            width: '56px', height: '68px', borderRadius: '8px', flexShrink: 0,
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            display: 'grid', placeItems: 'center',
+            color: 'rgba(255,255,255,0.2)', marginRight: '12px'
+          }}>
+            {student.photoUrl
+              ? <img src={student.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '7px' }} />
+              : <Users size={20} />
+            }
+          </div>
+
+          {/* Infos */}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '12px', fontWeight: 800, color: 'white', marginBottom: '6px', lineHeight: 1.2 }}>
+              {student.firstName.toUpperCase()} {student.lastName.toUpperCase()}
+            </div>
+            {[
+              ['MATRICULE', student.studentNumber],
+              ['CLASSE', student.classroom?.name || '—'],
+              ['ÂGE', `${age} ans`],
+            ].map(([label, value]) => (
+              <div key={label} style={{ display: 'flex', gap: '6px', marginBottom: '2px', alignItems: 'baseline' }}>
+                <span style={{ fontSize: '7px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, minWidth: '50px' }}>{label}</span>
+                <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* QR Code */}
+          <div style={{
+            width: '56px', height: '56px', borderRadius: '8px', flexShrink: 0,
+            background: 'white', padding: '4px',
+            display: 'grid', placeItems: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          }}>
+            {qrDataUrl
+              ? <img src={qrDataUrl} alt="QR" style={{ width: '100%', height: '100%' }} />
+              : <QrCode size={40} color="#1e293b" />
+            }
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          padding: '4px 12px 6px',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}>
+          <div style={{ fontSize: '6px', color: 'rgba(255,255,255,0.35)', letterSpacing: '1px' }}>
+            SCANNEZ LE QR CODE POUR VÉRIFIER
+          </div>
+          <div style={{
+            fontSize: '7px', color: '#fcd116', fontWeight: 700,
+            background: 'rgba(252,209,22,0.1)', padding: '2px 6px', borderRadius: '4px'
+          }}>
+            VALIDE 2024-2025
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page principale ──────────────────────────────────────────────────────────
 export default function StudentCardsPage() {
-    const [students, setStudents] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
-    const [showPreview, setShowPreview] = useState(false);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+  const [qrCache, setQrCache] = useState<Record<string, string>>({});
 
-    useEffect(() => {
-        setIsLoading(true);
-        fetch(`/api/students?search=${searchTerm}&pageSize=50`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.items) setStudents(data.items);
-                setIsLoading(false);
-            })
-            .catch(() => setIsLoading(false));
-    }, [searchTerm]);
+  // Génère les QR codes pour tous les élèves affichés
+  const generateQRCodes = useCallback(async (studs: Student[]) => {
+    const cache: Record<string, string> = {};
+    await Promise.all(studs.map(async (s) => {
+      const payload = JSON.stringify({
+        id: s.id,
+        num: s.studentNumber,
+        nom: `${s.firstName} ${s.lastName}`,
+        classe: s.classroom?.name || '',
+        url: `https://gestion-scolaire-livid.vercel.app/portal/${s.id}`,
+      });
+      cache[s.id] = await QRCode.toDataURL(payload, {
+        width: 200, margin: 1,
+        color: { dark: '#0f172a', light: '#ffffff' }
+      });
+    }));
+    setQrCache(cache);
+  }, []);
 
-    const generatePDF = async () => {
-        setIsGenerating(true);
-        try {
-            const doc = new jsPDF({
-                orientation: 'p',
-                unit: 'mm',
-                format: 'a4'
-            });
+  useEffect(() => {
+    setIsLoading(true);
+    fetch(`/api/students?search=${encodeURIComponent(searchTerm)}&pageSize=50`)
+      .then(res => res.json())
+      .then(data => {
+        const items: Student[] = data.items || [];
+        setStudents(items);
+        setIsLoading(false);
+        generateQRCodes(items);
+      })
+      .catch(() => setIsLoading(false));
+  }, [searchTerm, generateQRCodes]);
 
-            const cardWidth = 85.6;
-            const cardHeight = 54;
-            const marginX = 15;
-            const marginY = 15;
-            const gap = 10;
-            
-            let x = marginX;
-            let y = marginY;
+  const toggleStudent = (id: string) => {
+    const next = new Set(selectedStudents);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedStudents(next);
+  };
 
-            const studentsToPrint = students.filter(s => selectedStudents.size === 0 || selectedStudents.has(s.id));
+  const toggleAll = () => {
+    if (selectedStudents.size === students.length) setSelectedStudents(new Set());
+    else setSelectedStudents(new Set(students.map(s => s.id)));
+  };
 
-            studentsToPrint.forEach((student, index) => {
-                if (index > 0 && index % 10 === 0) {
-                    doc.addPage();
-                    x = marginX;
-                    y = marginY;
-                }
+  // ─── Export PDF ─────────────────────────────────────────────────────────────
+  const generatePDF = async () => {
+    setIsGenerating(true);
+    try {
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-                // --- Background de la carte (Premium White/Light Gray Gradient look) ---
-                doc.setDrawColor(220, 225, 235);
-                doc.setLineWidth(0.1);
-                doc.setFillColor(255, 255, 255);
-                doc.roundedRect(x, y, cardWidth, cardHeight, 4, 4, 'FD');
+      const cardW = 85.6, cardH = 54;
+      const marginX = 15, marginY = 15, gapX = 10, gapY = 8;
+      const cols = 2;
 
-                // --- Motif de Sécurité (Subtle Lines) ---
-                doc.setDrawColor(240, 245, 255);
-                for(let i = 0; i < cardWidth; i += 4) {
-                    doc.line(x + i, y, x + cardWidth - i, y + cardHeight);
-                }
+      const toPrint = students.filter(s => selectedStudents.size === 0 || selectedStudents.has(s.id));
 
-                // --- Bandeau Couleurs Mali (Subtil en haut) ---
-                doc.setFillColor(0, 154, 68); // Vert
-                doc.rect(x, y, cardWidth/3, 1, 'F');
-                doc.setFillColor(252, 209, 22); // Jaune
-                doc.rect(x + cardWidth/3, y, cardWidth/3, 1, 'F');
-                doc.setFillColor(206, 17, 38); // Rouge
-                doc.rect(x + 2*cardWidth/3, y, cardWidth/3, 1, 'F');
+      for (let i = 0; i < toPrint.length; i++) {
+        const student = toPrint[i];
+        const col = i % cols;
+        const row = Math.floor(i / cols) % 5;
 
-                // --- Header de la carte ---
-                doc.setFillColor(30, 41, 59); // Dark slate for premium feel
-                doc.roundedRect(x, y + 1, cardWidth, 13, 4, 4, 'F');
-                doc.rect(x, y + 7, cardWidth, 7, 'F');
-                
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(7);
-                doc.setFont('helvetica', 'normal');
-                doc.text('RÉPUBLIQUE DU MALI', x + cardWidth / 2, y + 5.5, { align: 'center' });
-                doc.setFontSize(9);
-                doc.setFont('helvetica', 'bold');
-                doc.text('CARTE D\'IDENTITÉ SCOLAIRE', x + cardWidth / 2, y + 10, { align: 'center' });
+        if (i > 0 && col === 0 && row === 0) doc.addPage();
 
-                // --- Filigrane de sécurité central ---
-                doc.setTextColor(245, 248, 255);
-                doc.setFontSize(24);
-                doc.text('OFFICIEL', x + cardWidth / 2, y + 35, { align: 'center', angle: 45 });
+        const x = marginX + col * (cardW + gapX);
+        const y = marginY + row * (cardH + gapY);
 
-                // --- Informations Élève ---
-                doc.setTextColor(15, 23, 42);
-                doc.setFontSize(11);
-                doc.setFont('helvetica', 'bold');
-                doc.text(`${student.firstName} ${student.lastName}`.toUpperCase(), x + 6, y + 22);
-                
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(100, 116, 139);
-                doc.text('MATRICULE', x + 6, y + 28);
-                doc.setTextColor(15, 23, 42);
-                doc.text(`${student.studentNumber || 'N/A'}`, x + 30, y + 28);
+        // Fond sombre
+        doc.setFillColor(15, 23, 42);
+        doc.roundedRect(x, y, cardW, cardH, 4, 4, 'F');
 
-                doc.setTextColor(100, 116, 139);
-                doc.text('CLASSE', x + 6, y + 33);
-                doc.setTextColor(15, 23, 42);
-                doc.text(`${student.classroom?.name || '---'}`, x + 30, y + 33);
+        // Bandeau Mali (3 couleurs)
+        doc.setFillColor(0, 154, 68); doc.rect(x, y, cardW / 3, 1.5, 'F');
+        doc.setFillColor(252, 209, 22); doc.rect(x + cardW / 3, y, cardW / 3, 1.5, 'F');
+        doc.setFillColor(206, 17, 38); doc.rect(x + 2 * cardW / 3, y, cardW / 3, 1.5, 'F');
 
-                doc.setTextColor(100, 116, 139);
-                doc.text('NAISSANCE', x + 6, y + 38);
-                doc.setTextColor(15, 23, 42);
-                doc.text(`${new Date(student.birthDate).toLocaleDateString('fr-FR')}`, x + 30, y + 38);
+        // Header bar
+        doc.setFillColor(20, 40, 80);
+        doc.rect(x, y + 1.5, cardW, 10, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(5.5); doc.setFont('helvetica', 'normal');
+        doc.text('RÉPUBLIQUE DU MALI', x + cardW / 2, y + 5.5, { align: 'center' });
+        doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+        doc.text("CARTE D'IDENTITÉ SCOLAIRE", x + cardW / 2, y + 9.5, { align: 'center' });
 
-                // --- Zone Photo ---
-                doc.setFillColor(248, 250, 252);
-                doc.setDrawColor(203, 213, 225);
-                doc.setLineWidth(0.3);
-                doc.roundedRect(x + cardWidth - 26, y + 18, 20, 24, 1, 1, 'FD');
-                
-                // Overlay text inside photo zone
-                doc.setFontSize(5);
-                doc.setTextColor(148, 163, 184);
-                doc.text('SCANNÉ', x + cardWidth - 16, y + 30, { align: 'center' });
+        // Nom
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+        doc.text(`${student.firstName.toUpperCase()} ${student.lastName.toUpperCase()}`, x + 6, y + 18);
 
-                // --- Code-barres ---
-                const canvas = document.createElement('canvas');
-                const barcodeValue = student.studentNumber || student.id.substring(0, 8);
-                
-                JsBarcode(canvas, barcodeValue, {
-                    format: "CODE128",
-                    displayValue: false,
-                    margin: 0,
-                    width: 2,
-                    height: 40,
-                    lineColor: "#0f172a",
-                    background: "#ffffff"
-                });
+        // Champs
+        const fields = [
+          ['MATRICULE', student.studentNumber],
+          ['CLASSE', student.classroom?.name || '—'],
+          ['NÉ(E) LE', new Date(student.dateOfBirth).toLocaleDateString('fr-FR')],
+        ];
+        let fieldY = y + 23;
+        fields.forEach(([label, value]) => {
+          doc.setFontSize(5.5); doc.setFont('helvetica', 'normal');
+          doc.setTextColor(150, 180, 220);
+          doc.text(label, x + 6, fieldY);
+          doc.setTextColor(220, 235, 255);
+          doc.text(value, x + 26, fieldY);
+          fieldY += 5;
+        });
 
-                const barcodeDataUrl = canvas.toDataURL('image/png');
-                const barcodeWidth = 35;
-                const barcodeHeight = 7;
-                doc.addImage(barcodeDataUrl, 'PNG', x + 6, y + 43, barcodeWidth, barcodeHeight);
-                
-                doc.setFontSize(6);
-                doc.setTextColor(71, 85, 105);
-                doc.text(barcodeValue, x + 6 + (barcodeWidth / 2), y + 51, { align: 'center' });
-
-                // --- Footer / Validity ---
-                doc.setFontSize(6);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(30, 41, 59);
-                doc.text('VALIDE : 2024-2025', x + cardWidth - 6, y + 47, { align: 'right' });
-                
-                doc.setDrawColor(30, 41, 59);
-                doc.setLineWidth(0.5);
-                doc.line(x + cardWidth - 25, y + 49, x + cardWidth - 6, y + 49);
-                doc.setFontSize(4);
-                doc.text('SIGNATURE DIRECTION', x + cardWidth - 15.5, y + 51, { align: 'center' });
-
-
-                // Positionnement de la prochaine carte (2 par ligne, 5 lignes par page)
-                if ((index + 1) % 2 === 0) {
-                    x = marginX;
-                    y += cardHeight + gap; 
-                } else {
-                    x += cardWidth + gap;
-                }
-            });
-
-            doc.save(`Cartes_Scolaires_${new Date().getFullYear()}.pdf`);
-        } catch (error) {
-            console.error('Erreur lors de la génération PDF:', error);
-        } finally {
-            setIsGenerating(false);
+        // QR Code
+        const qrDataUrl = qrCache[student.id];
+        if (qrDataUrl) {
+          doc.addImage(qrDataUrl, 'PNG', x + cardW - 24, y + 13, 18, 18);
         }
-    };
 
-    return (
-        <AppLayout
-            title="Cartes Scolaires"
-            subtitle="Identification sécurisée avec Codes-barres (Format ISO/IEC 7810)"
-            breadcrumbs={[{ label: 'Élèves', href: '/students' }, { label: 'Cartes Scolaires' }]}
-        >
-            {/* Toolbar */}
-            <div className="card shadow-premium" style={{ 
-                padding: '24px', 
-                marginBottom: '24px', 
-                background: 'rgba(255,255,255,0.8)', 
-                backdropFilter: 'blur(10)px',
-                display: 'flex', 
-                flexWrap: 'wrap', 
-                gap: '20px', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                borderRadius: '16px',
-                border: '1px solid rgba(255,255,255,0.5)'
-            }}>
-                <div style={{ display: 'flex', gap: '16px', flex: 1, maxWidth: '600px' }}>
-                    <div className="search-box-premium" style={{ flex: 1 }}>
-                        <Search size={18} className="text-muted" />
-                        <input
-                            type="text"
-                            placeholder="Rechercher par nom ou matricule..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ background: 'transparent', border: 'none', padding: '12px', width: '100%', outline: 'none' }}
-                        />
-                    </div>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '12px' }}>
-                    <button 
-                        className="btn-outline" 
-                        onClick={() => setSelectedStudents(new Set(students.map(s => s.id)))}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                    >
-                        <Users size={18} /> Tout sélectionner
-                    </button>
-                    <button 
-                        className="btn-primary" 
-                        onClick={generatePDF} 
-                        disabled={students.length === 0 || isGenerating}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '12px', fontWeight: 600, background: selectedStudents.size > 0 ? '#10b981' : '#4f8ef7' }}
-                    >
-                        {isGenerating ? (
-                            <><Loader2 size={18} className="spin" /> Génération...</>
-                        ) : (
-                            <><Printer size={18} /> Imprimer {selectedStudents.size > 0 ? `(${selectedStudents.size})` : 'Tout'} en PDF</>
-                        )}
-                    </button>
-                </div>
+        // Photo placeholder
+        doc.setFillColor(30, 50, 90);
+        doc.setDrawColor(60, 90, 140);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(x + 6, y + 34, 14, 16, 1, 1, 'FD');
+        doc.setFontSize(4); doc.setTextColor(100, 140, 200);
+        doc.text('PHOTO', x + 13, y + 43, { align: 'center' });
+
+        // Footer
+        doc.setFillColor(10, 20, 45);
+        doc.rect(x, y + 47, cardW, 7, 'F');
+        doc.setFontSize(5); doc.setTextColor(100, 150, 200);
+        doc.text('Scannez le QR Code pour vérifier ce document', x + 6, y + 50.5);
+        doc.setFontSize(5.5); doc.setFont('helvetica', 'bold');
+        doc.setTextColor(252, 209, 22);
+        doc.text('VALIDE 2024-2025', x + cardW - 4, y + 50.5, { align: 'right' });
+      }
+
+      doc.save(`Cartes_Scolaires_QR_${new Date().getFullYear()}.pdf`);
+    } catch (err) {
+      console.error('PDF Error:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const allSelected = students.length > 0 && selectedStudents.size === students.length;
+
+  return (
+    <AppLayout
+      title="Cartes Scolaires"
+      subtitle="Cartes d'identité scolaires sécurisées avec QR Code (Format ISO/IEC 7810 ID-1)"
+      breadcrumbs={[{ label: 'Élèves', href: '/students' }, { label: 'Cartes Scolaires' }]}
+    >
+      {/* ── Toolbar ── */}
+      <div style={{
+        background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255,255,255,0.6)',
+        borderRadius: '16px', padding: '20px 24px', marginBottom: '24px',
+        display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center',
+        justifyContent: 'space-between', boxShadow: '0 8px 32px rgba(0,0,0,0.06)'
+      }}>
+        {/* Search */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          background: '#f8fafc', border: '1.5px solid #e2e8f0',
+          borderRadius: '12px', padding: '0 16px', flex: 1, maxWidth: '400px',
+          transition: 'all 0.2s'
+        }}>
+          <Search size={16} color="#94a3b8" />
+          <input
+            type="text"
+            placeholder="Rechercher par nom ou matricule..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            style={{ border: 'none', background: 'transparent', padding: '12px 0', width: '100%', outline: 'none', fontSize: '14px' }}
+          />
+        </div>
+
+        {/* Stats badge */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          background: '#f1f5f9', borderRadius: '10px', padding: '8px 16px'
+        }}>
+          <Users size={14} color="#64748b" />
+          <span style={{ fontSize: '13px', fontWeight: 700, color: '#475569' }}>
+            {students.length} élèves • {selectedStudents.size} sélectionnés
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={toggleAll}
+            style={{
+              background: 'white', border: '1.5px solid #e2e8f0',
+              padding: '10px 18px', borderRadius: '10px', fontWeight: 600,
+              fontSize: '13px', color: '#475569', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s'
+            }}
+          >
+            {allSelected ? <CheckSquare size={15} /> : <Square size={15} />}
+            {allSelected ? 'Désélectionner' : 'Tout sélectionner'}
+          </button>
+
+          <button
+            onClick={generatePDF}
+            disabled={students.length === 0 || isGenerating}
+            style={{
+              background: 'linear-gradient(135deg, #4f8ef7, #3b6fd4)',
+              border: 'none', padding: '10px 22px', borderRadius: '10px',
+              color: 'white', fontWeight: 700, fontSize: '13px',
+              cursor: students.length === 0 ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: '8px',
+              opacity: students.length === 0 ? 0.6 : 1,
+              boxShadow: '0 4px 16px rgba(79,142,247,0.3)',
+              transition: 'all 0.2s'
+            }}
+          >
+            {isGenerating
+              ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Génération...</>
+              : <><Printer size={15} /> Imprimer PDF {selectedStudents.size > 0 ? `(${selectedStudents.size})` : 'Tout'}</>
+            }
+          </button>
+        </div>
+      </div>
+
+      {/* ── Info QR ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(79,142,247,0.08), rgba(59,111,212,0.04))',
+        border: '1px solid rgba(79,142,247,0.2)',
+        borderRadius: '12px', padding: '12px 20px', marginBottom: '24px',
+        display: 'flex', alignItems: 'center', gap: '12px'
+      }}>
+        <QrCode size={20} color="#4f8ef7" />
+        <p style={{ margin: 0, fontSize: '13px', color: '#475569' }}>
+          <strong>QR Code intelligent :</strong> Chaque QR code encode les données de l'élève et un lien de vérification vers le portail scolaire. Scannez pour accéder au profil en temps réel.
+        </p>
+      </div>
+
+      {/* ── Grille des cartes ── */}
+      <div style={{
+        background: 'white', borderRadius: '20px',
+        border: '1px solid rgba(0,0,0,0.05)',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          padding: '20px 24px', borderBottom: '1px solid #f1f5f9',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}>
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '16px', fontWeight: 700 }}>
+            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(79,142,247,0.1)', display: 'grid', placeItems: 'center' }}>
+              <ShieldCheck size={18} color="#4f8ef7" />
             </div>
+            Registre des Cartes d'Identité
+          </h3>
+          <span style={{ background: '#f1f5f9', color: '#475569', padding: '6px 14px', borderRadius: '99px', fontSize: '13px', fontWeight: 600 }}>
+            {students.length} profils
+          </span>
+        </div>
 
-            {/* Main Content */}
-            <div className="card-premium">
-                <div style={{ padding: '24px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px', fontSize: '18px', fontWeight: 700 }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(79, 142, 247, 0.1)', display: 'grid', placeItems: 'center' }}>
-                            <ShieldCheck size={20} className="text-primary" />
-                        </div>
-                        Registre des Cartes d'Identité
-                    </h3>
-                    <span className="badge-premium">{students.length} Profils chargés</span>
-                </div>
-
-                <div style={{ padding: '32px', background: '#f8fafc' }}>
-                    {isLoading ? (
-                        <div style={{ padding: '80px', textAlign: 'center' }}>
-                            <Loader2 size={48} className="spin text-primary" style={{ marginBottom: '16px' }} />
-                            <p className="text-muted">Synchronisation des données scolaires...</p>
-                        </div>
-                    ) : students.length > 0 ? (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '32px' }}>
-                            {students.map(student => {
-                                const isSelected = selectedStudents.has(student.id);
-                                return (
-                                <div 
-                                    key={student.id} 
-                                    className={`id-card-visual ${isSelected ? 'selected' : ''}`}
-                                    onClick={() => {
-                                        const newSelected = new Set(selectedStudents);
-                                        if (isSelected) newSelected.delete(student.id);
-                                        else newSelected.add(student.id);
-                                        setSelectedStudents(newSelected);
-                                    }}
-                                >
-                                    <div className="id-card-inner">
-                                        <div className="id-card-mali-strip"></div>
-                                        <div className="id-card-header">
-                                            <div className="school-logo-mini"></div>
-                                            <div className="id-card-header-text">
-                                                <div className="id-card-country">RÉPUBLIQUE DU MALI</div>
-                                                <div className="id-card-title">CARTE SCOLAIRE</div>
-                                            </div>
-                                            <div className="security-hologram"></div>
-                                        </div>
-                                        
-                                        <div className="id-card-body">
-                                            <div className="id-card-photo-container">
-                                                <div className="id-card-photo-placeholder">
-                                                    <Users size={32} opacity={0.2} />
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="id-card-info">
-                                                <div className="id-card-name">{student.firstName} {student.lastName}</div>
-                                                <div className="id-card-field">
-                                                    <span>MATRICULE</span>
-                                                    <strong>{student.studentNumber || '---'}</strong>
-                                                </div>
-                                                <div className="id-card-field">
-                                                    <span>CLASSE</span>
-                                                    <strong>{student.classroom?.name || 'Non assigné'}</strong>
-                                                </div>
-                                                <div className="id-card-field">
-                                                    <span>EXPIRATION</span>
-                                                    <strong>JUIN 2025</strong>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="id-card-footer">
-                                            <div className="id-card-barcode-mock"></div>
-                                            <div className="id-card-barcode-text">{student.studentNumber || student.id.slice(0,8)}</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="id-card-actions">
-                                        <div style={{ fontSize: '11px', color: isSelected ? '#10b981' : '#94a3b8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            {isSelected ? <ShieldCheck size={14} /> : null}
-                                            {isSelected ? 'SÉLECTIONNÉ' : 'CLIQUEZ POUR SÉLECTIONNER'}
-                                        </div>
-                                    </div>
-                                </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div style={{ padding: '80px', textAlign: 'center', opacity: 0.5 }}>
-                            <AlertCircle size={64} style={{ marginBottom: '24px' }} />
-                            <h3>Aucun résultat</h3>
-                            <p>Modifiez vos critères de recherche.</p>
-                        </div>
-                    )}
-                </div>
+        <div style={{ padding: '32px', background: '#f8fafc', minHeight: '300px' }}>
+          {isLoading ? (
+            <div style={{ padding: '80px', textAlign: 'center' }}>
+              <Loader2 size={48} color="#4f8ef7" style={{ animation: 'spin 1s linear infinite', marginBottom: '16px' }} />
+              <p style={{ color: '#94a3b8', margin: 0 }}>Chargement des profils...</p>
             </div>
+          ) : students.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '28px' }}>
+              {students.map(student => (
+                <StudentCardPreview
+                  key={student.id}
+                  student={student}
+                  qrDataUrl={qrCache[student.id] || ''}
+                  isSelected={selectedStudents.has(student.id)}
+                  onToggle={() => toggleStudent(student.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: '80px', textAlign: 'center', opacity: 0.5 }}>
+              <AlertCircle size={56} color="#94a3b8" style={{ marginBottom: '16px' }} />
+              <h3 style={{ margin: '0 0 8px', color: '#475569' }}>Aucun élève trouvé</h3>
+              <p style={{ margin: 0, color: '#94a3b8' }}>Modifiez vos critères de recherche.</p>
+            </div>
+          )}
+        </div>
+      </div>
 
-            <style jsx>{`
-                .card-premium {
-                    background: white;
-                    border-radius: 20px;
-                    border: 1px solid rgba(0,0,0,0.05);
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-                    overflow: hidden;
-                }
-
-                .badge-premium {
-                    background: #f1f5f9;
-                    color: #475569;
-                    padding: 6px 14px;
-                    border-radius: 99px;
-                    font-size: 13px;
-                    font-weight: 600;
-                }
-
-                .search-box-premium {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    background: #f8fafc;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 12px;
-                    padding: 0 16px;
-                    transition: all 0.3s;
-                }
-                .search-box-premium:focus-within {
-                    border-color: var(--primary);
-                    background: white;
-                    box-shadow: 0 0 0 4px rgba(79, 142, 247, 0.1);
-                }
-
-                /* Visual ID Card Styling */
-                .id-card-visual {
-                    perspective: 1000px;
-                }
-
-                .id-card-inner {
-                    width: 100%;
-                    background: white;
-                    border-radius: 16px;
-                    border: 1px solid #e2e8f0;
-                    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-                    overflow: hidden;
-                    position: relative;
-                    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-                }
-
-                .id-card-visual:hover .id-card-inner {
-                    transform: translateY(-8px) rotateX(4deg);
-                }
-
-                /* Pattern mask simulation */
-                .id-card-inner::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background-image: radial-gradient(#4f8ef7 0.5px, transparent 0.5px);
-                    background-size: 10px 10px;
-                    opacity: 0.03;
-                    pointer-events: none;
-                }
-
-                .id-card-header {
-                    background: #1e293b;
-                    padding: 12px 16px;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    color: white;
-                }
-
-                .school-logo-mini {
-                    width: 32px;
-                    height: 32px;
-                    background: #4f8ef7;
-                    border-radius: 6px;
-                }
-
-                .id-card-header-text {
-                    flex: 1;
-                }
-
-                .id-card-country { font-size: 8px; opacity: 0.7; letter-spacing: 1px; font-weight: 700; }
-                .id-card-title { font-size: 11px; font-weight: 800; }
-
-                .security-hologram {
-                  width: 28px; height: 28px;
-                  background: linear-gradient(45deg, #f0f9ff, #e0f2fe, #bae6fd);
-                  border-radius: 50%;
-                  opacity: 0.5;
-                  box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-                }
-
-                .id-card-body {
-                    padding: 16px;
-                    display: flex;
-                    gap: 16px;
-                }
-
-                .id-card-photo-container {
-                    width: 80px;
-                }
-
-                .id-card-photo-placeholder {
-                    width: 80px;
-                    height: 100px;
-                    background: #f8fafc;
-                    border: 1px solid #f1f5f9;
-                    border-radius: 8px;
-                    display: grid;
-                    place-items: center;
-                    color: #cbd5e1;
-                }
-
-                .id-card-info {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                }
-
-                .id-card-name {
-                    font-size: 16px;
-                    font-weight: 800;
-                    color: #1e293b;
-                    margin-bottom: 12px;
-                }
-
-                .id-card-field {
-                    display: flex;
-                    justify-content: space-between;
-                    font-size: 10px;
-                    margin-bottom: 4px;
-                    border-bottom: 1px solid #f1f5f9;
-                    padding-bottom: 2px;
-                }
-
-                .id-card-field span { color: #94a3b8; font-weight: 600; }
-                .id-card-field strong { color: #475569; }
-
-                .id-card-footer {
-                    padding: 8px 16px 12px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    background: #fdfdfd;
-                    border-top: 1px solid #f1f5f9;
-                }
-
-                .id-card-barcode-mock {
-                    width: 70%;
-                    height: 20px;
-                    background-image: repeating-linear-gradient(90deg, #1e293b 0, #1e293b 1px, transparent 1px, transparent 3px, #1e293b 3px, #1e293b 4px, transparent 4px, transparent 6px);
-                    opacity: 0.8;
-                }
-
-                .id-card-barcode-text {
-                    font-size: 8px;
-                    margin-top: 4px;
-                    color: #94a3b8;
-                    letter-spacing: 2px;
-                }
-
-                .id-card-actions {
-                    display: flex;
-                    gap: 8px;
-                    margin-top: 12px;
-                    justify-content: center;
-                }
-
-                .id-card-btn {
-                    padding: 6px 12px;
-                    border-radius: 8px;
-                    background: white;
-                    border: 1px solid #e2e8f0;
-                    font-size: 12px;
-                    font-weight: 600;
-                    color: #64748b;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .id-card-btn:hover {
-                    background: #f8fafc;
-                    border-color: #cbd5e1;
-                    color: #1e293b;
-                }
-
-                .btn-outline {
-                    background: white;
-                    border: 1px solid #e2e8f0;
-                    padding: 10px 20px;
-                    border-radius: 12px;
-                    font-weight: 600;
-                    color: #475569;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
-
-                .spin { animation: spin 1s linear infinite; }
-                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                
-                .shadow-premium { box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
-            `}</style>
-        </AppLayout>
-    );
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
+    </AppLayout>
+  );
 }
