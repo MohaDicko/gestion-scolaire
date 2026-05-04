@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
     Wallet, TrendingUp, TrendingDown, Landmark, 
     ArrowUpRight, ArrowDownRight, Loader2, Calendar, 
-    PieChart, DollarSign, Download, RefreshCcw
+    PieChart, DollarSign, Download, RefreshCcw, FileText
 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, Pie } from 'recharts';
 
 export default function FinanceOverviewPage() {
+    const router = useRouter();
     const toast = useToast();
     const [stats, setStats] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -178,14 +180,25 @@ export default function FinanceOverviewPage() {
             </div>
 
             {/* Bottom Actions */}
-            <div className="card shadow-sm" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Calendar size={18} className="text-primary" />
-                    <span style={{ fontSize: '14px', fontWeight: 600 }}>Rapport financier généré le {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                <div className="card shadow-sm" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <FileText size={18} className="text-primary" />
+                        <span style={{ fontSize: '14px', fontWeight: 600 }}>Registre Complet (Grand Livre)</span>
+                    </div>
+                    <button className="btn-primary" onClick={() => router.push('/finance/ledger')}>
+                        Consulter le Journal
+                    </button>
                 </div>
-                <button className="btn-primary" onClick={() => toast.info('Export Excel bientôt disponible')}>
-                    <Download size={16} /> Exporter le Bilan (Excel)
-                </button>
+                <div className="card shadow-sm" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Download size={18} className="text-primary" />
+                        <span style={{ fontSize: '14px', fontWeight: 600 }}>Rapport financier annuel</span>
+                    </div>
+                    <button className="btn-outline" onClick={() => toast.info('Export bientôt disponible')}>
+                        Générer PDF
+                    </button>
+                </div>
             </div>
         </AppLayout>
     );

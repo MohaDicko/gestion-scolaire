@@ -8,7 +8,7 @@ import {
   Briefcase, FileText, Receipt, Clock, Settings, LogOut,
   ChevronRight, GraduationCap, BadgeDollarSign, BarChart3,
   UserCog, Menu, X, Bell, Award, ClipboardCheck, Landmark,
-  Zap, Activity, ShieldAlert, Plus
+  Zap, Activity, ShieldAlert, Plus, Package
 } from 'lucide-react';
 
 interface NavItem {
@@ -36,6 +36,8 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Inscriptions',        href: '/students/enroll', icon: <Plus size={17}/> },
       { label: 'Classes',            href: '/classrooms',     icon: <School size={17}/> },
       { label: 'Matières',           href: '/subjects',       icon: <BookOpen size={17}/> },
+      { label: 'Cahier de Texte',    href: '/lessons',        icon: <ClipboardCheck size={17}/> },
+      { label: 'Bibliothèque',       href: '/library',        icon: <BookOpen size={17}/> },
       { label: 'Saisie des Notes',   href: '/grades',         icon: <FileText size={17}/> },
       { label: 'Bulletins & Résultats', href: '/reports/bulletins', icon: <Award size={17}/> },
       { label: 'Relevés de Notes',   href: '/reports/transcripts', icon: <FileText size={17}/> },
@@ -56,7 +58,9 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Finance',
     items: [
       { label: 'Bilan Financier',    href: '/finance',        icon: <Landmark size={17}/> },
+      { label: 'Grand Livre',        href: '/finance/ledger', icon: <FileText size={17}/> },
       { label: 'Factures & Frais',   href: '/invoices',       icon: <Receipt size={17}/> },
+      { label: 'Gestion des Stocks', href: '/inventory',      icon: <Package size={17}/> },
       { label: 'Dépenses',           href: '/expenses',       icon: <BarChart3 size={17}/> },
     ]
   },
@@ -161,8 +165,8 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
   const SidebarContent = () => (
     <>
-      {/* Logo */}
-      <div className="sidebar-logo">
+      {/* Logo (Header) */}
+      <header className="sidebar-logo">
         <div className="logo-icon"><GraduationCap size={22} /></div>
         <div>
           <div className="logo-title">SchoolERP <span style={{ color: 'var(--primary)' }}>Pro</span></div>
@@ -170,10 +174,10 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             {user?.schoolName || 'Mali Educational System'}
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Navigation */}
-      <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
+      {/* Navigation (Nav) */}
+      <nav className="sidebar-nav" aria-label="Menu principal" style={{ flex: 1, overflowY: 'auto' }}>
         {(user?.role === 'STUDENT' ? STUDENT_NAV_SECTIONS : [
           ...NAV_SECTIONS,
           ...(user?.role === 'SUPER_ADMIN' ? [{
@@ -246,8 +250,8 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
       {/* Main Content Area */}
       <main className="main-content">
-        {/* Top Bar */}
-        <div style={{
+        {/* Top Bar (Header) */}
+        <header style={{
           display: 'flex', alignItems: 'center', gap: '16px',
           padding: '16px 28px', borderBottom: '1px solid var(--border)',
           background: 'var(--bg-2)', flexShrink: 0
@@ -255,6 +259,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           {/* Mobile Menu Trigger */}
           <button 
             id="mobile-menu-btn"
+            aria-label="Ouvrir le menu"
             className="btn-icon" 
             style={{ display: 'none' }}
             onClick={() => setSidebarOpen(true)}
@@ -263,7 +268,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           </button>
 
           {/* Breadcrumbs / Page Title */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <nav aria-label="Fil d'Ariane" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
             {breadcrumbs && breadcrumbs.length > 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {breadcrumbs.map((b, i) => (
@@ -285,12 +290,12 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                 {subtitle && <p className="page-subtitle" style={{ fontSize: '12px' }}>{subtitle}</p>}
               </div>
             ) : null}
-          </div>
+          </nav>
 
           {/* Top actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {user?.role === 'SUPER_ADMIN' && user.schoolName && (
-               <div style={{ 
+               <div role="alert" style={{ 
                  background: 'rgba(79, 142, 247, 0.1)', border: '1px solid rgba(79, 142, 247, 0.2)', 
                  padding: '4px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', marginRight: '12px'
                }}>
@@ -303,7 +308,9 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             <div ref={notifRef} style={{ position: 'relative' }}>
               <button
                 className="btn-icon"
-                title="Notifications"
+                aria-label="Afficher les notifications"
+                aria-haspopup="true"
+                aria-expanded={notifOpen}
                 onClick={() => { setNotifOpen(o => !o); if (!notifOpen) loadNotifications(); }}
                 style={{ position: 'relative' }}
               >
@@ -318,12 +325,16 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               </button>
 
               {notifOpen && (
-                <div style={{
-                  position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                  width: '360px', background: 'white', borderRadius: '16px',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: '1px solid #f1f5f9',
-                  zIndex: 100, overflow: 'hidden'
-                }}>
+                <div 
+                  role="dialog"
+                  aria-label="Panneau de notifications"
+                  style={{
+                    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                    width: '360px', background: 'white', borderRadius: '16px',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: '1px solid #f1f5f9',
+                    zIndex: 100, overflow: 'hidden'
+                  }}
+                >
                   <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>Notifications</span>
                     <span style={{ background: '#f1f5f9', padding: '2px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 700, color: '#64748b' }}>{notifications.length}</span>
@@ -338,7 +349,10 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                       </div>
                     ) : notifications.map(n => (
                       <div key={n.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => { router.push(n.href); setNotifOpen(false); }}
+                        onKeyDown={e => { if (e.key === 'Enter') { router.push(n.href); setNotifOpen(false); } }}
                         style={{ padding: '14px 20px', borderBottom: '1px solid #f8fafc', cursor: 'pointer', display: 'flex', gap: '12px', alignItems: 'flex-start', transition: 'background 0.15s' }}
                         onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'white')}
@@ -361,11 +375,11 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               )}
             </div>
             <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 4px' }} />
-            <button className="btn-icon" onClick={handleLogout} title="Déconnexion" style={{ color: 'var(--danger)' }}>
+            <button className="btn-icon" onClick={handleLogout} aria-label="Déconnexion" title="Déconnexion" style={{ color: 'var(--danger)' }}>
               <LogOut size={18} />
             </button>
           </div>
-        </div>
+        </header>
 
         {/* Page-level header (title + actions) when breadcrumbs are shown */}
         {title && breadcrumbs && breadcrumbs.length > 0 && (

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Users, BookOpen, Clock, FileText, TrendingUp, AlertTriangle, Loader2, ChevronRight, CheckCircle, XCircle, Bell } from 'lucide-react';
+import { Users, BookOpen, Clock, FileText, TrendingUp, AlertTriangle, Loader2, ChevronRight, CheckCircle, XCircle, Bell, ClipboardList } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 
@@ -12,6 +12,7 @@ interface ChildSummary {
   attendanceRate: number | null; generalAverage: number | null;
   unpaidAmount: number; unpaidCount: number;
   nextDue?: { amount: number; dueDate: string; title: string } | null;
+  latestLesson?: { title: string; date: string; subject: string } | null;
 }
 
 function StatPill({ label, value, color }: { label: string; value: string; color: string }) {
@@ -94,17 +95,14 @@ function ChildCard({ child, onViewBulletin, onViewInvoices }: { child: ChildSumm
         )}
 
         {/* Actions */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
           <button onClick={onViewBulletin} style={{
             padding: '11px', borderRadius: '12px', background: 'rgba(79,142,247,0.1)', border: '1px solid rgba(79,142,247,0.2)',
             color: '#4f8ef7', fontWeight: 700, fontSize: '12px', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
             transition: 'all 0.2s'
-          }}
-            onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(79,142,247,0.2)'); }}
-            onMouseLeave={e => { (e.currentTarget.style.background = 'rgba(79,142,247,0.1)'); }}
-          >
-            <BookOpen size={14} /> Notes & Bulletins
+          }}>
+            <BookOpen size={14} /> Notes
           </button>
           <button onClick={onViewInvoices} style={{
             padding: '11px', borderRadius: '12px',
@@ -113,11 +111,17 @@ function ChildCard({ child, onViewBulletin, onViewInvoices }: { child: ChildSumm
             color: child.unpaidCount > 0 ? '#ef4444' : '#10b981',
             fontWeight: 700, fontSize: '12px', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            transition: 'all 0.2s'
           }}>
-            <FileText size={14} /> Factures {child.unpaidCount > 0 ? `(${child.unpaidCount})` : ''}
+            <FileText size={14} /> Factures
           </button>
         </div>
+        <button onClick={() => window.location.href = '/lessons'} style={{
+          width: '100%', padding: '11px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+          color: 'white', fontWeight: 700, fontSize: '12px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+        }}>
+          <ClipboardList size={14} /> Cahier de Texte (Cours & Devoirs)
+        </button>
       </div>
     </div>
   );

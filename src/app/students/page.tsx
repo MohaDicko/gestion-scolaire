@@ -15,7 +15,9 @@ const RELATION_LABELS: Record<string, string> = { FATHER: 'Père', MOTHER: 'Mèr
 const emptyForm = {
   firstName: '', lastName: '', dateOfBirth: '', gender: 'MALE',
   nationalId: '', parentName: '', parentPhone: '', parentEmail: '',
-  parentRelationship: 'FATHER', campusId: ''
+  parentRelationship: 'FATHER', campusId: '',
+  createStudentAccount: true, studentEmail: '', studentPassword: '',
+  createParentAccount: false, parentAccountPassword: ''
 };
 
 export default function StudentsPage() {
@@ -45,7 +47,7 @@ export default function StudentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, page]);
+  }, [searchTerm, page, router, toast]);
 
   useEffect(() => {
     const t = setTimeout(fetchStudents, 300);
@@ -59,6 +61,10 @@ export default function StudentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.campusId) { toast.warning('Veuillez sélectionner un campus.'); return; }
+    if (formData.createParentAccount && !formData.parentEmail) {
+      toast.warning("L'email du parent est requis pour créer un compte parent.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const res = await fetch('/api/students', {
@@ -192,7 +198,7 @@ export default function StudentsPage() {
         }}>
           <div style={{
             background: 'var(--bg-2)', border: '1px solid var(--border-md)',
-            borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '700px',
+            borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '750px',
             maxHeight: '90vh', overflow: 'auto', boxShadow: 'var(--shadow-lg)',
             animation: 'fadeUp 0.3s var(--ease) both'
           }}>
@@ -201,8 +207,9 @@ export default function StudentsPage() {
               <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit} style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
               <div>
-                <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>Informations Personnelles</p>
+                <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Informations Personnelles</p>
                 <div className="form-grid">
                   <div className="form-group"><label>Prénom *</label><input required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder="Ex: Moussa" /></div>
                   <div className="form-group"><label>Nom *</label><input required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder="Ex: Traoré" /></div>
@@ -223,8 +230,25 @@ export default function StudentsPage() {
                   </div>
                 </div>
               </div>
+
               <div>
-                <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>Informations du Parent / Tuteur</p>
+                <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Compte d'Accès Élève (Optionnel)</p>
+                <div style={{ background: 'var(--bg-3)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: formData.createStudentAccount ? '16px' : '0' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600 }}>Activer l'accès au portail élève</span>
+                    <input type="checkbox" checked={formData.createStudentAccount} onChange={e => setFormData({...formData, createStudentAccount: e.target.checked})} />
+                  </div>
+                  {formData.createStudentAccount && (
+                    <div className="form-grid">
+                      <div className="form-group"><label>Email Élève (Provisoire)</label><input type="email" value={formData.studentEmail} onChange={e => setFormData({...formData, studentEmail: e.target.value})} placeholder="laisser vide pour auto-générer" /></div>
+                      <div className="form-group"><label>Mot de passe</label><input type="password" value={formData.studentPassword} onChange={e => setFormData({...formData, studentPassword: e.target.value})} placeholder="défaut: matricule" /></div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Informations du Parent / Tuteur & Accès</p>
                 <div className="form-grid">
                   <div className="form-group"><label>Nom du Parent *</label><input required value={formData.parentName} onChange={e => setFormData({...formData, parentName: e.target.value})} /></div>
                   <div className="form-group"><label>Téléphone *</label><input type="tel" required value={formData.parentPhone} onChange={e => setFormData({...formData, parentPhone: e.target.value})} placeholder="+223 00 00 00 00" /></div>
@@ -236,7 +260,21 @@ export default function StudentsPage() {
                     </select>
                   </div>
                 </div>
+                
+                <div style={{ background: 'var(--bg-3)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', marginTop: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: formData.createParentAccount ? '16px' : '0' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600 }}>Créer un compte pour le Parent</span>
+                    <input type="checkbox" checked={formData.createParentAccount} onChange={e => setFormData({...formData, createParentAccount: e.target.checked})} />
+                  </div>
+                  {formData.createParentAccount && (
+                    <div className="form-group">
+                      <label>Mot de passe Parent *</label>
+                      <input type="password" required={formData.createParentAccount} value={formData.parentAccountPassword} onChange={e => setFormData({...formData, parentAccountPassword: e.target.value})} placeholder="Mot de passe portail parent" />
+                    </div>
+                  )}
+                </div>
               </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
                 <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
                 <button type="submit" className="btn-primary" disabled={isSubmitting}>

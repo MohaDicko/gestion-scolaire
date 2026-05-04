@@ -60,6 +60,10 @@ export async function GET(request: Request) {
   }
 }
 
+import { sendAbsenceAlert } from '@/lib/email';
+
+// ... existing GET handler ...
+
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session || !session.tenantId) {
@@ -85,13 +89,14 @@ export async function POST(request: Request) {
         }
       });
 
+      let attendance;
       if (existing) {
-        return prisma.attendance.update({
+        attendance = await prisma.attendance.update({
           where: { id: existing.id },
           data: { status: rec.status, notes: rec.notes }
         });
       } else {
-        return prisma.attendance.create({
+        attendance = await prisma.attendance.create({
           data: {
             tenantId: session.tenantId,
             studentId: rec.studentId,
@@ -102,10 +107,28 @@ export async function POST(request: Request) {
           }
         });
       }
+
+      // If marked ABSENT, notify parent (only if newly absent to avoid spam)
+      const isNewlyAbsent = rec.status === 'ABSENT' && (!existing || existing.status !== 'ABSENT');
+      
+      if (isNewlyAbsent) {
+        const student = await prisma.student.findUnique({
+          where: { id: rec.studentId },
+          select: { firstName: true, parentEmail: true }
+        });
+        
+        if (student?.parentEmail) {
+          sendAbsenceAlert(student.parentEmail, student.firstName, targetDate.toLocaleDateString('fr-FR'))
+            .catch(err => console.error('Failed to send absence alert:', err));
+        }
+      }
+      
+      return attendance;
     }));
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error: any) {
+    console.error('Attendance POST Error:', error);
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }

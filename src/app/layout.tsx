@@ -1,28 +1,38 @@
-import './globals.css';
-import { ToastProvider } from '@/components/Toast';
+import { Plus_Jakarta_Sans } from "next/font/google";
+import "./globals.css";
+import { ToastProvider } from "@/components/Toast";
+import { Metadata, Viewport } from "next";
 
-export const metadata = {
-  title: {
-    default: 'SchoolERP Pro — Gestion Scolaire Intégrée',
-    template: '%s | SchoolERP Pro'
+const jakarta = Plus_Jakarta_Sans({ 
+  subsets: ["latin"],
+  variable: '--font-jakarta',
+});
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
+export const metadata: Metadata = {
+  title: "SchoolERP Pro | Excellence en Gestion Scolaire",
+  description: "Plateforme ERP premium pour la gestion des établissements scolaires : Académique, Finance, RH et Stock.",
+  keywords: ["ERP scolaire", "gestion école", "logiciel éducation", "portail parent", "paie mali"],
+  authors: [{ name: "SchoolERP Team" }],
+  icons: {
+    icon: "/favicon.ico",
   },
-  description: 'Logiciel de gestion scolaire premium pour établissements maliens. Gestion des élèves, notes, paie, et finance en un seul lieu.',
-  keywords: ['école', 'gestion scolaire', 'Mali', 'ERP', 'bulletin de notes', 'logiciel éducation'],
-  robots: 'index, follow',
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="fr" data-theme="dark" suppressHydrationWarning>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#060b18" />
-      </head>
-      <body className="antialiased font-sans" suppressHydrationWarning>
+    <html lang="fr" className={jakarta.variable} suppressHydrationWarning>
+      <body className="antialiased font-sans">
         <ToastProvider>
           {children}
         </ToastProvider>

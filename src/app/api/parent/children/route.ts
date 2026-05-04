@@ -19,7 +19,8 @@ export async function GET() {
         campus: { select: { name: true } },
         enrollments: {
           where: { status: 'ACTIVE' },
-          include: {
+          select: {
+            classroomId: true,
             classroom: { select: { name: true, level: true } },
             academicYear: { select: { name: true, isActive: true } },
           },
@@ -44,7 +45,16 @@ export async function GET() {
       },
     });
 
-    const result = children.map(child => {
+    const result = await Promise.all(children.map(async (child) => {
+      const classroomId = child.enrollments[0]?.classroomId;
+      const latestLog = classroomId 
+        ? await prisma.lessonLog.findFirst({
+            where: { classroomId },
+            orderBy: { date: 'desc' },
+            include: { subject: { select: { name: true } } }
+          })
+        : null;
+
       const totalAttendance = child.Attendance.length;
       const presentCount = child.Attendance.filter(a => a.status === 'PRESENT').length;
       const attendanceRate = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : null;
@@ -72,8 +82,13 @@ export async function GET() {
         unpaidAmount: totalUnpaid,
         unpaidCount: child.Invoice.length,
         nextDue: child.Invoice[0] ?? null,
+        latestLesson: latestLog ? {
+          title: latestLog.title,
+          date: latestLog.date.toISOString(),
+          subject: latestLog.subject.name
+        } : null
       };
-    });
+    }));
 
     return NextResponse.json(result);
   } catch (error) {

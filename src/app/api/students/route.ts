@@ -67,40 +67,74 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+    const { 
+      firstName, lastName, dateOfBirth, gender, nationalId, 
+      parentName, parentPhone, parentEmail, parentRelationship, campusId,
+      createStudentAccount, studentEmail, studentPassword,
+      createParentAccount, parentAccountPassword
+    } = body;
+
     const uniqueNumber = `STU-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
 
-    const newStudent = await prisma.student.create({
-      data: {
-        tenantId: session.tenantId,
-        studentNumber: uniqueNumber,
-        firstName: body.firstName,
-        lastName: body.lastName,
-        dateOfBirth: new Date(body.dateOfBirth),
-        gender: body.gender.toUpperCase(),
-        nationalId: body.nationalId,
-        parentName: body.parentName,
-        parentPhone: body.parentPhone,
-        parentEmail: body.parentEmail || '',
-        parentRelationship: body.parentRelationship,
-        campusId: body.campusId,
-      },
-    });
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create Student record
+      const student = await tx.student.create({
+        data: {
+          tenantId: session.tenantId,
+          studentNumber: uniqueNumber,
+          firstName,
+          lastName,
+          dateOfBirth: new Date(dateOfBirth),
+          gender: gender.toUpperCase(),
+          nationalId: nationalId || '',
+          parentName,
+          parentPhone,
+          parentEmail: parentEmail || '',
+          parentRelationship,
+          campusId,
+        },
+      });
 
-    const pass = await bcrypt.hash(uniqueNumber, 10);
-    await prisma.user.create({
-      data: {
-        tenantId: session.tenantId,
-        email: `${uniqueNumber.toLowerCase()}@student.schoolerp.com`,
-        password: pass,
-        firstName: body.firstName,
-        lastName: body.lastName,
-        role: 'STUDENT',
+      // 2. Create Student User account
+      if (createStudentAccount) {
+        const pass = await bcrypt.hash(studentPassword || uniqueNumber, 10);
+        await tx.user.create({
+          data: {
+            tenantId: session.tenantId,
+            email: studentEmail ? studentEmail.toLowerCase().trim() : `${uniqueNumber.toLowerCase()}@erp.ml`,
+            password: pass,
+            firstName,
+            lastName,
+            role: 'STUDENT',
+          }
+        });
       }
+
+      // 3. Create Parent User account
+      if (createParentAccount && parentEmail) {
+        const pPass = await bcrypt.hash(parentAccountPassword || 'parent123', 10);
+        const pNames = parentName.split(' ');
+        await tx.user.create({
+          data: {
+            tenantId: session.tenantId,
+            email: parentEmail.toLowerCase().trim(),
+            password: pPass,
+            firstName: pNames[0] || 'Parent',
+            lastName: pNames.slice(1).join(' ') || lastName,
+            role: 'PARENT',
+          }
+        });
+      }
+
+      return student;
     });
 
-    return NextResponse.json({ id: newStudent.id, studentNumber: newStudent.studentNumber }, { status: 201 });
+    return NextResponse.json({ id: result.id, studentNumber: result.studentNumber }, { status: 201 });
   } catch (error: any) {
     console.error('Students POST Error:', error);
+    if (error.code === 'P2002') {
+      return NextResponse.json({ error: 'Cet email est déjà utilisé pour un compte.' }, { status: 400 });
+    }
     return NextResponse.json({ error: error.message || 'Error creating student' }, { status: 400 });
   }
 }

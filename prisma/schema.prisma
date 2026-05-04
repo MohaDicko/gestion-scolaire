@@ -77,6 +77,7 @@ model Classroom {
   campus         Campus       @relation(fields: [campusId], references: [id])
   enrollments    Enrollment[]
   Timetable      Timetable[]
+  lessonLogs     LessonLog[]
 }
 
 model Student {
@@ -101,6 +102,7 @@ model Student {
   enrollments        Enrollment[]
   Grade              Grade[]
   Invoice            Invoice[]
+  loans              Loan[]
   campus             Campus       @relation(fields: [campusId], references: [id])
 }
 
@@ -164,6 +166,8 @@ model Employee {
   Payslip         Payslip[]
   StaffAttendance StaffAttendance[]
   Timetable       Timetable[]
+  lessonLogs      LessonLog[]
+  loans           Loan[]
 }
 
 model Contract {
@@ -191,6 +195,7 @@ model Subject {
   updatedAt   DateTime    @updatedAt
   grades      Grade[]
   Timetable   Timetable[]
+  lessonLogs  LessonLog[]
 }
 
 model Grade {
@@ -297,6 +302,25 @@ model Attendance {
   student     Student   @relation(fields: [studentId], references: [id])
 }
 
+model LessonLog {
+  id          String    @id @default(uuid())
+  tenantId    String
+  classroomId String
+  subjectId   String
+  employeeId  String
+  date        DateTime  @default(now())
+  title       String
+  content     String    @db.Text
+  homework    String?   @db.Text
+  status      String    @default("COMPLETED") // COMPLETED, PLANNED, CANCELLED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  classroom Classroom @relation(fields: [classroomId], references: [id])
+  subject   Subject   @relation(fields: [subjectId], references: [id])
+  teacher   Employee  @relation(fields: [employeeId], references: [id])
+}
+
 model StaffAttendance {
   id         String   @id @default(uuid())
   tenantId   String
@@ -329,6 +353,67 @@ model Expense {
   category    String
   status      String   @default("PAID")
   createdAt   DateTime @default(now())
+}
+
+model StockItem {
+  id            String             @id @default(uuid())
+  tenantId      String
+  name          String
+  category      String             // Uniform, Textbook, Stationery, Equipment
+  sku           String?            @unique
+  description   String?
+  unitPrice     Float              @default(0)
+  quantity      Int                @default(0)
+  minThreshold  Int                @default(5)
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  transactions  StockTransaction[]
+}
+
+model StockTransaction {
+  id          String   @id @default(uuid())
+  tenantId    String
+  itemId      String
+  type        String   // IN, OUT, ADJUSTMENT
+  quantity    Int
+  date        DateTime @default(now())
+  performer   String?  // Name of person who did the action
+  notes       String?
+  
+  item        StockItem @relation(fields: [itemId], references: [id])
+}
+
+model Book {
+  id              String      @id @default(uuid())
+  tenantId        String
+  title           String
+  author          String
+  isbn            String?     @unique
+  category        String      // Fiction, Science, History, etc.
+  totalCopies     Int         @default(1)
+  availableCopies Int         @default(1)
+  shelfLocation   String?
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  loans           Loan[]
+}
+
+model Loan {
+  id            String    @id @default(uuid())
+  tenantId      String
+  bookId        String
+  studentId     String?
+  employeeId    String?
+  loanDate      DateTime  @default(now())
+  dueDate       DateTime
+  returnDate    DateTime?
+  status        String    @default("BORROWED") // BORROWED, RETURNED, OVERDUE, LOST
+
+  book          Book      @relation(fields: [bookId], references: [id])
+  student       Student?  @relation(fields: [studentId], references: [id])
+  employee      Employee? @relation(fields: [employeeId], references: [id])
 }
 
 enum Gender {

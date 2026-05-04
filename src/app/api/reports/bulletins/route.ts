@@ -16,8 +16,8 @@ export async function GET(request: Request) {
   }
 
   const [student, grades, enrollment, school] = await Promise.all([
-    prisma.student.findUnique({
-      where: { id: studentId },
+    prisma.student.findFirst({
+      where: { id: studentId, tenantId: session.tenantId },
       include: { campus: { select: { name: true } } },
     }),
     prisma.grade.findMany({
@@ -27,10 +27,15 @@ export async function GET(request: Request) {
     }),
     prisma.enrollment.findFirst({
       where: { studentId, academicYearId },
-      include: { classroom: { select: { name: true, level: true } }, academicYear: { select: { name: true } } },
+      include: { classroom: { select: { name: true, level: true, id: true } }, academicYear: { select: { name: true } } },
     }),
     prisma.school.findUnique({ where: { id: session.tenantId } }),
   ]);
+
+  if (enrollment) {
+    // Add classroomId check to satisfy TypeScript if needed
+    (enrollment as any).classroomId = enrollment.classroom.id;
+  }
 
   if (!student) return NextResponse.json({ error: 'Élève non trouvé' }, { status: 404 });
 
@@ -61,6 +66,53 @@ export async function GET(request: Request) {
   const totalWeighted = subjectResults.reduce((s, r) => s + r.weighted, 0);
   const generalAverage = totalCoeff > 0 ? Math.round((totalWeighted / totalCoeff) * 100) / 100 : 0;
 
+  // --- CALCULATION OF RANK ---
+  let rank = 1;
+  let totalInClass = 1;
+  const classroomId = (enrollment as any)?.classroomId;
+  
+  if (classroomId) {
+    // Fetch all active enrollments for this class
+    const classmates = await prisma.enrollment.findMany({
+      where: { classroomId, academicYearId, status: 'ACTIVE' },
+      select: { studentId: true }
+    });
+    totalInClass = classmates.length;
+
+    // Fetch all grades for these classmates in this period
+    const classmateGrades = await prisma.grade.findMany({
+      where: { 
+        studentId: { in: classmates.map(c => c.studentId) },
+        academicYearId,
+        trimestre
+      },
+      include: { subject: true }
+    });
+
+    // Group by student and calculate averages
+    const classmateAverages = classmates.map(c => {
+      const sGrades = classmateGrades.filter(g => g.studentId === c.studentId);
+      const sResults = sGrades.map(g => {
+        const avg = (g.score / g.maxScore) * 20;
+        return { average: avg, coeff: g.subject.coefficient };
+      });
+      const sTotalCoeff = sResults.reduce((s, r) => s + r.coeff, 0);
+      const sTotalWeighted = sResults.reduce((s, r) => s + (r.average * r.coeff), 0);
+      return { 
+        studentId: c.studentId, 
+        avg: sTotalCoeff > 0 ? sTotalWeighted / sTotalCoeff : 0 
+      };
+    });
+
+    // Sort by average DESC
+    classmateAverages.sort((a, b) => b.avg - a.avg);
+    
+    // Find index
+    const myIndex = classmateAverages.findIndex(a => a.studentId === studentId);
+    if (myIndex !== -1) rank = myIndex + 1;
+  }
+  // ---------------------------
+
   let generalMention = '';
   if (generalAverage >= 16) generalMention = 'Très Bien';
   else if (generalAverage >= 14) generalMention = 'Bien';
@@ -86,6 +138,14 @@ export async function GET(request: Request) {
     },
     trimestre,
     subjectResults,
-    summary: { generalAverage, generalMention, totalCoeff, totalWeighted, subjectCount: subjectResults.length },
+    summary: { 
+      generalAverage, 
+      generalMention, 
+      totalCoeff, 
+      totalWeighted, 
+      subjectCount: subjectResults.length,
+      rank,
+      totalInClass
+    },
   });
 }
