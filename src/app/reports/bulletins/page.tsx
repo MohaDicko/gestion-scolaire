@@ -78,7 +78,7 @@ export default function BulletinsPage() {
     } finally { setLoading(false); }
   }, [selectedStudentId, selectedYearId, trimestre]);
 
-  useEffect(() => { if (selectedStudentId) loadBulletin(); }, [loadBulletin]);
+  useEffect(() => { if (selectedStudentId) loadBulletin(); }, [selectedStudentId, loadBulletin]);
 
   const generatePDF = async () => {
     if (!bulletin) return;
