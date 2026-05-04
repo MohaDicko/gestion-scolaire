@@ -38,6 +38,26 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
 
+    // --- Domain/Subdomain Verification ---
+    const host = request.headers.get('host') || '';
+    const isLocal = host.includes('localhost');
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+    
+    // Extract subdomain (e.g., 'ecole1' from 'ecole1.votre-erp.com')
+    const subdomain = isLocal 
+      ? (host !== 'localhost:3000' ? host.split('.')[0] : null)
+      : (host !== rootDomain ? host.replace(`.${rootDomain}`, '') : null);
+
+    if (subdomain && subdomain !== 'www' && user && user.role !== 'SUPER_ADMIN') {
+      const school = await prisma.school.findFirst({
+        where: { OR: [{ subdomain }, { customDomain: host }] }
+      });
+
+      if (school && user.tenantId !== school.id) {
+        return NextResponse.json({ error: 'Cet utilisateur n\'appartient pas à cet établissement.' }, { status: 401 });
+      }
+    }
+
     // Always respond after bcrypt compare — avoids timing attacks / user enumeration
     if (!user) {
       await bcrypt.compare(password, '$2a$10$dummyhashtopreventtimingattack000000000000'); // blind compare

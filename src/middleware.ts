@@ -19,7 +19,14 @@ const isPublicPath = (url: string) => {
 };
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const url = request.nextUrl;
+  const hostname = request.headers.get('host') || '';
+  const { pathname } = url;
+
+  // Détection du sous-domaine / domaine personnalisé
+  const currentHost = process.env.NODE_ENV === 'production' 
+    ? hostname.replace(`.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`, '')
+    : hostname.replace(`.localhost:3000`, '');
 
   // 1. Laisser passer les routes publiques
   if (isPublicPath(pathname)) {

@@ -41,9 +41,18 @@ export default function LoginPage() {
   const [error, setError]           = useState('');
   const [loading, setLoading]       = useState(false);
   const [mounted, setMounted]       = useState(false);
+  const [schoolInfo, setSchoolInfo] = useState<any>(null);
   const router = useRouter();
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { 
+    setMounted(true); 
+    fetch('/api/school/info')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.error && !data.isMain) setSchoolInfo(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -573,8 +582,12 @@ export default function LoginPage() {
               Accès Sécurisé
             </div>
 
-            <h2 className="form-title">Bienvenue 👋</h2>
-            <p className="form-subtitle">Connectez-vous à votre espace de gestion</p>
+            <h2 className="form-title">
+              {schoolInfo ? `Bienvenue à ${schoolInfo.name}` : 'Bienvenue 👋'}
+            </h2>
+            <p className="form-subtitle">
+              {schoolInfo?.motto || 'Connectez-vous à votre espace de gestion'}
+            </p>
 
             {/* Error */}
             {error && (
