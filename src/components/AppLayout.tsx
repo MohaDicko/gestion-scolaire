@@ -8,7 +8,7 @@ import {
   Briefcase, FileText, Receipt, Clock, Settings, LogOut,
   ChevronRight, GraduationCap, BadgeDollarSign, BarChart3,
   UserCog, Menu, X, Bell, Award, ClipboardCheck, Landmark,
-  Zap, Activity, ShieldAlert
+  Zap, Activity, ShieldAlert, Plus
 } from 'lucide-react';
 
 interface NavItem {
@@ -33,6 +33,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Académique',
     items: [
       { label: 'Élèves & Scolarité', href: '/students',       icon: <Users size={17}/> },
+      { label: 'Inscriptions',        href: '/students/enroll', icon: <Plus size={17}/> },
       { label: 'Classes',            href: '/classrooms',     icon: <School size={17}/> },
       { label: 'Matières',           href: '/subjects',       icon: <BookOpen size={17}/> },
       { label: 'Saisie des Notes',   href: '/grades',         icon: <FileText size={17}/> },

@@ -48,16 +48,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'studentId, classroomId et academicYearId sont requis' }, { status: 400 });
     }
 
-    // Verify all resources belong to this tenant
-    const [classroom, student] = await Promise.all([
+    const [classroom, student, academicYear] = await Promise.all([
       prisma.classroom.findFirst({ where: { id: classroomId, tenantId: session.tenantId } }),
       prisma.student.findFirst({ where: { id: studentId, tenantId: session.tenantId } }),
+      prisma.academicYear.findUnique({ where: { id: academicYearId } }),
     ]);
 
     if (!classroom) return NextResponse.json({ error: 'Classe introuvable ou accès non autorisé' }, { status: 403 });
     if (!student) return NextResponse.json({ error: 'Élève introuvable ou accès non autorisé' }, { status: 403 });
 
-    // Check existing enrollment
     const existingEnrollment = await prisma.enrollment.findUnique({
       where: { studentId_academicYearId: { studentId, academicYearId } }
     });
@@ -65,12 +64,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Cet élève est déjà inscrit pour cette année académique' }, { status: 400 });
     }
 
-    const enrollment = await prisma.enrollment.create({
-      data: { studentId, classroomId, academicYearId },
-      include: { student: true, classroom: true }
+    // ── Transaction atomique : inscription + facture auto ────────────
+    const result = await prisma.$transaction(async (tx) => {
+      const enrollment = await tx.enrollment.create({
+        data: { studentId, classroomId, academicYearId },
+        include: { student: true, classroom: true, academicYear: true }
+      });
+
+      const tuitionAmount = Number(body.tuitionAmount ?? 0);
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 30);
+
+      let invoice = null;
+      if (tuitionAmount > 0) {
+        const invoiceNumber = `INV-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+        invoice = await tx.invoice.create({
+          data: {
+            tenantId: session.tenantId,
+            studentId,
+            invoiceNumber,
+            title: `Frais de scolarité — ${academicYear?.name ?? 'Année en cours'} — ${classroom.name}`,
+            type: 'TUITION',
+            amount: tuitionAmount,
+            status: 'UNPAID',
+            dueDate,
+          }
+        });
+      }
+
+      return { enrollment, invoice };
     });
 
-    return NextResponse.json(enrollment, { status: 201 });
+    return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     console.error('[ENROLLMENTS POST]', error.message);
     return NextResponse.json({ error: 'Erreur lors de l\'inscription' }, { status: 400 });

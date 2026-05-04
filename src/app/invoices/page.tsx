@@ -22,7 +22,10 @@ export default function InvoicesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [formData, setFormData] = useState({ ...emptyForm });
+  const [paymentForm, setPaymentForm] = useState({ amount: '', method: 'ESPECES', reference: '', notes: '' });
   const [search, setSearch] = useState('');
 
   const fetchInvoices = useCallback(async () => {
@@ -73,6 +76,37 @@ export default function InvoicesPage() {
     }
   };
 
+  const handleOpenPayment = (inv: any) => {
+    setSelectedInvoice(inv);
+    setPaymentForm({ ...paymentForm, amount: inv.amount.toString() });
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceId: selectedInvoice.id,
+          ...paymentForm,
+          amount: parseFloat(paymentForm.amount)
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur lors du paiement');
+      toast.success('Paiement enregistré avec succès.');
+      setShowPaymentModal(false);
+      fetchInvoices();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const filtered = invoices.filter(inv => 
     inv.student?.firstName.toLowerCase().includes(search.toLowerCase()) ||
     inv.student?.lastName.toLowerCase().includes(search.toLowerCase()) ||
@@ -85,9 +119,14 @@ export default function InvoicesPage() {
       subtitle="Gestion de la facturation, des scolarités et suivi des encaissements"
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Facturation' }]}
       actions={
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={15} /> Émettre une Facture
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-ghost" onClick={() => router.push('/students/enroll')}>
+            <Plus size={15} /> Nouvelle Inscription
+          </button>
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <Receipt size={15} /> Émettre Facture
+          </button>
+        </div>
       }
     >
       <div className="card shadow-sm" style={{ padding: 0 }}>
@@ -147,7 +186,7 @@ export default function InvoicesPage() {
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                         <button className="btn-icon" title="Voir détails" onClick={() => router.push(`/students/${inv.studentId}`)}><Eye size={14}/></button>
                         {inv.status !== 'PAID' && (
-                          <button className="btn-icon text-success" title="Enregistrer paiement"><CreditCard size={14}/></button>
+                          <button className="btn-icon text-success" title="Enregistrer paiement" onClick={() => handleOpenPayment(inv)}><CreditCard size={14}/></button>
                         )}
                         <button className="btn-icon" title="Télécharger PDF"><FileDown size={14}/></button>
                       </div>
@@ -220,6 +259,63 @@ export default function InvoicesPage() {
                 <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
                 <button type="submit" className="btn-primary" disabled={isSubmitting}>
                   {isSubmitting ? <><Loader2 size={16} className="spin" /> Émission...</> : 'Valider & Envoyer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showPaymentModal && selectedInvoice && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border-md)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '500px', boxShadow: 'var(--shadow-lg)', animation: 'fadeUp 0.3s var(--ease) both' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--border)' }}>
+              <div>
+                <h2 style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '18px', marginBottom: '4px' }}>Enregistrer un Paiement</h2>
+                <p style={{ fontSize: '12px', color: 'var(--text-dim)' }}>Facture {selectedInvoice.invoiceNumber} — {selectedInvoice.student?.firstName}</p>
+              </div>
+              <button className="btn-icon" onClick={() => setShowPaymentModal(false)}><X size={18} /></button>
+            </div>
+            <form onSubmit={handlePaymentSubmit} style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              
+              <div style={{ background: 'var(--bg-fluid)', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-dim)' }}>Reste à payer :</span>
+                <strong style={{ fontSize: '18px', color: 'var(--danger)' }}>{selectedInvoice.amount.toLocaleString()} XOF</strong>
+              </div>
+
+              <div className="form-group">
+                <label>Montant encaissé (XOF) *</label>
+                <input 
+                  type="number" 
+                  required 
+                  value={paymentForm.amount} 
+                  onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} 
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Mode de règlement *</label>
+                <select required value={paymentForm.method} onChange={e => setPaymentForm({...paymentForm, method: e.target.value})}>
+                  <option value="ESPECES">Espèces (Cash)</option>
+                  <option value="ORANGE_MONEY">Orange Money</option>
+                  <option value="MOOV_MONEY">Moov Money</option>
+                  <option value="VIREMENT">Virement Bancaire</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Référence (facultatif)</label>
+                <input 
+                  placeholder="ID transaction, n° chèque..." 
+                  value={paymentForm.reference} 
+                  onChange={e => setPaymentForm({...paymentForm, reference: e.target.value})} 
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn-ghost" onClick={() => setShowPaymentModal(false)}>Annuler</button>
+                <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ background: 'var(--success)', border: 'none' }}>
+                  {isSubmitting ? <><Loader2 size={16} className="spin" /> Validation...</> : 'Confirmer l\'Encaissement'}
                 </button>
               </div>
             </form>
