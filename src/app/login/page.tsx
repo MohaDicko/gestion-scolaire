@@ -576,18 +576,33 @@ export default function LoginPage() {
         {/* ─── RIGHT PANEL ─── */}
         <div className="right-panel">
           <div className="form-card">
-            {/* Badge */}
-            <div className="form-badge">
-              <span className="form-badge-dot" />
-              Accès Sécurisé
-            </div>
+            {/* Branding Personnalisé */}
+            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+              {schoolInfo?.logoUrl ? (
+                <img 
+                  src={schoolInfo.logoUrl} 
+                  alt={schoolInfo.name} 
+                  style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '16px', borderRadius: '12px' }} 
+                />
+              ) : (
+                <div className="form-badge">
+                  <span className="form-badge-dot" />
+                  Accès Sécurisé
+                </div>
+              )}
 
-            <h2 className="form-title">
-              {schoolInfo ? `Bienvenue à ${schoolInfo.name}` : 'Bienvenue 👋'}
-            </h2>
-            <p className="form-subtitle">
-              {schoolInfo?.motto || 'Connectez-vous à votre espace de gestion'}
-            </p>
+              <h2 className="form-title" style={{ fontSize: schoolInfo ? '24px' : '30px' }}>
+                {schoolInfo ? `Bienvenue au ${schoolInfo.name}` : 'Bienvenue 👋'}
+              </h2>
+              <p className="form-subtitle">
+                {schoolInfo?.motto || 'Connectez-vous à votre espace de gestion'}
+              </p>
+              {schoolInfo?.city && (
+                <div style={{ fontSize: '11px', color: '#4f8ef7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '-12px', marginBottom: '20px' }}>
+                  {schoolInfo.city}
+                </div>
+              )}
+            </div>
 
             {/* Error */}
             {error && (
