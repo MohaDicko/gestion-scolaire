@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { CalendarDays, Plus, Clock, Trash2, Loader2, X, AlertCircle } from 'lucide-react';
+import { CalendarDays, Plus, Clock, Trash2, Loader2, X, AlertCircle, Printer } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const DAYS = [
   { id: 1, label: 'Lundi' },
@@ -26,6 +28,7 @@ export default function TimetablePage() {
     const [selectedClassroom, setSelectedClassroom] = useState('');
     const [schedule, setSchedule] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     const [showModal, setShowModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,6 +86,57 @@ export default function TimetablePage() {
         fetchSchedule();
     }, [fetchSchedule]);
 
+    const generatePDF = () => {
+        if (!selectedClassroom || schedule.length === 0) return;
+        setIsGenerating(true);
+        try {
+            const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' });
+            const classroom = classrooms.find(c => c.id === selectedClassroom);
+            const classroomName = classroom?.name || 'Classe';
+            
+            doc.setFillColor(15, 23, 42);
+            doc.rect(0, 0, 297, 25, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+            doc.text(`EMPLOI DU TEMPS : ${classroomName.toUpperCase()}`, 148.5, 12, { align: 'center' });
+            doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+            doc.text(`Établissement Scolaire — Année Académique 2023-2024`, 148.5, 19, { align: 'center' });
+
+            const timeSlots = Array.from(new Set(schedule.map(s => `${s.startTime} - ${s.endTime}`))).sort();
+            const tableData: string[][] = [];
+
+            timeSlots.forEach(time => {
+                const row = [time];
+                DAYS.forEach(day => {
+                    const slot = schedule.find(s => s.dayOfWeek === day.id && `${s.startTime} - ${s.endTime}` === time);
+                    row.push(slot ? `${slot.subject?.name}\n(${slot.teacher?.lastName})` : '-');
+                });
+                tableData.push(row);
+            });
+
+            (doc as any).autoTable({
+                startY: 35,
+                head: [['HEURE', ...DAYS.map(d => d.label.toUpperCase())]],
+                body: tableData,
+                theme: 'grid',
+                styles: { fontSize: 8, halign: 'center', valign: 'middle', cellPadding: 4 },
+                headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold' },
+                columnStyles: { 0: { fontStyle: 'bold', fillColor: [248, 250, 252], cellWidth: 35 } },
+                alternateRowStyles: { fillColor: [252, 253, 255] }
+            });
+
+            doc.setFontSize(7); doc.setTextColor(150);
+            doc.text(`Document généré le ${new Date().toLocaleDateString('fr-FR')} — Système de Gestion Scolaire Excellence`, 148.5, 200, { align: 'center' });
+
+            doc.save(`Emploi_du_Temps_${classroomName.replace(/\s+/g, '_')}.pdf`);
+            toast.success('Emploi du temps exporté avec succès');
+        } catch (e) {
+            toast.error('Erreur lors de l\'exportation PDF');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleAddSlot = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedClassroom) return;
@@ -128,10 +182,11 @@ export default function TimetablePage() {
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <button 
                         className="btn-outline" 
-                        onClick={() => window.print()}
-                        disabled={!selectedClassroom || schedule.length === 0}
+                        onClick={generatePDF}
+                        disabled={!selectedClassroom || schedule.length === 0 || isGenerating}
                     >
-                        Imprimer
+                        {isGenerating ? <Loader2 size={15} className="spin" /> : <Printer size={15} />}
+                        {isGenerating ? 'Génération...' : 'Imprimer PDF'}
                     </button>
                     <button 
                         className="btn-primary" 
@@ -238,7 +293,6 @@ export default function TimetablePage() {
                 </div>
             )}
 
-            {/* Modal de création */}
             {showModal && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
                     <div style={{ 
@@ -304,27 +358,6 @@ export default function TimetablePage() {
 
             <style jsx>{`
                 .hover-opacity-1:hover { opacity: 1 !important; }
-                
-                @media print {
-                    .sidebar, .top-bar, .btn-primary, .btn-outline, .btn-icon, .form-group, .breadcrumbs {
-                        display: none !important;
-                    }
-                    .main-content {
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-                    .card {
-                        box-shadow: none !important;
-                        border: 1px solid #eee !important;
-                        padding: 0 !important;
-                    }
-                    .layout-root {
-                        display: block !important;
-                    }
-                    title, .page-header {
-                        margin-bottom: 20px !important;
-                    }
-                }
             `}</style>
         </AppLayout>
     );

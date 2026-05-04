@@ -328,23 +328,24 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                 <div 
                   role="dialog"
                   aria-label="Panneau de notifications"
+                  className="animate-up"
                   style={{
                     position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                    width: '360px', background: 'white', borderRadius: '16px',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: '1px solid #f1f5f9',
+                    width: '360px', background: 'var(--bg-3)', borderRadius: '16px',
+                    boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-light)',
                     zIndex: 100, overflow: 'hidden'
                   }}
                 >
-                  <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>Notifications</span>
-                    <span style={{ background: '#f1f5f9', padding: '2px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 700, color: '#64748b' }}>{notifications.length}</span>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text)' }}>Notifications</span>
+                    <span style={{ background: 'var(--bg-4)', padding: '2px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 700, color: 'var(--primary)' }}>{notifications.length}</span>
                   </div>
                   <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
                     {notifLoading ? (
-                      <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>Chargement...</div>
+                      <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-dim)', fontSize: '13px' }}><Loader2 size={24} className="spin" style={{ margin: '0 auto 8px' }} /></div>
                     ) : notifications.length === 0 ? (
-                      <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
-                        <Bell size={28} style={{ marginBottom: '8px', opacity: 0.3, display: 'block', margin: '0 auto 8px' }} />
+                      <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-dim)', fontSize: '13px' }}>
+                        <Bell size={28} style={{ marginBottom: '8px', opacity: 0.1, display: 'block', margin: '0 auto 8px' }} />
                         Aucune notification
                       </div>
                     ) : notifications.map(n => (
@@ -353,23 +354,22 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                         tabIndex={0}
                         onClick={() => { router.push(n.href); setNotifOpen(false); }}
                         onKeyDown={e => { if (e.key === 'Enter') { router.push(n.href); setNotifOpen(false); } }}
-                        style={{ padding: '14px 20px', borderBottom: '1px solid #f8fafc', cursor: 'pointer', display: 'flex', gap: '12px', alignItems: 'flex-start', transition: 'background 0.15s' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'white')}
+                        style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', gap: '12px', alignItems: 'flex-start', transition: 'background 0.15s' }}
+                        className="hover-bg-primary-dim"
                       >
                         <span style={{ fontSize: '20px', flexShrink: 0, lineHeight: 1 }}>{typeIcon[n.type] || '🔔'}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', lineHeight: 1.3 }}>{n.title}</span>
-                            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: priorityColor[n.priority], flexShrink: 0, marginTop: '4px' }} />
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', lineHeight: 1.3 }}>{n.title}</span>
+                            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: priorityColor[n.priority], flexShrink: 0, marginTop: '4px', boxShadow: `0 0 8px ${priorityColor[n.priority]}` }} />
                           </div>
-                          <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#64748b', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{n.message}</p>
+                          <p style={{ margin: '3px 0 0', fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{n.message}</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div style={{ padding: '12px 20px', borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
-                    <button onClick={loadNotifications} style={{ fontSize: '12px', color: '#4f8ef7', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>Actualiser</button>
+                  <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', textAlign: 'center', background: 'rgba(0,0,0,0.2)' }}>
+                    <button onClick={loadNotifications} style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>Actualiser la liste</button>
                   </div>
                 </div>
               )}

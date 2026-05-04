@@ -3,13 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-    Wallet, TrendingUp, TrendingDown, Landmark, 
-    ArrowUpRight, ArrowDownRight, Loader2, Calendar, 
-    PieChart, DollarSign, Download, RefreshCcw, FileText
+    TrendingUp, TrendingDown, Landmark, 
+    ArrowUpRight, ArrowDownRight, Loader2, 
+    DollarSign, Download, RefreshCcw, FileText
 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, Pie } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import jsPDF from 'jspdf';
 
 export default function FinanceOverviewPage() {
     const router = useRouter();
@@ -34,7 +35,7 @@ export default function FinanceOverviewPage() {
             const totalExpenses = expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
             const netBalance = totalRevenue - totalExpenses;
 
-            // Chart data preparation
+            // Chart data preparation (Sample for demo)
             const chartData = [
                 { name: 'Lun', Recettes: 45000, Dépenses: 20000 },
                 { name: 'Mar', Recettes: 52000, Dépenses: 15000 },
@@ -45,13 +46,7 @@ export default function FinanceOverviewPage() {
                 { name: 'Dim', Recettes: 40000, Dépenses: 5000 },
             ];
 
-            setStats({
-                totalRevenue,
-                totalPending,
-                totalExpenses,
-                netBalance,
-                chartData
-            });
+            setStats({ totalRevenue, totalPending, totalExpenses, netBalance, chartData });
         } catch {
             toast.error('Erreur lors du chargement des données financières');
         } finally {
@@ -63,7 +58,59 @@ export default function FinanceOverviewPage() {
         fetchFinancialData();
     }, [fetchFinancialData]);
 
-    if (isLoading) return (
+    const generatePDF = () => {
+        if (!stats) return;
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+        const pageW = 210;
+        const margin = 20;
+
+        // Header
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, pageW, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+        doc.text('RAPPORT FINANCIER PÉRIODIQUE', pageW / 2, 20, { align: 'center' });
+        doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+        doc.text(new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }), pageW / 2, 28, { align: 'center' });
+
+        let y = 55;
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text('RÉSUMÉ ANALYTIQUE', margin, y);
+        y += 10;
+
+        const rows = [
+            ['Recettes Totales Encaissées', `${stats.totalRevenue.toLocaleString()} FCFA`],
+            ['Dépenses Totales', `${stats.totalExpenses.toLocaleString()} FCFA`],
+            ['Reste à Recouvrer (Factures en attente)', `${stats.totalPending.toLocaleString()} FCFA`],
+            ['RÉSULTAT NET', `${stats.netBalance.toLocaleString()} FCFA`],
+        ];
+
+        rows.forEach(([label, value], i) => {
+            doc.setFontSize(10); doc.setFont('helvetica', i === 3 ? 'bold' : 'normal');
+            doc.text(label, margin, y);
+            doc.text(value, pageW - margin, y, { align: 'right' });
+            doc.setDrawColor(240); doc.line(margin, y + 2, pageW - margin, y + 2);
+            y += 10;
+        });
+
+        y += 15;
+        doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+        doc.text('CERTIFICATION', margin, y);
+        y += 8;
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.text('Je certifie par la présente que les données ci-dessus reflètent l\'état réel de la trésorerie', margin, y);
+        doc.text('de l\'établissement à la date d\'édition du présent rapport.', margin, y + 5);
+
+        y += 30;
+        doc.line(pageW - margin - 50, y, pageW - margin, y);
+        doc.text('Le Responsable Financier', pageW - margin - 25, y + 5, { align: 'center' });
+
+        doc.save(`Rapport_Financier_${new Date().toISOString().split('T')[0]}.pdf`);
+        toast.success('Rapport PDF généré');
+    };
+
+    if (isLoading || !stats) return (
         <AppLayout title="Chargement..." subtitle="Préparation du bilan financier">
             <div style={{ display: 'grid', placeItems: 'center', height: '60vh' }}>
                 <Loader2 size={48} className="spin" color="var(--primary)" />
@@ -132,7 +179,7 @@ export default function FinanceOverviewPage() {
             </div>
 
             {/* Charts Section */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '24px' }}>
                 <div className="card shadow-sm" style={{ padding: '24px' }}>
                     <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '24px' }}>Flux de Trésorerie (7 derniers jours)</h3>
                     <div style={{ height: '300px' }}>
@@ -180,7 +227,7 @@ export default function FinanceOverviewPage() {
             </div>
 
             {/* Bottom Actions */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
                 <div className="card shadow-sm" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <FileText size={18} className="text-primary" />
@@ -195,7 +242,7 @@ export default function FinanceOverviewPage() {
                         <Download size={18} className="text-primary" />
                         <span style={{ fontSize: '14px', fontWeight: 600 }}>Rapport financier annuel</span>
                     </div>
-                    <button className="btn-outline" onClick={() => toast.info('Export bientôt disponible')}>
+                    <button className="btn-outline" onClick={generatePDF}>
                         Générer PDF
                     </button>
                 </div>

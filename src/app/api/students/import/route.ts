@@ -22,22 +22,39 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Aucun campus configuré pour cet établissement.' }, { status: 400 });
     }
 
+    const GENDER_MAP: Record<string, string> = {
+      'MASCULIN': 'MALE', 'HOMME': 'MALE', 'GARÇON': 'MALE', 'MALE': 'MALE', 'M': 'MALE',
+      'FÉMININ': 'FEMALE', 'FEMME': 'FEMALE', 'FILLE': 'FEMALE', 'FEMALE': 'FEMALE', 'F': 'FEMALE'
+    };
+
+    const RELATION_MAP: Record<string, string> = {
+      'PÈRE': 'FATHER', 'MÈRE': 'MOTHER', 'TUTEUR': 'GUARDIAN', 'AUTRE': 'OTHER'
+    };
+
     const results = await prisma.student.createMany({
-      data: students.map((s: any) => ({
-        tenantId: session.tenantId,
-        campusId: campus.id,
-        firstName: s.Prenom || s.firstName || 'Inconnu',
-        lastName: s.Nom || s.lastName || 'Inconnu',
-        studentNumber: s.Matricule || s.studentNumber || `MAT-${Math.floor(Math.random() * 90000)}`,
-        gender: (s.Genre || s.gender || 'MALE').toUpperCase(),
-        dateOfBirth: s.DateNaissance ? new Date(s.DateNaissance) : new Date('2010-01-01'),
-        nationalId: s.nationalId || 'N/A',
-        parentName: s.parentName || 'À préciser',
-        parentPhone: s.parentPhone || '00000000',
-        parentEmail: s.parentEmail || '',
-        parentRelationship: s.parentRelationship || 'PERE',
-        isActive: true
-      })),
+      data: students.map((s: any) => {
+        const rawGender = (s.Genre || s.gender || 'MALE').toString().toUpperCase();
+        const gender = GENDER_MAP[rawGender] || 'MALE';
+        
+        const rawRelation = (s.Relation || s.parentRelationship || 'OTHER').toString().toUpperCase();
+        const parentRelationship = RELATION_MAP[rawRelation] || 'OTHER';
+
+        return {
+          tenantId: session.tenantId,
+          campusId: campus.id,
+          firstName: s.Prenom || s.firstName || 'Inconnu',
+          lastName: s.Nom || s.lastName || 'Inconnu',
+          studentNumber: s.Matricule || s.studentNumber || `MAT-${Math.floor(Math.random() * 90000)}`,
+          gender: gender as any,
+          dateOfBirth: s.DateNaissance ? new Date(s.DateNaissance) : new Date('2010-01-01'),
+          nationalId: (s.nationalId || s.CNI || 'N/A').toString(),
+          parentName: s.parentName || s.Parent || 'À préciser',
+          parentPhone: (s.parentPhone || s.Telephone || '00000000').toString(),
+          parentEmail: s.parentEmail || '',
+          parentRelationship: parentRelationship as any,
+          isActive: true
+        };
+      }),
       skipDuplicates: true
     });
 

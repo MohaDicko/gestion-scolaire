@@ -123,7 +123,7 @@ export default function TranscriptsPage() {
         r.mention,
       ]);
 
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: y,
         head: [['MATIÈRE', 'COEFF', 'T1/20', 'T2/20', 'T3/20', 'MOY. ANNUELLE', 'MENTION']],
         body: tableRows,
@@ -140,17 +140,17 @@ export default function TranscriptsPage() {
           6: { halign: 'center', cellWidth: 28 },
         },
         alternateRowStyles: { fillColor: [248, 250, 255] },
-        didParseCell: (data) => {
-          if (data.column.index === 5 && data.section === 'body') {
-            const val = parseFloat(data.cell.text[0]);
+        didParseCell: (cellData: any) => {
+          if (cellData.column.index === 5 && cellData.section === 'body') {
+            const val = parseFloat(cellData.cell.text[0]);
             if (!isNaN(val)) {
-              data.cell.styles.textColor = val >= 14 ? [21, 128, 61] : val >= 10 ? [30, 41, 59] : [185, 28, 28];
+              cellData.cell.styles.textColor = val >= 14 ? [21, 128, 61] : val >= 10 ? [30, 41, 59] : [185, 28, 28];
             }
           }
         },
       });
 
-      const finalY = (doc as any).lastAutoTable.finalY + 8;
+      const finalY = ((doc as any).lastAutoTable?.finalY || y + 20) + 8;
 
       // ── Récapitulatif ─────────────────────────────────────────────────
       const avg = data.summary.generalAverage;
