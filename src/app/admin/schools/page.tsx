@@ -435,6 +435,10 @@ export default function SchoolsManagementPage() {
             <form onSubmit={handleSave}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="form-label" style={{ color: 'var(--primary)', fontWeight: 800 }}>DÉTAILS DE L'ÉTABLISSEMENT</label>
+                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 8 }} />
+                </div>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                   <label className="form-label">Nom complet de l'établissement *</label>
                   <input name="name" required className="form-input" defaultValue={editSchool?.name} placeholder="Ex: Lycée Excellence de Bamako" />
                 </div>
@@ -449,7 +453,52 @@ export default function SchoolsManagementPage() {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Email</label>
+                  <label className="form-label">Ville</label>
+                  <input name="city" className="form-input" defaultValue={editSchool?.city || 'Bamako'} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Plan d'abonnement *</label>
+                  <select name="plan" required className="form-input" defaultValue={editSchool?.plan || 'STARTER'}>
+                    <option value="STARTER">Pack STARTER</option>
+                    <option value="BUSINESS">Pack BUSINESS</option>
+                    <option value="ELITE">Pack ELITE</option>
+                  </select>
+                </div>
+
+                {!editSchool && (
+                  <>
+                    <div className="form-group" style={{ gridColumn: '1 / -1', marginTop: 12 }}>
+                      <label className="form-label" style={{ color: 'var(--success)', fontWeight: 800 }}>COMPTE ADMINISTRATEUR PRINCIPAL</label>
+                      <div style={{ height: 1, background: 'var(--border)', marginBottom: 8 }} />
+                      <p style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 8 }}>
+                        Ces identifiants permettront au responsable de l'école de se connecter pour la première fois.
+                      </p>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Prénom Admin *</label>
+                      <input name="adminFirstName" required className="form-input" placeholder="Prénom" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Nom Admin *</label>
+                      <input name="adminLastName" required className="form-input" placeholder="Nom" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Email Admin *</label>
+                      <input name="adminEmail" type="email" required className="form-input" placeholder="admin@ecole.com" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Mot de passe provisoire *</label>
+                      <input name="adminPassword" type="password" required className="form-input" placeholder="••••••••" />
+                    </div>
+                  </>
+                )}
+
+                <div className="form-group" style={{ gridColumn: '1 / -1', marginTop: 12 }}>
+                  <label className="form-label" style={{ color: 'var(--text-muted)', fontWeight: 800 }}>INFORMATIONS DE CONTACT (OPTIONNEL)</label>
+                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 8 }} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email de l'école</label>
                   <input name="email" type="email" className="form-input" defaultValue={editSchool?.email} />
                 </div>
                 <div className="form-group">
@@ -457,32 +506,8 @@ export default function SchoolsManagementPage() {
                   <input name="phoneNumber" className="form-input" defaultValue={editSchool?.phoneNumber} />
                 </div>
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="form-label">Adresse</label>
+                  <label className="form-label">Adresse physique</label>
                   <input name="address" className="form-input" defaultValue={editSchool?.address} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Ville</label>
-                  <input name="city" className="form-input" defaultValue={editSchool?.city || 'Bamako'} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Code DREN/CAP</label>
-                  <input name="drenCode" className="form-input" defaultValue={editSchool?.drenCode} placeholder="Ex: DREN-RD-01" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Numéro RNE</label>
-                  <input name="nationalRNE" className="form-input" defaultValue={editSchool?.nationalRNE} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Devise / Slogan</label>
-                  <input name="motto" className="form-input" defaultValue={editSchool?.motto} />
-                </div>
-                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="form-label" style={{ color: 'var(--primary)', fontWeight: 800 }}>Abonnement (Plan) *</label>
-                  <select name="plan" required className="form-input" style={{ border: '1px solid var(--primary)' }} defaultValue={editSchool?.plan || 'STARTER'}>
-                    <option value="STARTER">Pack STARTER (Limitée)</option>
-                    <option value="BUSINESS">Pack BUSINESS (Standard)</option>
-                    <option value="ELITE">Pack ELITE (Complet)</option>
-                  </select>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 24 }}>

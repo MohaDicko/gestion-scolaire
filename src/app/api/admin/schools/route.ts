@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import * as bcrypt from 'bcryptjs';
 
 export async function GET() {
   const session = await getSession();
@@ -68,31 +69,54 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, code, type, email, phoneNumber, address, city, country, motto } = body;
+    const { 
+      name, code, type, email, phoneNumber, address, city, country, motto, plan,
+      adminEmail, adminPassword, adminFirstName, adminLastName 
+    } = body;
 
-    if (!name || !code || !type) {
-      return NextResponse.json({ error: 'Nom, code et type sont obligatoires' }, { status: 400 });
+    if (!name || !code || !type || !adminEmail || !adminPassword) {
+      return NextResponse.json({ error: 'Nom, code, type et informations admin sont obligatoires' }, { status: 400 });
     }
 
-    const school = await prisma.school.create({
-      data: {
-        name,
-        code,
-        type,
-        email: email || '',
-        phoneNumber: phoneNumber || '',
-        address: address || '',
-        city: city || '',
-        country: country || 'Mali',
-        motto,
-        isSetupComplete: false,
-      }
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    
+    const result = await prisma.$transaction(async (tx) => {
+      const school = await tx.school.create({
+        data: {
+          name,
+          code,
+          type,
+          email: email || '',
+          phoneNumber: phoneNumber || '',
+          address: address || '',
+          city: city || '',
+          country: country || 'Mali',
+          motto,
+          plan: plan || 'STARTER',
+          isSetupComplete: false,
+        }
+      });
+
+      await tx.user.create({
+        data: {
+          tenantId: school.id,
+          email: adminEmail.toLowerCase().trim(),
+          password: hashedPassword,
+          firstName: adminFirstName || 'Admin',
+          lastName: adminLastName || name,
+          role: 'SCHOOL_ADMIN',
+          isActive: true
+        }
+      });
+
+      return school;
     });
 
-    return NextResponse.json(school);
+    return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
+    console.error('[SCHOOLS_POST]', error);
     if (error.code === 'P2002') {
-      return NextResponse.json({ error: 'Ce code d\'établissement existe déjà' }, { status: 400 });
+      return NextResponse.json({ error: 'Ce code d\'établissement ou email admin existe déjà' }, { status: 400 });
     }
     return NextResponse.json({ error: 'Erreur lors de la création' }, { status: 500 });
   }

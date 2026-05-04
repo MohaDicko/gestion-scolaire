@@ -25,7 +25,7 @@ export default function EmployeesPage() {
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [campuses, setCampuses] = useState<any[]>([]);
-  const [formData, setFormData] = useState({ ...emptyForm });
+  const [formData, setFormData] = useState({ ...emptyForm, createAccount: false, password: '' });
 
   const fetchEmployees = useCallback(async () => {
     setIsLoading(true);
@@ -33,13 +33,26 @@ export default function EmployeesPage() {
       const res = await fetch(`/api/employees?search=${encodeURIComponent(searchTerm)}`);
       if (res.status === 401) { router.push('/login'); return; }
       if (!res.ok) throw new Error();
-      setEmployees(await res.json());
+      const data = await res.json();
+      setEmployees(Array.isArray(data) ? data : []);
     } catch {
       toast.error('Erreur lors du chargement des employés.');
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm]);
+  }, [searchTerm, router, toast]);
+
+  useEffect(() => {
+    const t = setTimeout(fetchEmployees, 300);
+    return () => clearTimeout(t);
+  }, [fetchEmployees]);
+
+  useEffect(() => {
+    fetch('/api/campuses')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setCampuses(d); })
+      .catch(() => {});
+  }, []);
 
   const handleExport = () => {
     const data = employees.map(e => ({
@@ -55,20 +68,13 @@ export default function EmployeesPage() {
     toast.success('Export RH généré.');
   };
 
-  useEffect(() => {
-    const t = setTimeout(fetchEmployees, 300);
-    return () => clearTimeout(t);
-  }, [fetchEmployees]);
-
-  useEffect(() => {
-    fetch('/api/campuses').then(r => r.json()).then(d => { if (Array.isArray(d)) setCampuses(d); }).catch(() => {});
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
       if (!formData.campusId) throw new Error("Veuillez sélectionner un campus.");
+      if (formData.createAccount && !formData.password) throw new Error("Veuillez saisir un mot de passe pour le compte portail.");
+      
       const res = await fetch('/api/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,9 +82,9 @@ export default function EmployeesPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur création');
-      toast.success(`L'employé ${formData.firstName} a été ajouté avec succès.`);
+      toast.success(`Le dossier RH de ${formData.firstName} a été créé${formData.createAccount ? ' avec un compte accès' : ''}.`);
       setShowModal(false);
-      setFormData({ ...emptyForm });
+      setFormData({ ...emptyForm, createAccount: false, password: '' });
       fetchEmployees();
     } catch (err: any) {
       toast.error(err.message);
@@ -112,10 +118,15 @@ export default function EmployeesPage() {
               <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit} style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              
+              <div style={{ paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
+                <h3 style={{ fontSize: '13px', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Identité & Poste</h3>
+              </div>
+
               <div className="form-grid">
                 <div className="form-group"><label>Prénom *</label><input required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder="Ex: Awa" /></div>
                 <div className="form-group"><label>Nom *</label><input required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder="Ex: Diallo" /></div>
-                <div className="form-group"><label>Email *</label><input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="awa.diallo@ecole.ml" /></div>
+                <div className="form-group"><label>Email Professionnel *</label><input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="awa.diallo@ecole.ml" /></div>
                 <div className="form-group"><label>Téléphone *</label><input type="tel" required value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+223 ..." /></div>
                 <div className="form-group"><label>Date de Naissance *</label><input type="date" required value={formData.dateOfBirth} onChange={e => setFormData({...formData, dateOfBirth: e.target.value})} /></div>
                 <div className="form-group">
@@ -138,6 +149,48 @@ export default function EmployeesPage() {
                     {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
+              </div>
+
+              <div style={{ marginTop: '12px', padding: '20px', background: 'var(--bg-3)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: formData.createAccount ? '16px' : '0' }}>
+                  <div>
+                    <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>Compte d'Accès Portail</h3>
+                    <p style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Permettre à cet employé de se connecter au logiciel.</p>
+                  </div>
+                  <div 
+                    onClick={() => setFormData({...formData, createAccount: !formData.createAccount})}
+                    style={{ 
+                      width: '44px', height: '24px', borderRadius: '12px', 
+                      background: formData.createAccount ? 'var(--primary)' : 'var(--border-md)', 
+                      position: 'relative', cursor: 'pointer', transition: 'all 0.2s' 
+                    }}
+                  >
+                    <div style={{ 
+                      width: '18px', height: '18px', borderRadius: '50%', background: 'white', 
+                      position: 'absolute', top: '3px', left: formData.createAccount ? '23px' : '3px',
+                      transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }} />
+                  </div>
+                </div>
+
+                {formData.createAccount && (
+                  <div style={{ animation: 'fadeIn 0.2s ease', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="form-group">
+                      <label>Identifiant (Email)</label>
+                      <input disabled value={formData.email} className="form-input" style={{ opacity: 0.6 }} />
+                    </div>
+                    <div className="form-group">
+                      <label>Mot de passe provisoire *</label>
+                      <input 
+                        type="password" 
+                        required 
+                        value={formData.password} 
+                        onChange={e => setFormData({...formData, password: e.target.value})} 
+                        placeholder="••••••••" 
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
                 <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>

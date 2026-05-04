@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import * as bcrypt from 'bcryptjs';
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -43,26 +44,74 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
+    const { 
+      firstName, lastName, email, phoneNumber, dateOfBirth, gender, 
+      hireDate, employeeType, campusId, createAccount, password 
+    } = data;
+
     const employeeNumber = `EMP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    const newEmployee = await prisma.employee.create({
-      data: {
-        tenantId: session.tenantId,
-        employeeNumber,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phoneNumber: data.phoneNumber,
-        dateOfBirth: new Date(data.dateOfBirth),
-        gender: data.gender.toUpperCase(),
-        hireDate: new Date(data.hireDate),
-        employeeType: data.employeeType.toUpperCase(),
-        departmentId: data.departmentId,
-        campusId: data.campusId || '1',
-      },
+    // Ensure a default department exists for the tenant
+    let department = await prisma.department.findFirst({
+      where: { tenantId: session.tenantId }
     });
 
-    return NextResponse.json(newEmployee, { status: 201 });
+    if (!department) {
+      department = await prisma.department.create({
+        data: {
+          tenantId: session.tenantId,
+          name: 'Administration',
+          code: 'ADMIN',
+        }
+      });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create Employee
+      const employee = await tx.employee.create({
+        data: {
+          tenantId: session.tenantId,
+          employeeNumber,
+          firstName,
+          lastName,
+          email,
+          phoneNumber,
+          dateOfBirth: new Date(dateOfBirth),
+          gender: gender.toUpperCase(),
+          hireDate: new Date(hireDate),
+          employeeType: employeeType.toUpperCase(),
+          departmentId: department!.id,
+          campusId: campusId,
+        },
+      });
+
+      // 2. Create User account if requested
+      if (createAccount && password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Map employeeType to UserRole
+        let role: any = 'TEACHER';
+        if (employeeType === 'ADMIN') role = 'SCHOOL_ADMIN';
+        if (employeeType === 'ACCOUNTANT') role = 'ACCOUNTANT';
+        if (employeeType === 'HR') role = 'HR_MANAGER';
+
+        await tx.user.create({
+          data: {
+            tenantId: session.tenantId,
+            email: email.toLowerCase().trim(),
+            password: hashedPassword,
+            firstName,
+            lastName,
+            role,
+            isActive: true
+          }
+        });
+      }
+
+      return employee;
+    });
+
+    return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     console.error('Employees POST Error:', error);
     return NextResponse.json({ error: error.message }, { status: 400 });
