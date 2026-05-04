@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { Users, BookOpen, Clock, FileText, TrendingUp, AlertTriangle, Loader2, ChevronRight, CheckCircle, XCircle, Bell, ClipboardList } from 'lucide-react';
 import { useRouter } from 'next/navigation';
