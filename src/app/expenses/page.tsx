@@ -36,6 +36,7 @@ export default function ExpensesPage() {
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ ...emptyForm });
     const [search, setSearch] = useState('');
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const fetchExpenses = useCallback(async () => {
         setIsLoading(true);
@@ -76,6 +77,21 @@ export default function ExpensesPage() {
             toast.error('Erreur lors de l\'enregistrement');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (id: string, description: string) => {
+        if (!window.confirm(`Supprimer la dépense "${description}" ? Cette action est irréversible.`)) return;
+        setDeletingId(id);
+        try {
+            const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error();
+            toast.success('Dépense supprimée');
+            setExpenses(prev => prev.filter(e => e.id !== id));
+        } catch {
+            toast.error('Erreur lors de la suppression');
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -166,7 +182,13 @@ export default function ExpensesPage() {
                                             </span>
                                         </td>
                                         <td style={{ textAlign: 'right' }}>
-                                            <button className="btn-icon text-danger" title="Supprimer"><Trash2 size={14}/></button>
+                                            <button 
+                                                className="btn-icon text-danger" 
+                                                title="Supprimer"
+                                                onClick={() => handleDelete(e.id, e.description)}
+                                            >
+                                                <Trash2 size={14}/>
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}

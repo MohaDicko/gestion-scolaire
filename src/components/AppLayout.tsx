@@ -57,11 +57,12 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Finance',
     items: [
-      { label: 'Bilan Financier',    href: '/finance',        icon: <Landmark size={17}/> },
-      { label: 'Grand Livre',        href: '/finance/ledger', icon: <FileText size={17}/> },
-      { label: 'Factures & Frais',   href: '/invoices',       icon: <Receipt size={17}/> },
-      { label: 'Gestion des Stocks', href: '/inventory',      icon: <Package size={17}/> },
-      { label: 'Dépenses',           href: '/expenses',       icon: <BarChart3 size={17}/> },
+      { label: 'Bilan Financier',    href: '/finance',         icon: <Landmark size={17}/> },
+      { label: 'Grand Livre',        href: '/finance/ledger',  icon: <FileText size={17}/> },
+      { label: 'Rapport Annuel PDF', href: '/finance/report',  icon: <BarChart3 size={17}/> },
+      { label: 'Factures & Frais',   href: '/invoices',        icon: <Receipt size={17}/> },
+      { label: 'Gestion des Stocks', href: '/inventory',       icon: <Package size={17}/> },
+      { label: 'Dépenses',           href: '/expenses',        icon: <BarChart3 size={17}/> },
     ]
   },
   {
