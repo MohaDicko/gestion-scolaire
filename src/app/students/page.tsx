@@ -35,6 +35,9 @@ export default function StudentsPage() {
   const [formData, setFormData]     = useState({ ...emptyForm });
   const [importData, setImportData] = useState<any[]>([]);
 
+  const [importReport, setImportReport] = useState<{ success: number; errors: string[] } | null>(null);
+  const [importConfig, setImportConfig] = useState({ campusId: '', createAccounts: false });
+
   const fetchStudents = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -55,8 +58,30 @@ export default function StudentsPage() {
   }, [fetchStudents]);
 
   useEffect(() => {
-    fetch('/api/campuses').then(r => r.json()).then(d => { if (Array.isArray(d)) setCampuses(d); }).catch(() => {});
+    fetch('/api/campuses').then(r => r.json()).then(d => { 
+      if (Array.isArray(d)) {
+        setCampuses(d); 
+        if (d.length > 0) setImportConfig(prev => ({ ...prev, campusId: d[0].id }));
+      }
+    }).catch(() => {});
   }, []);
+
+  const downloadTemplate = () => {
+    const template = [{
+      'Nom': 'TRAORE',
+      'Prénom': 'Moussa',
+      'Matricule': '2024-001',
+      'DateNaissance': '2012-05-15',
+      'Genre': 'M',
+      'Parent': 'Ibrahim Traoré',
+      'Telephone': '+223 70 00 00 00',
+      'EmailParent': 'parent@example.com',
+      'Relation': 'PÈRE',
+      'CNI': 'ML12345'
+    }];
+    exportToExcel(template, 'Modele_Import_Eleves', 'Modèle');
+    toast.success('Modèle Excel téléchargé.');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,31 +127,46 @@ export default function StudentsPage() {
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const data = new Uint8Array(event.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(worksheet);
-      setImportData(json);
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet);
+        if (json.length === 0) throw new Error('Le fichier est vide');
+        setImportData(json);
+        setImportReport(null);
+      } catch (err: any) {
+        toast.error(`Erreur de lecture : ${err.message}`);
+      }
     };
     reader.readAsArrayBuffer(file);
   };
 
   const executeImport = async () => {
     if (importData.length === 0) return;
+    if (!importConfig.campusId) { toast.warning('Veuillez sélectionner un campus.'); return; }
+    
     setIsSubmitting(true);
     try {
       const res = await fetch('/api/students/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ students: importData })
+        body: JSON.stringify({ 
+          students: importData,
+          campusId: importConfig.campusId,
+          createAccounts: importConfig.createAccounts
+        })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      
+      setImportReport(data.report);
       toast.success(data.message);
-      setShowImport(false);
-      setImportData([]);
-      fetchStudents();
+      
+      if (data.report?.success > 0) {
+        fetchStudents();
+      }
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -156,33 +196,90 @@ export default function StudentsPage() {
       {/* Modal d'importation */}
       {showImport && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 101, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border-md)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '600px', boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border-md)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '640px', maxHeight: '90vh', overflow: 'auto', boxShadow: 'var(--shadow-lg)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--border)' }}>
-              <h2 style={{ fontWeight: 700 }}>Importation en Masse</h2>
-              <button className="btn-icon" onClick={() => { setShowImport(false); setImportData([]); }}><X size={18} /></button>
+              <div>
+                <h2 style={{ fontWeight: 700 }}>Importation en Masse</h2>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Inscrivez des dizaines d'élèves en un clic</p>
+              </div>
+              <button className="btn-icon" onClick={() => { setShowImport(false); setImportData([]); setImportReport(null); }}><X size={18} /></button>
             </div>
+            
             <div style={{ padding: '28px' }}>
-              <div style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '40px', textAlign: 'center', marginBottom: '24px', background: 'var(--bg-3)' }}>
-                <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileChange} style={{ display: 'none' }} id="excel-upload" />
+              {/* Étape 1 : Template */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600 }}>1. Télécharger le modèle</span>
+                <button className="btn-outline" onClick={downloadTemplate} style={{ padding: '6px 12px', fontSize: '12px' }}>
+                  <FileDown size={14} /> Modele_Import.xlsx
+                </button>
+              </div>
+
+              {/* Étape 2 : Upload */}
+              <div style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '30px', textAlign: 'center', marginBottom: '24px', background: 'var(--bg-3)' }}>
+                <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} style={{ display: 'none' }} id="excel-upload" />
                 <label htmlFor="excel-upload" style={{ cursor: 'pointer' }}>
-                  <Upload size={40} style={{ color: 'var(--primary)', marginBottom: '16px' }} />
-                  <p style={{ fontWeight: 600 }}>{importData.length > 0 ? `${importData.length} lignes détectées` : 'Cliquez pour choisir un fichier Excel'}</p>
-                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Format accepté : .xlsx, .xls</p>
+                  <Upload size={32} style={{ color: 'var(--primary)', marginBottom: '12px' }} />
+                  <p style={{ fontWeight: 600, fontSize: '14px' }}>{importData.length > 0 ? `${importData.length} élèves détectés` : 'Choisir le fichier Excel rempli'}</p>
                 </label>
               </div>
 
-              {importData.length > 0 && (
-                <div style={{ maxHeight: '200px', overflowY: 'auto', background: 'var(--bg-1)', padding: '12px', borderRadius: '8px', fontSize: '11px', marginBottom: '24px' }}>
-                  <pre>{JSON.stringify(importData.slice(0, 3), null, 2)}</pre>
-                  <p style={{ textAlign: 'center', color: 'var(--text-muted)', paddingTop: '8px' }}>... et {importData.length - 3} autres élèves</p>
+              {/* Étape 3 : Config */}
+              {importData.length > 0 && !importReport && (
+                <div style={{ background: 'var(--bg-1)', padding: '20px', borderRadius: '12px', marginBottom: '24px', border: '1px solid var(--border)' }}>
+                  <p style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '15px', color: 'var(--text-muted)' }}>3. Paramètres d'importation</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div className="form-group">
+                      <label>Campus de destination</label>
+                      <select 
+                        value={importConfig.campusId} 
+                        onChange={e => setImportConfig({...importConfig, campusId: e.target.value})}
+                      >
+                        {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <input 
+                        type="checkbox" 
+                        id="createAcc" 
+                        checked={importConfig.createAccounts} 
+                        onChange={e => setImportConfig({...importConfig, createAccounts: e.target.checked})} 
+                      />
+                      <label htmlFor="createAcc" style={{ fontSize: '13px', cursor: 'pointer' }}>Créer automatiquement des comptes d'accès élèves (Mot de passe par défaut : pass123)</label>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                <button className="btn-ghost" onClick={() => { setShowImport(false); setImportData([]); }}>Annuler</button>
-                <button className="btn-primary" disabled={importData.length === 0 || isSubmitting} onClick={executeImport}>
-                  {isSubmitting ? 'Importation...' : 'Lancer l\'Importation'}
-                </button>
+              {/* Étape 4 : Rapport */}
+              {importReport && (
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                    <div style={{ flex: 1, padding: '15px', background: 'var(--success-dim)', borderRadius: '10px', border: '1px solid var(--success)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--success)' }}>{importReport.success}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--success)' }}>Succès</div>
+                    </div>
+                    <div style={{ flex: 1, padding: '15px', background: importReport.errors.length > 0 ? 'var(--danger-dim)' : 'var(--bg-3)', borderRadius: '10px', border: importReport.errors.length > 0 ? '1px solid var(--danger)' : '1px solid var(--border)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '20px', fontWeight: 800, color: importReport.errors.length > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>{importReport.errors.length}</div>
+                      <div style={{ fontSize: '11px', color: importReport.errors.length > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>Échecs</div>
+                    </div>
+                  </div>
+                  
+                  {importReport.errors.length > 0 && (
+                    <div style={{ maxHeight: '150px', overflowY: 'auto', background: 'var(--bg-3)', padding: '12px', borderRadius: '8px', fontSize: '11px', color: 'var(--danger)', border: '1px solid var(--border)' }}>
+                      <p style={{ fontWeight: 700, marginBottom: '5px' }}>Journal des erreurs :</p>
+                      {importReport.errors.map((err, i) => <div key={i} style={{ marginBottom: '4px' }}>• {err}</div>)}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+                <button className="btn-ghost" onClick={() => { setShowImport(false); setImportData([]); setImportReport(null); }}>Fermer</button>
+                {!importReport && (
+                  <button className="btn-primary" disabled={importData.length === 0 || isSubmitting} onClick={executeImport}>
+                    {isSubmitting ? <><Loader2 size={16} className="spin" /> Importation...</> : 'Lancer l\'Importation'}
+                  </button>
+                )}
               </div>
             </div>
           </div>

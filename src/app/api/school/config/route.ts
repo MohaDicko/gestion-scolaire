@@ -37,6 +37,9 @@ export async function POST(request: Request) {
         city: body.city,
         phoneNumber: body.phoneNumber,
         motto: body.motto,
+        logoUrl: body.logoUrl,
+        primaryColor: body.primaryColor,
+        secondaryColor: body.secondaryColor,
       }
     });
 

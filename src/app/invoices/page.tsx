@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
   Receipt, Plus, Search, Loader2, X, Wallet, 
-  CreditCard, CheckCircle2, AlertCircle, FileDown, Eye
+  CreditCard, CheckCircle2, AlertCircle, FileDown, Eye, MessageSquare
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
@@ -107,6 +107,26 @@ export default function InvoicesPage() {
     }
   };
 
+  const handleSendSMS = async (inv: any) => {
+    if (!inv.student?.parentPhone) {
+      toast.warning("Cet élève n'a pas de téléphone parent enregistré.");
+      return;
+    }
+    
+    try {
+      const res = await fetch('/api/sms/send-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoiceId: inv.id })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success('Rappel SMS envoyé au parent.');
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
   const filtered = invoices.filter(inv => 
     inv.student?.firstName.toLowerCase().includes(search.toLowerCase()) ||
     inv.student?.lastName.toLowerCase().includes(search.toLowerCase()) ||
@@ -186,7 +206,10 @@ export default function InvoicesPage() {
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                         <button className="btn-icon" title="Voir détails" onClick={() => router.push(`/students/${inv.studentId}`)}><Eye size={14}/></button>
                         {inv.status !== 'PAID' && (
-                          <button className="btn-icon text-success" title="Enregistrer paiement" onClick={() => handleOpenPayment(inv)}><CreditCard size={14}/></button>
+                          <>
+                            <button className="btn-icon text-primary" title="Envoyer rappel SMS" onClick={() => handleSendSMS(inv)}><MessageSquare size={14}/></button>
+                            <button className="btn-icon text-success" title="Enregistrer paiement" onClick={() => handleOpenPayment(inv)}><CreditCard size={14}/></button>
+                          </>
                         )}
                         <button className="btn-icon" title="Télécharger PDF"><FileDown size={14}/></button>
                       </div>

@@ -115,6 +115,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ firstName?: string; lastName?: string; role?: string; email?: string; schoolName?: string } | null>(null);
+  const [branding, setBranding] = useState<{ primaryColor?: string; secondaryColor?: string; logoUrl?: string } | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -144,6 +145,20 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
     try {
       const stored = localStorage.getItem('auth_user');
       if (stored) setUser(JSON.parse(stored));
+      
+      // Fetch branding
+      fetch('/api/school/config')
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.primaryColor) {
+            setBranding({
+              primaryColor: data.primaryColor,
+              secondaryColor: data.secondaryColor,
+              logoUrl: data.logoUrl
+            });
+          }
+        })
+        .catch(() => {});
     } catch {}
   }, []);
 
@@ -168,7 +183,13 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
     <>
       {/* Logo (Header) */}
       <header className="sidebar-logo">
-        <div className="logo-icon"><GraduationCap size={22} /></div>
+        <div className="logo-icon">
+          {branding?.logoUrl ? (
+            <img src={branding.logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          ) : (
+            <GraduationCap size={22} />
+          )}
+        </div>
         <div>
           <div className="logo-title">SchoolERP <span style={{ color: 'var(--primary)' }}>Pro</span></div>
           <div className="logo-school" style={{ color: user?.schoolName ? 'var(--primary)' : 'var(--text-dim)', fontWeight: user?.schoolName ? 700 : 500 }}>
@@ -224,6 +245,17 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
   return (
     <div className="layout-root">
+      {/* Branding Injection */}
+      {branding?.primaryColor && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          :root {
+            --primary: ${branding.primaryColor};
+            --primary-dim: ${branding.primaryColor}22;
+            --primary-light: ${branding.primaryColor}88;
+          }
+        `}} />
+      )}
+
       {/* Desktop Sidebar */}
       <aside className="sidebar">
         <SidebarContent />
