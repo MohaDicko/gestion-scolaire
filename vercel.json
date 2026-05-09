@@ -1,5 +1,21 @@
 {
   "version": 2,
-  "buildCommand": "npx prisma generate && next build",
-  "installCommand": "npm install"
+  "framework": "nextjs",
+  "functions": {
+    "src/app/api/**/*": {
+      "maxDuration": 30,
+      "memory": 2048
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "x-deployment-id",
+          "value": "$VERCEL_DEPLOYMENT_ID"
+        }
+      ]
+    }
+  ]
 }
