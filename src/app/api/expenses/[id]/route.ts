@@ -4,8 +4,9 @@ import { getSession } from '@/lib/auth';
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -15,14 +16,14 @@ export async function DELETE(
 
   try {
     const expense = await prisma.expense.findFirst({
-      where: { id: params.id, tenantId: session.tenantId }
+      where: { id: id, tenantId: session.tenantId }
     });
 
     if (!expense) {
       return NextResponse.json({ error: 'Dépense introuvable' }, { status: 404 });
     }
 
-    await prisma.expense.delete({ where: { id: params.id } });
+    await prisma.expense.delete({ where: { id: id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[EXPENSE_DELETE]', error);
