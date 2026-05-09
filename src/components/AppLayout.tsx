@@ -441,7 +441,15 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             gap: '8px'
           }}>
             <span>© {new Date().getFullYear()} SchoolERP Pro — Propulsion digitale par</span>
-            <strong style={{ color: 'var(--primary)', letterSpacing: '0.05em' }}>SAHEL-MULTISERVICES</strong>
+            <a 
+              href="https://sahelmutiservices.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: 'var(--primary)', fontWeight: 800, textDecoration: 'none', letterSpacing: '0.05em' }}
+              className="hover-underline"
+            >
+              SAHEL-MULTISERVICES
+            </a>
           </footer>
         </div>
       </main>
