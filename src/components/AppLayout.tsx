@@ -427,6 +427,22 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
         <div className="page" style={{ flex: 1, overflowY: 'auto' }}>
           {children}
+          
+          <footer style={{ 
+            padding: '30px 40px', 
+            textAlign: 'center', 
+            marginTop: 'auto',
+            borderTop: '1px solid var(--border)', 
+            fontSize: '12px', 
+            color: 'var(--text-dim)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span>© {new Date().getFullYear()} SchoolERP Pro — Propulsion digitale par</span>
+            <strong style={{ color: 'var(--primary)', letterSpacing: '0.05em' }}>SAHEL-MULTISERVICES</strong>
+          </footer>
         </div>
       </main>
 
