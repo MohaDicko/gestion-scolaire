@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { CalendarDays, Plus, Clock, Trash2, Loader2, X, AlertCircle, Printer } from 'lucide-react';
+import { CalendarDays, Plus, Clock, Trash2, Loader2, X, AlertCircle, Printer, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
@@ -187,6 +187,33 @@ export default function TimetablePage() {
                     >
                         {isGenerating ? <Loader2 size={15} className="spin" /> : <Printer size={15} />}
                         {isGenerating ? 'Génération...' : 'Imprimer PDF'}
+                    </button>
+                    <button 
+                        className="btn-outline" 
+                        onClick={async () => {
+                          if (!selectedClassroom) return;
+                          if (!confirm("Voulez-vous générer automatiquement l'emploi du temps ? Cela remplacera le planning existant pour cette classe.")) return;
+                          setIsGenerating(true);
+                          try {
+                            const res = await fetch('/api/timetable/generate', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ classroomId: selectedClassroom })
+                            });
+                            if (!res.ok) throw new Error();
+                            toast.success("Emploi du temps généré avec succès !");
+                            fetchSchedule();
+                          } catch (e) {
+                            toast.error("Erreur lors de la génération");
+                          } finally {
+                            setIsGenerating(false);
+                          }
+                        }}
+                        disabled={!selectedClassroom || isGenerating}
+                        style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}
+                    >
+                        {isGenerating ? <Loader2 size={15} className="spin" /> : <Sparkles size={15} />}
+                        Générer via IA
                     </button>
                     <button 
                         className="btn-primary" 

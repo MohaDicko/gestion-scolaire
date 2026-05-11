@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 import bcrypt from 'bcryptjs';
 import { getStudentLimit } from '@/lib/plans';
 
@@ -127,6 +128,15 @@ export async function POST(request: Request) {
       }
 
       return student;
+    });
+
+    await logAudit({
+      request,
+      action: 'CREATE',
+      entityType: 'Student',
+      entityId: result.id,
+      newValues: { firstName, lastName, studentNumber: result.studentNumber, campusId },
+      description: `Création du dossier élève pour ${firstName} ${lastName} (${result.studentNumber})`,
     });
 
     return NextResponse.json({ id: result.id, studentNumber: result.studentNumber }, { status: 201 });

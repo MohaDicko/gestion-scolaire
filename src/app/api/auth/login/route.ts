@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { encrypt } from '@/lib/auth';
 import * as bcrypt from 'bcryptjs';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
+import { logAudit } from '@/lib/audit';
 
 export async function POST(request: Request) {
   // ── Rate Limiting: max 10 login attempts per IP per 15 minutes ──
@@ -113,6 +114,19 @@ async function handleLogin(user: any) {
     sameSite: 'strict', // upgraded from 'lax'
     maxAge: 7 * 24 * 60 * 60,
     path: '/',
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      tenantId: user.tenantId || 'SYSTEM',
+      userId: user.id,
+      userRole: user.role,
+      userEmail: user.email,
+      action: 'LOGIN',
+      entityType: 'User',
+      entityId: user.id,
+      description: `Connexion réussie de ${user.email}`,
+    }
   });
 
   return response;

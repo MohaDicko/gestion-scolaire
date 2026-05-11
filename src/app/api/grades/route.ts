@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -89,6 +90,15 @@ export async function POST(request: Request) {
         }
       });
     }));
+
+    await logAudit({
+      request,
+      action: 'CREATE',
+      entityType: 'Grade',
+      entityId: results[0]?.id || 'BATCH',
+      newValues: { subjectId, academicYearId, count: results.length, examType: resolvedExamType },
+      description: `Saisie groupée de ${results.length} notes pour la matière ${subjectId}`,
+    });
 
     return NextResponse.json({ success: true, count: results.length });
   } catch (error: any) {

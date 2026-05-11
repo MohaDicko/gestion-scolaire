@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 import * as bcrypt from 'bcryptjs';
 
 export async function GET(request: Request) {
@@ -109,6 +110,15 @@ export async function POST(request: Request) {
       }
 
       return employee;
+    });
+
+    await logAudit({
+      request,
+      action: 'CREATE',
+      entityType: 'Employee',
+      entityId: result.id,
+      newValues: { firstName, lastName, employeeNumber: result.employeeNumber, employeeType },
+      description: `Embauche de ${firstName} ${lastName} au poste de ${employeeType}`,
     });
 
     return NextResponse.json(result, { status: 201 });

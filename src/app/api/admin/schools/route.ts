@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 import * as bcrypt from 'bcryptjs';
 
 export async function GET() {
@@ -145,6 +146,15 @@ export async function POST(request: Request) {
     } catch (emailError) {
       console.warn('[SCHOOLS_POST] Email onboarding non envoyé:', emailError);
     }
+
+    await logAudit({
+      request,
+      action: 'CREATE',
+      entityType: 'School',
+      entityId: result.id,
+      newValues: { name, code, plan },
+      description: `Création d'un nouveau tenant école : ${name} (${code}) sous le plan ${plan}`,
+    });
 
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -70,6 +71,15 @@ export async function POST(request: Request) {
       }
     });
 
+    await logAudit({
+      request,
+      action: 'CREATE',
+      entityType: 'Invoice',
+      entityId: invoice.id,
+      newValues: { studentId, amount: parsedAmount, title, invoiceNumber },
+      description: `Émission d'une facture de ${parsedAmount.toLocaleString('fr-FR')} FCFA pour ${title}`,
+    });
+
     return NextResponse.json(invoice, { status: 201 });
   } catch (error: any) {
     console.error('[INVOICES POST]', error.message);
@@ -91,6 +101,15 @@ export async function PATCH(request: Request) {
         paymentMethod: paymentMethod || undefined,
         paidDate: status === 'PAID' ? new Date() : undefined
       }
+    });
+
+    await logAudit({
+      request,
+      action: 'UPDATE',
+      entityType: 'Invoice',
+      entityId: id,
+      newValues: { status, paymentMethod },
+      description: `Mise à jour du statut de la facture ${invoice.invoiceNumber} -> ${status}`,
     });
 
     return NextResponse.json(invoice);

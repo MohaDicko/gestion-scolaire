@@ -10,6 +10,8 @@ import {
   UserCog, Menu, X, Bell, Award, ClipboardCheck, Landmark,
   Zap, Activity, ShieldAlert, Plus, Package, Loader2
 } from 'lucide-react';
+import AIDashboardAssistant from './AIDashboardAssistant';
+import PushNotificationManager from './PushNotificationManager';
 
 interface NavItem {
   label: string;
@@ -27,6 +29,12 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Vue Générale',
     items: [
       { label: 'Tableau de Bord',   href: '/dashboard',       icon: <LayoutDashboard size={17}/> },
+    ]
+  },
+  {
+    title: 'Communication',
+    items: [
+      { label: 'Messagerie Chat',    href: '/chat',            icon: <MessageSquare size={17}/> },
     ]
   },
   {
@@ -71,7 +79,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Tableau de Bord BI', href: '/reports',        icon: <BarChart3 size={17}/> },
       { label: 'Bulletins de Notes', href: '/reports/bulletins', icon: <Award size={17}/> },
       { label: 'Relevés Annuels',   href: '/reports/transcripts', icon: <FileText size={17}/> },
-      { label: 'Piste d\'Audit',     href: '/settings/audit', icon: <ShieldAlert size={17}/> },
+      { label: 'Journal d\'Audit',   href: '/admin/audit',    icon: <ShieldAlert size={17}/> },
     ]
   },
   {
@@ -337,6 +345,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                </div>
             )}
             {actions}
+            <PushNotificationManager />
             {/* ── Notification Bell ── */}
             <div ref={notifRef} style={{ position: 'relative' }}>
               <button
@@ -453,6 +462,8 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           </footer>
         </div>
       </main>
+
+      <AIDashboardAssistant />
 
       <style jsx>{`
         @media (max-width: 768px) {

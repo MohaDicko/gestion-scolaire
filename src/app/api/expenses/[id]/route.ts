@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 
 export async function DELETE(
   _request: Request,
@@ -24,6 +25,16 @@ export async function DELETE(
     }
 
     await prisma.expense.delete({ where: { id: id } });
+
+    await logAudit({
+      request: _request,
+      action: 'DELETE',
+      entityType: 'Expense',
+      entityId: id,
+      oldValues: expense,
+      description: `Suppression de la dépense: ${expense.description} (${expense.amount} FCFA)`,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[EXPENSE_DELETE]', error);
