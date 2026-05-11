@@ -3,6 +3,8 @@
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import { Badge } from '@/components/ui/badge';
 import React, { ReactNode, useEffect, useState, useRef, useCallback } from 'react';
 import {
   LayoutDashboard, Users, School, BookOpen, CalendarCheck,
@@ -204,7 +206,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
       <header className="sidebar-logo">
         <div className="logo-icon">
           {branding?.logoUrl ? (
-            <img src={branding.logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <Image src={branding.logoUrl} alt="Logo établissement" fill style={{ objectFit: 'contain' }} />
           ) : (
             <GraduationCap size={22} />
           )}

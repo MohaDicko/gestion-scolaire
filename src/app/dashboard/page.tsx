@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 // Extracted Components
 import { ShadcnStats } from '@/components/dashboard/ShadcnStats';
@@ -93,7 +93,8 @@ export default function DashboardPage() {
       subtitle={`Tableau de bord exécutif — ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`}
       breadcrumbs={[{ label: 'Dashboard' }]}
       actions={
-        <Button variant="ghost" size="sm" onClick={fetchStats} leftIcon={<Activity size={15} />}>
+        <Button variant="ghost" size="sm" onClick={fetchStats}>
+          <Activity size={15} className="mr-2" />
           Actualiser
         </Button>
       }

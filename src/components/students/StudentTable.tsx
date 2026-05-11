@@ -3,7 +3,7 @@
 import React from 'react';
 import { Eye, Users, Search, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Card } from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 
 const GENDER_LABELS: Record<string, string> = { MALE: 'Masculin', FEMALE: 'Féminin', OTHER: 'Autre' };
 

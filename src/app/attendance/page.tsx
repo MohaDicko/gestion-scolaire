@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function AttendancePage() {
   const router = useRouter();
@@ -117,12 +117,13 @@ export default function AttendancePage() {
                 <CardTitle className="text-base uppercase tracking-tight">Liste d'appel</CardTitle>
               </div>
               <Button 
-                variant="primary" 
+                variant="default" 
                 size="sm" 
                 onClick={handleSave} 
-                isLoading={isSaving}
-                leftIcon={<Save size={16} />}
+                className="bg-primary text-white"
+                disabled={isSaving}
               >
+                {isSaving ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2" size={16} />}
                 Valider l'appel
               </Button>
             </CardHeader>

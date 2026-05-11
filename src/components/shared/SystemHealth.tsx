@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Activity, ShieldCheck, Database, HardDrive, Zap, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export function SystemHealth() {
   const [status, setStatus] = useState<any>({

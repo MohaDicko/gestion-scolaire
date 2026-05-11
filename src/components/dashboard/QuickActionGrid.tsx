@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, FileText, Receipt, ClipboardCheck, Award, Briefcase, Zap } from 'lucide-react';
-import { Card, CardTitle } from '@/components/ui/Card';
+import { Card, CardTitle } from '@/components/ui/card';
 
 const ACTIONS = [
   { icon: Users, label: 'Inscrire un élève', href: '/students', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },

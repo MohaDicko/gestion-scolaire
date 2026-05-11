@@ -9,8 +9,8 @@ import { useParams, useRouter } from 'next/navigation';
 
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
-import { Button } from '@/components/ui/Button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Components
 import { StudentSidebar } from '@/components/students/StudentSidebar';
@@ -61,9 +61,9 @@ export default function StudentDetailPage() {
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Élèves', href: '/students' }, { label: 'Profil' }]}
       actions={
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => router.back()} leftIcon={<ArrowLeft size={16} />}>Retour</Button>
-          <Button variant="secondary" size="sm" onClick={() => toast.info('Génération PDF en cours...')} leftIcon={<FileText size={16} />}>Fiche PDF</Button>
-          <Button variant="primary" size="sm" leftIcon={<Globe size={16} />}>Lien Portail</Button>
+          <Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft size={16} /> Retour</Button>
+          <Button variant="secondary" size="sm" onClick={() => toast.info('Génération PDF en cours...')}><FileText size={16} /> Fiche PDF</Button>
+          <Button size="sm" className="bg-primary text-white"><Globe size={16} /> Lien Portail</Button>
         </div>
       }
     >

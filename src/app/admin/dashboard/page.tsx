@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 import AppLayout from '@/components/AppLayout';
-import { Card } from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/Toast';
 
 interface AdminStats {

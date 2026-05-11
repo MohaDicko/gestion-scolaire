@@ -6,7 +6,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 const REVENUE_DATA = [
   { name: 'Sep', recettes: 1200000, dépenses: 480000 },

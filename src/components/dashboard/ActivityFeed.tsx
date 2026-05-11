@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Bell, GraduationCap, AlertTriangle, FileText, Wallet, Clock, BadgeCheck } from 'lucide-react';
-import { Card, CardTitle } from '@/components/ui/Card';
+import { Card, CardTitle } from '@/components/ui/card';
 
 const RECENT_EVENTS = [
   { icon: GraduationCap, label: 'Nouvelle inscription', value: 'Issa Mariko — Terminale A', time: '10 min', color: '#3b82f6', urgent: false },

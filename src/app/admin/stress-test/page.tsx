@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { Zap, Play, Loader2, CheckCircle2, XCircle, BarChart, AlertTriangle } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function StressTestPage() {
   const [targetCount, setTargetCount] = useState(10); // Start small for safety
@@ -118,12 +118,12 @@ export default function StressTestPage() {
                 </p>
               </div>
               <Button 
-                variant={isRunning ? 'secondary' : 'primary'} 
-                className="w-full" 
+                variant={isRunning ? 'secondary' : 'default'} 
+                className="w-full bg-primary text-white" 
                 onClick={startStressTest}
                 disabled={isRunning}
-                leftIcon={isRunning ? <Loader2 className="animate-spin" /> : <Play />}
               >
+                {isRunning ? <Loader2 className="animate-spin mr-2" /> : <Play className="mr-2" />}
                 {isRunning ? 'Exécution en cours...' : 'Lancer le Stress Test'}
               </Button>
             </CardContent>

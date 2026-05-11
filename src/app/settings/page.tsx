@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Save, Loader2, Landmark, Building2, Bell, ShieldCheck } from 'lucide-react';
+import Image from 'next/image';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 
@@ -161,7 +162,7 @@ export default function SettingsPage() {
                       />
                       {school?.logoUrl && (
                         <div style={{ width: '40px', height: '40px', borderRadius: '8px', border: '1px solid var(--border)', overflow: 'hidden', background: 'white' }}>
-                          <img src={school.logoUrl} alt="Logo Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          <Image src={school.logoUrl} alt="Logo Preview" fill style={{ objectFit: 'contain' }} />
                         </div>
                       )}
                     </div>
