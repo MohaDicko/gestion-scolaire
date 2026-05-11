@@ -16,6 +16,8 @@ import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { FinanceChart } from '@/components/dashboard/FinanceChart';
 import { SystemHealth } from '@/components/shared/SystemHealth';
 
+import { motion } from 'framer-motion';
+
 export default function DashboardPage() {
   const router = useRouter();
   const toast = useToast();
@@ -96,13 +98,29 @@ export default function DashboardPage() {
         </Button>
       }
     >
-      <div className="flex flex-col gap-6">
+      <motion.div 
+        className="flex flex-col gap-6"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+          }
+        }}
+      >
         
         {/* KPI Grid */}
-        <StatCards stats={stats} isLoading={isLoading} />
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <StatCards stats={stats} isLoading={isLoading} />
+        </motion.div>
 
         {/* Secondary Indicators */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <motion.div 
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+        >
           {secondaryKpis.map((kpi, i) => (
             <Card
               key={i}
@@ -125,22 +143,28 @@ export default function DashboardPage() {
               </div>
             </Card>
           ))}
-        </div>
+        </motion.div>
 
         {/* Charts & Main Content */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 space-y-6">
+          <motion.div 
+            className="xl:col-span-2 space-y-6"
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          >
              <FinanceChart isLoading={isLoading} />
              <ActivityFeed />
-          </div>
+          </motion.div>
           
-          <div className="xl:col-span-1 space-y-6">
+          <motion.div 
+            className="xl:col-span-1 space-y-6"
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          >
              <QuickActionGrid />
              <SystemHealth />
-          </div>
+          </motion.div>
         </div>
 
-      </div>
+      </motion.div>
     </AppLayout>
   );
 }

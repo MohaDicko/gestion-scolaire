@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import React, { ReactNode, useEffect, useState, useRef, useCallback } from 'react';
 import {
   LayoutDashboard, Users, School, BookOpen, CalendarCheck,
@@ -435,7 +436,14 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
         )}
 
         <div className="page" style={{ flex: 1, overflowY: 'auto' }}>
-          {children}
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {children}
+          </motion.div>
           
           <footer style={{ 
             padding: '30px 40px', 
