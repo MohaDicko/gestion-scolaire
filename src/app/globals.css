@@ -4,10 +4,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-@import "tw-animate-css";
-
-@import "shadcn/tailwind.css";
-
 /* ══════════════════════════════════════════════════════════════
    SCHOOLERP PRO — DESIGN SYSTEM v2.0
    Palette: Deep Navy × Electric Blue × Gold
@@ -1253,7 +1249,7 @@ label { font-size: 13px; font-weight: 500; color: var(--text-soft); margin-botto
     --sidebar-ring:        oklch(0.556 0 0);
   }
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
