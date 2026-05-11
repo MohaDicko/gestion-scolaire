@@ -681,8 +681,12 @@ export default function LoginPage() {
             </div>
 
             <p className="form-footer">
-              SchoolERP Pro &copy; {new Date().getFullYear()}<br />
-              <span style={{ color: '#1e2d4a' }}>Version Stable 1.1.0 — Données chiffrées AES-256</span>
+              SchoolERP Pro &copy; {new Date().getFullYear()} • Développé par 
+              <a href="https://sahelmultiservices.com" target="_blank" rel="noopener noreferrer" style={{ color: '#4f8ef7', fontWeight: 800, marginLeft: '5px' }}>
+                SAHEL MULTISERVICES
+              </a>
+              <br />
+              <span style={{ color: '#1e2d4a' }}>Version Stable 1.1.0 — Propulsion technologique malienne</span>
             </p>
           </div>
         </div>

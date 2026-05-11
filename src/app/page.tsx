@@ -276,7 +276,15 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="footer-bottom">
-            <p>© 2026 SchoolERP Pro. Tous droits réservés.</p>
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <p>© 2026 SchoolERP Pro. Tous droits réservés.</p>
+              <div className="hidden md:block w-px h-4 bg-white/10 mx-2"></div>
+              <p className="text-xs opacity-60">Développé par 
+                <a href="https://sahelmultiservices.com" target="_blank" rel="noopener noreferrer" className="ml-2 text-primary font-black hover:underline">
+                  SAHEL MULTISERVICES
+                </a>
+              </p>
+            </div>
             <div className="social-icons">
                <Globe size={18} />
                <Cpu size={18} />

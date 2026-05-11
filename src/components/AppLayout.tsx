@@ -464,27 +464,42 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           </motion.div>
           
           <footer style={{ 
-            padding: '30px 40px', 
+            padding: '40px 40px', 
             textAlign: 'center', 
             marginTop: 'auto',
             borderTop: '1px solid var(--border)', 
-            fontSize: '12px', 
-            color: 'var(--text-dim)',
+            fontSize: '11px', 
+            fontWeight: 500,
+            color: 'var(--text-muted)',
             display: 'flex',
+            flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            gap: '8px'
+            gap: '12px'
           }}>
-            <span>© {new Date().getFullYear()} SchoolERP Pro — Propulsion digitale par</span>
-            <a 
-              href="https://sahelmutiservices.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              style={{ color: 'var(--primary)', fontWeight: 800, textDecoration: 'none', letterSpacing: '0.05em' }}
-              className="hover-underline"
-            >
-              SAHEL-MULTISERVICES
-            </a>
+            <div className="flex items-center gap-2">
+              <span className="opacity-60">© {new Date().getFullYear()} SchoolERP Pro — Propulsion digitale par</span>
+              <a 
+                href="https://sahelmultiservices.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ 
+                  color: 'var(--primary)', 
+                  fontWeight: 900, 
+                  textDecoration: 'none', 
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  padding: '4px 10px',
+                  background: 'var(--primary-dim)',
+                  borderRadius: '6px'
+                }}
+              >
+                SAHEL MULTISERVICES
+              </a>
+            </div>
+            <div className="text-[10px] opacity-30 font-black tracking-widest">
+              INNOVATION • PERFORMANCE • EXCELLENCE
+            </div>
           </footer>
         </div>
       </main>
