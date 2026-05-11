@@ -36,13 +36,7 @@ export default function ChatPage() {
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('auth_user');
-    if (stored) setCurrentUser(JSON.parse(stored));
-    fetchConversations();
-  }, []);
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     try {
       const res = await fetch('/api/chat/conversations');
       if (res.ok) setConversations(await res.json());
@@ -51,7 +45,13 @@ export default function ChatPage() {
     } finally {
       setIsLoadingConv(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('auth_user');
+    if (stored) setCurrentUser(JSON.parse(stored));
+    fetchConversations();
+  }, [fetchConversations]);
 
   const fetchMessages = useCallback(async (id: string) => {
     setIsLoadingMsgs(true);
