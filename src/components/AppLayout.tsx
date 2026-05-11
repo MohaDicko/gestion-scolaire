@@ -14,6 +14,16 @@ import {
 import AIDashboardAssistant from './AIDashboardAssistant';
 import PushNotificationManager from './PushNotificationManager';
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
 interface NavItem {
   label: string;
   href: string;
@@ -347,80 +357,86 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             )}
             {actions}
             <PushNotificationManager />
-            {/* ── Notification Bell ── */}
-            <div ref={notifRef} style={{ position: 'relative' }}>
-              <button
-                className="btn-icon"
-                aria-label="Afficher les notifications"
-                aria-haspopup="true"
-                aria-expanded={notifOpen}
-                onClick={() => { setNotifOpen(o => !o); if (!notifOpen) loadNotifications(); }}
-                style={{ position: 'relative' }}
-              >
-                <Bell size={18} />
-                {notifications.filter(n => n.priority === 'high').length > 0 && (
-                  <span style={{
-                    position: 'absolute', top: '2px', right: '2px',
-                    width: '8px', height: '8px', borderRadius: '50%',
-                    background: '#ef4444', border: '1.5px solid white'
-                  }} />
-                )}
-              </button>
-
-              {notifOpen && (
-                <div 
-                  role="dialog"
-                  aria-label="Panneau de notifications"
-                  className="animate-up"
-                  style={{
-                    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                    width: '360px', background: 'var(--bg-3)', borderRadius: '16px',
-                    boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-light)',
-                    zIndex: 100, overflow: 'hidden'
-                  }}
-                >
-                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text)' }}>Notifications</span>
-                    <span style={{ background: 'var(--bg-4)', padding: '2px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 700, color: 'var(--primary)' }}>{notifications.length}</span>
+            <div className="flex items-center gap-3">
+              {/* ── Notifications Dropdown ── */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full bg-bg-3/50 hover:bg-bg-3 border border-border/40">
+                    <Bell size={18} />
+                    {notifications.filter(n => n.priority === 'high').length > 0 && (
+                      <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border border-white dark:border-bg-3" />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[380px] bg-bg-3 border-border-light shadow-xl p-0 overflow-hidden rounded-xl">
+                  <div className="p-4 border-b border-border flex justify-between items-center bg-bg-2/50">
+                    <h3 className="font-bold text-sm">Centre d'Alertes</h3>
+                    <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px]">{notifications.length}</Badge>
                   </div>
-                  <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                  <div className="max-h-[400px] overflow-y-auto">
                     {notifLoading ? (
-                      <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-dim)', fontSize: '13px' }}><Loader2 size={24} className="spin" style={{ margin: '0 auto 8px' }} /></div>
+                      <div className="p-8 text-center"><Loader2 size={24} className="spin mx-auto text-primary/40" /></div>
                     ) : notifications.length === 0 ? (
-                      <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-dim)', fontSize: '13px' }}>
-                        <Bell size={28} style={{ marginBottom: '8px', opacity: 0.1, display: 'block', margin: '0 auto 8px' }} />
-                        Aucune notification
+                      <div className="p-8 text-center text-text-dim text-sm">
+                        <Bell size={32} className="mx-auto mb-2 opacity-10" />
+                        Aucune nouvelle notification
                       </div>
                     ) : notifications.map(n => (
-                      <div key={n.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => { router.push(n.href); setNotifOpen(false); }}
-                        onKeyDown={e => { if (e.key === 'Enter') { router.push(n.href); setNotifOpen(false); } }}
-                        style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', gap: '12px', alignItems: 'flex-start', transition: 'background 0.15s' }}
-                        className="hover-bg-primary-dim"
+                      <div 
+                        key={n.id} 
+                        onClick={() => router.push(n.href)}
+                        className="p-4 border-b border-border/40 cursor-pointer hover:bg-primary-surface transition-colors flex gap-3 group"
                       >
-                        <span style={{ fontSize: '20px', flexShrink: 0, lineHeight: 1 }}>{typeIcon[n.type] || '🔔'}</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', lineHeight: 1.3 }}>{n.title}</span>
-                            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: priorityColor[n.priority], flexShrink: 0, marginTop: '4px', boxShadow: `0 0 8px ${priorityColor[n.priority]}` }} />
-                          </div>
-                          <p style={{ margin: '3px 0 0', fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{n.message}</p>
-                        </div>
+                         <span className="text-xl flex-shrink-0 grayscale group-hover:grayscale-0 transition-all">{typeIcon[n.type] || '🔔'}</span>
+                         <div className="flex-1 min-w-0">
+                           <div className="flex justify-between items-start gap-2">
+                             <span className="text-xs font-bold text-text leading-tight">{n.title}</span>
+                             <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-1" style={{ background: priorityColor[n.priority], boxShadow: `0 0 8px ${priorityColor[n.priority]}` }} />
+                           </div>
+                           <p className="text-[11px] text-text-muted mt-1 line-clamp-2 leading-relaxed">{n.message}</p>
+                         </div>
                       </div>
                     ))}
                   </div>
-                  <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', textAlign: 'center', background: 'rgba(0,0,0,0.2)' }}>
-                    <button onClick={loadNotifications} style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>Actualiser la liste</button>
+                  <div className="p-2 border-t border-border bg-bg-2/30 text-center">
+                    <Button variant="ghost" size="sm" className="text-[11px] font-bold text-primary w-full" onClick={loadNotifications}>
+                      Actualiser les flux
+                    </Button>
                   </div>
-                </div>
-              )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="h-4 w-[1px] bg-border mx-1" />
+
+              {/* ── User Profile Dropdown ── */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="p-1 h-auto flex items-center gap-2 hover:bg-bg-3 rounded-full border border-border/20 pr-3">
+                    <div className="h-8 w-8 rounded-full bg-primary-grad flex items-center justify-center text-white font-black text-xs shadow-glow">
+                      {user?.firstName?.charAt(0) || 'U'}
+                    </div>
+                    <div className="hidden sm:flex flex-col items-start text-left">
+                       <span className="text-[11px] font-bold leading-none text-text">{user?.firstName}</span>
+                       <span className="text-[9px] font-medium text-text-dim uppercase tracking-tighter mt-1">{user?.role}</span>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-bg-3 border-border-light shadow-xl rounded-xl">
+                  <DropdownMenuLabel className="text-xs text-text-muted">Mon Compte</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-border/40" />
+                  <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer focus:bg-primary-surface">
+                    <Users size={14} className="mr-2 text-primary" /> Profil & Paramètres
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/chat')} className="cursor-pointer focus:bg-primary-surface">
+                    <MessageSquare size={14} className="mr-2 text-emerald-400" /> Messagerie Interne
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-border/40" />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-400 focus:bg-red-500/10 focus:text-red-500">
+                    <LogOut size={14} className="mr-2" /> Déconnexion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 4px' }} />
-            <button className="btn-icon" onClick={handleLogout} aria-label="Déconnexion" title="Déconnexion" style={{ color: 'var(--danger)' }}>
-              <LogOut size={18} />
-            </button>
           </div>
         </header>
 

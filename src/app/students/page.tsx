@@ -8,6 +8,24 @@ import { useToast } from '@/components/Toast';
 import { exportToExcel } from '@/lib/excelExport';
 import * as XLSX from 'xlsx';
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+
 const GENDER_LABELS: Record<string, string> = { MALE: 'Masculin', FEMALE: 'Féminin', OTHER: 'Autre' };
 const RELATION_OPTIONS = ['FATHER', 'MOTHER', 'GUARDIAN', 'OTHER'];
 const RELATION_LABELS: Record<string, string> = { FATHER: 'Père', MOTHER: 'Mère', GUARDIAN: 'Tuteur', OTHER: 'Autre' };
@@ -281,107 +299,88 @@ export default function StudentsPage() {
                   </button>
                 )}
               </div>
+        <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-3xl bg-bg-2 border-border-light shadow-2xl rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-6 border-b border-border bg-bg-2/50">
+            <DialogTitle className="text-xl font-bold font-plus-jakarta">Inscrire un Nouvel Élève</DialogTitle>
+            <DialogDescription className="text-text-dim">Remplissez les informations pour enregistrer un nouvel étudiant dans le système.</DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="p-6 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            {/* Section 1: Perso */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/5 p-2 rounded-lg w-fit">
+                <Users size={12} /> Informations Personnelles
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted">Prénom *</label>
+                  <input className="flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder="Ex: Moussa" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted">Nom *</label>
+                  <input className="flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder="Ex: Traoré" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted">Date de Naissance *</label>
+                  <input type="date" className="flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" required value={formData.dateOfBirth} onChange={e => setFormData({...formData, dateOfBirth: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted">Genre *</label>
+                  <select className="flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
+                    {Object.entries(GENDER_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted">Campus / École *</label>
+                  <select className="flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" required value={formData.campusId} onChange={e => setFormData({...formData, campusId: e.target.value})}>
+                    <option value="">-- Sélectionner --</option>
+                    {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted">N° CNI / Matricule</label>
+                  <input className="flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" value={formData.nationalId} onChange={e => setFormData({...formData, nationalId: e.target.value})} placeholder="Optionnel" />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Modal d'ajout */}
-      {showModal && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100,
-          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
-        }}>
-          <div style={{
-            background: 'var(--bg-2)', border: '1px solid var(--border-md)',
-            borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '750px',
-            maxHeight: '90vh', overflow: 'auto', boxShadow: 'var(--shadow-lg)',
-            animation: 'fadeUp 0.3s var(--ease) both'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--border)' }}>
-              <h2 style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '18px' }}>Inscrire un Nouvel Élève</h2>
-              <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
+            {/* Section 2: Parent */}
+            <div className="space-y-4 pt-4 border-t border-border/40">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 bg-emerald-400/5 p-2 rounded-lg w-fit">
+                <Briefcase size={12} /> Parent / Tuteur
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted">Nom du Parent *</label>
+                  <input className="flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" required value={formData.parentName} onChange={e => setFormData({...formData, parentName: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted">Téléphone *</label>
+                  <input className="flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" type="tel" required value={formData.parentPhone} onChange={e => setFormData({...formData, parentPhone: e.target.value})} placeholder="+223 00 00 00 00" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted">Email du Parent</label>
+                  <input className="flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" type="email" value={formData.parentEmail} onChange={e => setFormData({...formData, parentEmail: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted">Relation *</label>
+                  <select className="flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={formData.parentRelationship} onChange={e => setFormData({...formData, parentRelationship: e.target.value})}>
+                    {RELATION_OPTIONS.map(r => <option key={r} value={r}>{RELATION_LABELS[r]}</option>)}
+                  </select>
+                </div>
+              </div>
             </div>
-            <form onSubmit={handleSubmit} style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              
-              <div>
-                <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Informations Personnelles</p>
-                <div className="form-grid">
-                  <div className="form-group"><label>Prénom *</label><input required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder="Ex: Moussa" /></div>
-                  <div className="form-group"><label>Nom *</label><input required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder="Ex: Traoré" /></div>
-                  <div className="form-group"><label>Date de Naissance *</label><input type="date" required value={formData.dateOfBirth} onChange={e => setFormData({...formData, dateOfBirth: e.target.value})} /></div>
-                  <div className="form-group">
-                    <label>Genre *</label>
-                    <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
-                      {Object.entries(GENDER_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group"><label>N° CNI / Matricule</label><input value={formData.nationalId} onChange={e => setFormData({...formData, nationalId: e.target.value})} placeholder="Optionnel" /></div>
-                  <div className="form-group">
-                    <label>Campus / École *</label>
-                    <select required value={formData.campusId} onChange={e => setFormData({...formData, campusId: e.target.value})}>
-                      <option value="">-- Sélectionner --</option>
-                      {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </div>
 
-              <div>
-                <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Compte d'Accès Élève (Optionnel)</p>
-                <div style={{ background: 'var(--bg-3)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: formData.createStudentAccount ? '16px' : '0' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600 }}>Activer l'accès au portail élève</span>
-                    <input type="checkbox" checked={formData.createStudentAccount} onChange={e => setFormData({...formData, createStudentAccount: e.target.checked})} />
-                  </div>
-                  {formData.createStudentAccount && (
-                    <div className="form-grid">
-                      <div className="form-group"><label>Email Élève (Provisoire)</label><input type="email" value={formData.studentEmail} onChange={e => setFormData({...formData, studentEmail: e.target.value})} placeholder="laisser vide pour auto-générer" /></div>
-                      <div className="form-group"><label>Mot de passe</label><input type="password" value={formData.studentPassword} onChange={e => setFormData({...formData, studentPassword: e.target.value})} placeholder="défaut: matricule" /></div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Informations du Parent / Tuteur & Accès</p>
-                <div className="form-grid">
-                  <div className="form-group"><label>Nom du Parent *</label><input required value={formData.parentName} onChange={e => setFormData({...formData, parentName: e.target.value})} /></div>
-                  <div className="form-group"><label>Téléphone *</label><input type="tel" required value={formData.parentPhone} onChange={e => setFormData({...formData, parentPhone: e.target.value})} placeholder="+223 00 00 00 00" /></div>
-                  <div className="form-group"><label>Email du Parent</label><input type="email" value={formData.parentEmail} onChange={e => setFormData({...formData, parentEmail: e.target.value})} /></div>
-                  <div className="form-group">
-                    <label>Relation *</label>
-                    <select value={formData.parentRelationship} onChange={e => setFormData({...formData, parentRelationship: e.target.value})}>
-                      {RELATION_OPTIONS.map(r => <option key={r} value={r}>{RELATION_LABELS[r]}</option>)}
-                    </select>
-                  </div>
-                </div>
-                
-                <div style={{ background: 'var(--bg-3)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', marginTop: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: formData.createParentAccount ? '16px' : '0' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600 }}>Créer un compte pour le Parent</span>
-                    <input type="checkbox" checked={formData.createParentAccount} onChange={e => setFormData({...formData, createParentAccount: e.target.checked})} />
-                  </div>
-                  {formData.createParentAccount && (
-                    <div className="form-group">
-                      <label>Mot de passe Parent *</label>
-                      <input type="password" required={formData.createParentAccount} value={formData.parentAccountPassword} onChange={e => setFormData({...formData, parentAccountPassword: e.target.value})} placeholder="Mot de passe portail parent" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
-                <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
-                <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? <><Loader2 size={15} className="spin" /> Enregistrement...</> : 'Confirmer l\'Inscription'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="pt-4 border-t border-border/40 flex justify-end gap-3">
+              <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Annuler</Button>
+              <Button type="submit" disabled={isSubmitting} className="bg-primary text-white shadow-glow">
+                {isSubmitting ? <><Loader2 size={15} className="spin mr-2" /> Enregistrement...</> : 'Confirmer l\'Inscription'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Search + Table */}
       <div className="card" style={{ padding: 0 }}>
@@ -396,51 +395,89 @@ export default function StudentsPage() {
           </span>
         </div>
 
-        <div className="table-container">
+        <div className="p-1">
           {isLoading ? (
-            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <Loader2 size={32} className="spin" style={{ margin: '0 auto 12px', display: 'block' }} />
-              <p>Chargement des données...</p>
+            <div className="py-20 text-center text-text-muted">
+              <Loader2 size={32} className="spin mx-auto mb-4" />
+              <p>Chargement des données scolaires...</p>
             </div>
           ) : result.items.length > 0 ? (
-            <table className="data-table">
-              <thead><tr>
-                <th>Matricule</th><th>Nom Complet</th><th>Date de Naissance</th>
-                <th>Genre</th><th>Parent / Tuteur</th><th>Actions</th>
-              </tr></thead>
-              <tbody>
-                {result.items.map(s => (
-                  <tr key={s.id}>
-                    <td><span className="badge badge-primary">{s.studentNumber}</span></td>
-                    <td><strong style={{ color: 'var(--text)' }}>{s.firstName} {s.lastName}</strong><br /><small style={{ color: 'var(--text-dim)' }}>{s.nationalId || '—'}</small></td>
-                    <td>{new Date(s.dateOfBirth).toLocaleDateString('fr-FR')}</td>
-                    <td><span className={`badge ${s.gender === 'FEMALE' ? 'badge-purple' : 'badge-info'}`}>{GENDER_LABELS[s.gender] || s.gender}</span></td>
-                    <td>{s.parentName}<br /><small style={{ color: 'var(--text-dim)' }}>{s.parentPhone}</small></td>
-                    <td>
-                      <button className="btn-icon" title="Voir le profil" onClick={() => router.push(`/students/${s.id}`)}>
-                        <Eye size={15} />
-                      </button>
-                    </td>
-                  </tr>
+            <Table>
+              <TableHeader className="bg-bg-2">
+                <TableRow>
+                  <TableHead className="w-[120px]">Matricule</TableHead>
+                  <TableHead>Nom Complet</TableHead>
+                  <TableHead>Date Naissance</TableHead>
+                  <TableHead>Genre</TableHead>
+                  <TableHead>Parent / Tuteur</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {result.items.map((s: any) => (
+                  <TableRow key={s.id} className="hover:bg-primary-surface transition-colors border-border/40">
+                    <TableCell>
+                      <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-mono">
+                        {s.studentNumber}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-text">{s.firstName} {s.lastName}</span>
+                        <span className="text-[11px] text-text-dim">{s.nationalId || 'Sans CNI'}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-text-soft">
+                      {new Date(s.dateOfBirth).toLocaleDateString('fr-FR')}
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="secondary" 
+                        className={s.gender === 'FEMALE' ? 'bg-purple-500/10 text-purple-400 border-none' : 'bg-blue-500/10 text-blue-400 border-none'}
+                      >
+                        {GENDER_LABELS[s.gender] || s.gender}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-text-soft">{s.parentName}</span>
+                        <span className="text-[11px] text-text-muted">{s.parentPhone}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="icon-sm" 
+                        title="Profil complet"
+                        onClick={() => router.push(`/students/${s.id}`)}
+                      >
+                        <Eye size={15} className="text-text-muted hover:text-primary transition-colors" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           ) : (
-            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <Users size={48} style={{ opacity: 0.2, margin: '0 auto 16px', display: 'block' }} />
-              <h3 style={{ fontWeight: 600, marginBottom: '8px' }}>Aucun élève trouvé</h3>
-              <p style={{ fontSize: '13px' }}>Utilisez le bouton "Nouvel Élève" pour commencer.</p>
+            <div className="py-20 text-center text-text-muted">
+              <Users size={48} className="opacity-10 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-text mb-2">Aucun élève trouvé</h3>
+              <p className="text-sm">Votre base de données est vide ou aucun résultat pour cette recherche.</p>
             </div>
           )}
         </div>
 
         {/* Pagination */}
         {result.totalPages > 1 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Page {page} sur {result.totalPages}</span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>← Précédent</button>
-              <button className="btn-ghost" disabled={page >= result.totalPages} onClick={() => setPage(p => p + 1)}>Suivant →</button>
+          <div className="flex items-center justify-between p-4 border-t border-border/40">
+            <span className="text-xs text-text-muted">Page {page} sur {result.totalPages}</span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                Précédent
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= result.totalPages} onClick={() => setPage(p => p + 1)}>
+                Suivant
+              </Button>
             </div>
           </div>
         )}

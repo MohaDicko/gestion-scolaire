@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
 // Extracted Components
-import { StatCards } from '@/components/dashboard/StatCards';
+import { ShadcnStats } from '@/components/dashboard/ShadcnStats';
 import { QuickActionGrid } from '@/components/dashboard/QuickActionGrid';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { FinanceChart } from '@/components/dashboard/FinanceChart';
@@ -113,7 +113,7 @@ export default function DashboardPage() {
         
         {/* KPI Grid */}
         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <StatCards stats={stats} isLoading={isLoading} />
+          <ShadcnStats stats={stats} isLoading={isLoading} />
         </motion.div>
 
         {/* Secondary Indicators */}
