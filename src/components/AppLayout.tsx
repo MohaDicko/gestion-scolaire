@@ -347,7 +347,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           </nav>
 
           {/* Top actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {user?.role === 'SUPER_ADMIN' && user.schoolName && (
                <div role="alert" style={{ 
                  background: 'rgba(79, 142, 247, 0.1)', border: '1px solid rgba(79, 142, 247, 0.2)', 
@@ -449,7 +449,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               <h1 className="page-title">{title}</h1>
               {subtitle && <p className="page-subtitle">{subtitle}</p>}
             </div>
-            {actions && <div style={{ display: 'flex', gap: '12px' }}>{actions}</div>}
+            {actions && <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>{actions}</div>}
           </div>
         )}
 
@@ -477,7 +477,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             alignItems: 'center',
             gap: '12px'
           }}>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
               <span className="opacity-60">© {new Date().getFullYear()} SchoolERP Pro — Propulsion digitale par</span>
               <a 
                 href="https://sahelmultiservices.com" 
