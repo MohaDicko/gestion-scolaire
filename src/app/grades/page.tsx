@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Save, AlertCircle, Loader2 } from 'lucide-react';
+import { BookOpen, Save, AlertCircle, Loader2, FileDown, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { exportToExcel } from '@/lib/excelExport';
+import * as XLSX from 'xlsx';
 
 export default function GradesPage() {
   const router = useRouter();
@@ -115,6 +117,52 @@ export default function GradesPage() {
     }
   };
 
+  const handleExportTemplate = () => {
+    if (students.length === 0) { toast.warning('Chargez d\'abord une liste d\'élèves.'); return; }
+    const template = students.map(e => ({
+      'Matricule': e.student.studentNumber,
+      'Nom': e.student.lastName,
+      'Prénom': e.student.firstName,
+      'Note': '',
+      'Commentaire': ''
+    }));
+    exportToExcel(template, `Grille_Notes_${form.classroomId}`, 'Notes');
+    toast.success('Modèle d\'importation généré.');
+  };
+
+  const handleImportExcel = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const json: any[] = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        
+        const newGrades = { ...grades };
+        let count = 0;
+
+        json.forEach(row => {
+          const student = students.find(s => s.student.studentNumber === String(row.Matricule || row.matricule));
+          if (student) {
+            newGrades[student.studentId] = { 
+              score: row.Note?.toString() || row.note?.toString() || '', 
+              comment: row.Commentaire || row.commentaire || '' 
+            };
+            count++;
+          }
+        });
+
+        setGrades(newGrades);
+        toast.success(`${count} notes pré-remplies depuis Excel.`);
+      } catch (err) {
+        toast.error('Erreur lors de la lecture du fichier Excel.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   return (
     <AppLayout
       title="Saisie des Notes"
@@ -174,9 +222,18 @@ export default function GradesPage() {
               <BookOpen size={18} className="text-primary" />
               Grille de Saisie ({students.length} élèves)
             </h3>
-            <button className="btn-primary" onClick={handleSave} disabled={isSaving || !form.subjectId}>
-              {isSaving ? <><Loader2 size={16} className="spin" /> Validation...</> : <><Save size={16} /> Valider les notes</>}
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="btn-ghost" onClick={handleExportTemplate}>
+                <FileDown size={14} /> Modèle Excel
+              </button>
+              <label className="btn-ghost" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Upload size={14} /> Importer Excel
+                <input type="file" accept=".xlsx,.xls" hidden onChange={handleImportExcel} />
+              </label>
+              <button className="btn-primary" onClick={handleSave} disabled={isSaving || !form.subjectId}>
+                {isSaving ? <><Loader2 size={16} className="spin" /> Validation...</> : <><Save size={16} /> Valider les notes</>}
+              </button>
+            </div>
           </div>
           
           <div className="table-container">

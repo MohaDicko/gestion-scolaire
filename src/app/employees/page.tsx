@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Briefcase, Plus, Search, Loader2, X, Users, Mail, Phone, FileDown } from 'lucide-react';
+import { Briefcase, Plus, Search, Loader2, X, Users, Mail, Phone, FileDown, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { exportToExcel } from '@/lib/excelExport';
+import * as XLSX from 'xlsx';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const EMPLOYEE_TYPES = ['TEACHER', 'ADMIN', 'ACCOUNTANT', 'HR', 'MAINTENANCE', 'SUPPORT'];
 
@@ -23,9 +26,12 @@ export default function EmployeesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [campuses, setCampuses] = useState<any[]>([]);
   const [formData, setFormData] = useState({ ...emptyForm, createAccount: false, password: '' });
+  const [importData, setImportData] = useState<any[]>([]);
+  const [importConfig, setImportConfig] = useState({ campusId: '', createAccounts: false });
 
   const fetchEmployees = useCallback(async () => {
     setIsLoading(true);
@@ -93,6 +99,40 @@ export default function EmployeesPage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        setImportData(json);
+      } catch (err) { toast.error('Erreur de lecture'); }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const executeImport = async () => {
+    if (importData.length === 0) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/employees/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employees: importData, campusId: importConfig.campusId, createAccounts: importConfig.createAccounts })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success(data.message);
+      setShowImport(false);
+      setImportData([]);
+      fetchEmployees();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setIsSubmitting(false); }
+  };
+
   return (
     <AppLayout
       title="Ressources Humaines"
@@ -100,6 +140,9 @@ export default function EmployeesPage() {
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Employés' }]}
       actions={
         <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-ghost" onClick={() => setShowImport(true)}>
+            <Upload size={15} /> Importer
+          </button>
           <button className="btn-ghost" onClick={handleExport} disabled={employees.length === 0}>
             <FileDown size={15} /> Exporter
           </button>
@@ -200,8 +243,47 @@ export default function EmployeesPage() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      {/* Import Modal */}
+      <Dialog open={showImport} onOpenChange={setShowImport}>
+        <DialogContent className="max-w-md bg-bg-2 border-border-light shadow-2xl rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-6 border-b border-border bg-bg-2/50">
+            <DialogTitle>Importation RH</DialogTitle>
+            <DialogDescription>Importez votre liste d&apos;enseignants et staff.</DialogDescription>
+          </DialogHeader>
+          <div className="p-6 space-y-6">
+            <div className="border-2 border-dashed border-border rounded-xl p-8 text-center bg-bg-3 hover:border-primary/40 transition-colors">
+              <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="hidden" id="staff-upload" />
+              <label htmlFor="staff-upload" className="cursor-pointer flex flex-col items-center gap-3">
+                <Upload size={32} className="text-primary/60" />
+                <p className="font-semibold text-sm">
+                  {importData.length > 0 ? `✅ ${importData.length} lignes détectées` : 'Choisir le fichier Excel'}
+                </p>
+              </label>
+            </div>
+            {importData.length > 0 && (
+              <div className="space-y-4">
+                <div className="form-group">
+                  <label className="text-xs font-bold text-text-muted">Campus d'affectation</label>
+                  <select className="form-input" style={{ width: '100%' }} value={importConfig.campusId} onChange={e => setImportConfig({...importConfig, campusId: e.target.value})}>
+                    <option value="">-- Sélectionner --</option>
+                    {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="cAcc" checked={importConfig.createAccounts} onChange={e => setImportConfig({...importConfig, createAccounts: e.target.checked})} />
+                  <label htmlFor="cAcc" className="text-xs">Créer des comptes accès (mdp: staff123)</label>
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+              <Button variant="ghost" onClick={() => setShowImport(false)}>Annuler</Button>
+              <Button disabled={importData.length === 0 || isSubmitting} onClick={executeImport} className="bg-primary text-white">
+                {isSubmitting ? 'En cours...' : 'Lancer l\'Import'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Table */}
       <div className="card" style={{ padding: 0 }}>

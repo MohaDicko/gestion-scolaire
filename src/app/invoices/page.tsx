@@ -8,6 +8,7 @@ import {
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { exportToExcel } from '@/lib/excelExport';
 
 const emptyForm = {
   studentId: '', title: '', amount: '', dueDate: new Date().toISOString().split('T')[0], type: 'TUITION', paymentMethod: 'ESPECES'
@@ -128,10 +129,24 @@ export default function InvoicesPage() {
   };
 
   const filtered = invoices.filter(inv => 
-    inv.student?.firstName.toLowerCase().includes(search.toLowerCase()) ||
-    inv.student?.lastName.toLowerCase().includes(search.toLowerCase()) ||
     inv.invoiceNumber.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleExport = () => {
+    const data = filtered.map(inv => ({
+      'N° Facture': inv.invoiceNumber,
+      'Élève': `${inv.student?.firstName} ${inv.student?.lastName}`,
+      'Matricule': inv.student?.studentNumber,
+      'Objet': inv.title,
+      'Type': inv.type,
+      'Montant': inv.amount,
+      'Échéance': new Date(inv.dueDate).toLocaleDateString(),
+      'Mode': inv.paymentMethod || '—',
+      'Statut': inv.status === 'PAID' ? 'Payée' : 'Impayée'
+    }));
+    exportToExcel(data, `Facturation_${new Date().toISOString().split('T')[0]}`);
+    toast.success('Grand livre exporté en Excel.');
+  };
 
   return (
     <AppLayout
@@ -140,6 +155,9 @@ export default function InvoicesPage() {
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Facturation' }]}
       actions={
         <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-ghost" onClick={handleExport} disabled={filtered.length === 0}>
+            <FileDown size={15} /> Exporter Excel
+          </button>
           <button className="btn-ghost" onClick={() => router.push('/students/enroll')}>
             <Plus size={15} /> Nouvelle Inscription
           </button>
