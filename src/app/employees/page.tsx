@@ -243,6 +243,8 @@ export default function EmployeesPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
       {/* Import Modal */}
       <Dialog open={showImport} onOpenChange={setShowImport}>
         <DialogContent className="max-w-md bg-bg-2 border-border-light shadow-2xl rounded-2xl p-0 overflow-hidden">
