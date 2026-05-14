@@ -29,11 +29,9 @@ export default function GradesPage() {
   useEffect(() => {
     Promise.all([
       fetch('/api/classrooms').then(r => r.json()),
-      fetch('/api/subjects').then(r => r.json()),
       fetch('/api/academic-years').then(r => r.json())
-    ]).then(([cData, sData, yData]) => {
+    ]).then(([cData, yData]) => {
       if (Array.isArray(cData)) setClassrooms(cData);
-      if (Array.isArray(sData)) setSubjects(sData);
       if (Array.isArray(yData)) {
         setYears(yData);
         const active = yData.find(y => y.isActive);
@@ -41,6 +39,24 @@ export default function GradesPage() {
       }
     }).catch(() => toast.error('Erreur lors du chargement des modules.'));
   }, [toast]);
+
+  // Chargement dynamique des matières selon la classe
+  useEffect(() => {
+    if (form.classroomId) {
+      fetch(`/api/subjects?classroomId=${form.classroomId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setSubjects(data);
+            // Optionnel : Reset de la matière sélectionnée si elle n'est plus dans la liste
+            setForm(f => ({ ...f, subjectId: '' }));
+          }
+        })
+        .catch(() => {});
+    } else {
+      setSubjects([]);
+    }
+  }, [form.classroomId]);
 
   const loadStudents = useCallback(async () => {
     if (!form.classroomId || !form.academicYearId) {

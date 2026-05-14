@@ -2,10 +2,31 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  
+  const { searchParams } = new URL(request.url);
+  const classroomId = searchParams.get('classroomId');
+
   try {
+    if (classroomId) {
+      // Récupérer les matières via l'emploi du temps de la classe
+      const timetableEntries = await prisma.timetable.findMany({
+        where: { 
+          tenantId: session.tenantId,
+          classroomId: classroomId
+        },
+        select: {
+          subject: true
+        },
+        distinct: ['subjectId']
+      });
+      
+      const subjects = timetableEntries.map(t => t.subject);
+      return NextResponse.json(subjects);
+    }
+
     const subjects = await prisma.subject.findMany({
       where: { tenantId: session.tenantId },
       orderBy: { name: 'asc' }
