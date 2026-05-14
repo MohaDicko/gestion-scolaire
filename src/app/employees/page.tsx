@@ -253,27 +253,29 @@ export default function EmployeesPage() {
             <DialogDescription>Importez votre liste d&apos;enseignants et staff.</DialogDescription>
           </DialogHeader>
           <div className="p-6 space-y-6">
+            <div className="form-group">
+              <label className="text-xs font-bold text-text-muted">Campus d'affectation *</label>
+              <select className="form-input" style={{ width: '100%' }} value={importConfig.campusId} onChange={e => setImportConfig({...importConfig, campusId: e.target.value})}>
+                <option value="">-- Sélectionner le campus de destination --</option>
+                {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+
             <div className="border-2 border-dashed border-border rounded-xl p-8 text-center bg-bg-3 hover:border-primary/40 transition-colors">
               <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="hidden" id="staff-upload" />
               <label htmlFor="staff-upload" className="cursor-pointer flex flex-col items-center gap-3">
                 <Upload size={32} className="text-primary/60" />
                 <p className="font-semibold text-sm">
-                  {importData.length > 0 ? `✅ ${importData.length} lignes détectées` : 'Choisir le fichier Excel'}
+                  {importData.length > 0 ? `✅ ${importData.length} lignes détectées` : 'Choisir le fichier Excel (Personnel)'}
                 </p>
               </label>
             </div>
+
             {importData.length > 0 && (
               <div className="space-y-4">
-                <div className="form-group">
-                  <label className="text-xs font-bold text-text-muted">Campus d'affectation</label>
-                  <select className="form-input" style={{ width: '100%' }} value={importConfig.campusId} onChange={e => setImportConfig({...importConfig, campusId: e.target.value})}>
-                    <option value="">-- Sélectionner --</option>
-                    {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" id="cAcc" checked={importConfig.createAccounts} onChange={e => setImportConfig({...importConfig, createAccounts: e.target.checked})} />
-                  <label htmlFor="cAcc" className="text-xs">Créer des comptes accès (mdp: staff123)</label>
+                  <label htmlFor="cAcc" className="text-xs">Créer des comptes accès portail (mdp par défaut: staff123)</label>
                 </div>
               </div>
             )}
