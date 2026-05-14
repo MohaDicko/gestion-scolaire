@@ -19,6 +19,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Aucun campus spécifié ou trouvé.' }, { status: 400 });
     }
 
+    // Récupérer ou créer un département par défaut
+    let defaultDept = await prisma.department.findFirst({
+      where: { tenantId: session.tenantId!, name: 'GENERAL' }
+    });
+
+    if (!defaultDept) {
+      defaultDept = await prisma.department.create({
+        data: {
+          tenantId: session.tenantId!,
+          name: 'GENERAL',
+          code: 'GEN'
+        }
+      });
+    }
+
     const report = { success: 0, errors: [] as string[], total: employees.length };
     const defaultPassword = await bcrypt.hash('staff123', 10);
 
@@ -40,13 +55,15 @@ export async function POST(request: Request) {
             data: {
               tenantId: session.tenantId!,
               campusId: targetCampusId,
+              departmentId: defaultDept!.id,
               firstName: String(firstName),
               lastName: String(lastName),
               email: String(email).toLowerCase(),
               phoneNumber: String(e.Telephone || e.phoneNumber || '0000'),
               employeeNumber: String(employeeNumber),
               employeeType: (e.Poste || e.employeeType || 'TEACHER').toUpperCase() as any,
-              gender: (e.Genre || e.gender || 'MALE').toUpperCase() === 'F' ? 'FEMALE' : 'MALE',
+              gender: (e.Genre || e.gender || 'MALE').toUpperCase().startsWith('F') ? 'FEMALE' : 'MALE',
+              dateOfBirth: e.DateNaissance ? new Date(e.DateNaissance) : new Date(1990, 0, 1),
               hireDate: e.DateEmbauche ? new Date(e.DateEmbauche) : new Date(),
               isActive: true
             }
