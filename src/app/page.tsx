@@ -259,20 +259,20 @@ export default function LandingPage() {
             </div>
             <div className="footer-links">
               <h4>Plateforme</h4>
-              <a href="#">Académie</a>
-              <a href="#">Finance</a>
-              <a href="#">RH & Paie</a>
+              <a href="/login">Académie</a>
+              <a href="/login">Finance</a>
+              <a href="/login">RH & Paie</a>
             </div>
             <div className="footer-links">
               <h4>Support</h4>
-              <a href="#">Aide</a>
-              <a href="#">Contact</a>
+              <a href="mailto:support@schoolerp.pro">Aide</a>
+              <a href="mailto:contact@sahelmultiservices.com">Contact</a>
               <a href="#">Status</a>
             </div>
             <div className="footer-links">
               <h4>Légal</h4>
-              <a href="#">Confidentialité</a>
-              <a href="#">Conditions</a>
+              <a href="/login">Confidentialité</a>
+              <a href="/login">Conditions</a>
             </div>
           </div>
           <div className="footer-bottom">

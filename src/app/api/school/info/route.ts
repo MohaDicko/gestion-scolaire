@@ -8,10 +8,15 @@ export async function GET(request: Request) {
   
   const subdomain = isLocal 
     ? (host !== 'localhost:3000' ? host.split('.')[0] : null)
-    : (host !== rootDomain ? host.replace(`.${rootDomain}`, '') : null);
+    : (host !== rootDomain && !host.includes('vercel.app') ? host.replace(`.${rootDomain}`, '') : null);
 
   if (!subdomain || subdomain === 'www') {
-    return NextResponse.json({ isMain: true });
+    // En production, si on est sur le domaine principal ou Vercel, on peut retourner la première école par défaut
+    // ou marquer comme site principal. Ici, on va chercher l'école par défaut pour le branding.
+    const defaultSchool = await prisma.school.findFirst({
+      select: { name: true, logoUrl: true, motto: true, address: true, city: true }
+    });
+    return NextResponse.json(defaultSchool || { isMain: true });
   }
 
   try {
@@ -27,7 +32,11 @@ export async function GET(request: Request) {
     });
 
     if (!school) {
-      return NextResponse.json({ error: 'School not found' }, { status: 404 });
+      // Fallback de sécurité : retourner la première école trouvée
+      const fallbackSchool = await prisma.school.findFirst({
+        select: { name: true, logoUrl: true, motto: true, address: true, city: true }
+      });
+      return NextResponse.json(fallbackSchool || { error: 'School not found' }, { status: fallbackSchool ? 200 : 404 });
     }
 
     return NextResponse.json(school);
