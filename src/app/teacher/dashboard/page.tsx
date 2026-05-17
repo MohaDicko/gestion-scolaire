@@ -50,15 +50,15 @@ export default function TeacherDashboardPage() {
                 <s.icon size={22} />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{s.label}</div>
-                <div className="text-2xl font-black text-white">{s.value}</div>
+                <div className="text-xs font-bold text-text-muted uppercase tracking-wider">{s.label}</div>
+                <div className="text-2xl font-black text-text">{s.value}</div>
               </div>
             </Card>
           ))}
         </div>
 
         {/* Quick Actions */}
-        <h3 className="text-lg font-bold text-slate-300 mt-4">Accès Rapide</h3>
+        <h3 className="text-lg font-bold text-text-soft mt-4">Accès Rapide</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {quickLinks.map((link, i) => (
             <motion.div 
@@ -68,15 +68,15 @@ export default function TeacherDashboardPage() {
             >
               <Card 
                 variant="glass" 
-                className="cursor-pointer flex items-start gap-4 p-6 hover:bg-slate-800/50 transition-all border border-slate-700/50 group"
+                className="cursor-pointer flex items-start gap-4 p-6 hover:bg-bg-3/50 transition-all border border-border/50 group"
                 onClick={() => router.push(link.path)}
               >
-                <div className="p-3 bg-slate-800 rounded-xl group-hover:bg-blue-500 group-hover:text-white text-blue-400 transition-colors">
+                <div className="p-3 bg-bg-3 rounded-xl group-hover:bg-blue-500 group-hover:text-text text-blue-400 transition-colors">
                   <link.icon size={24} />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{link.title}</h4>
-                  <p className="text-sm text-slate-400 mt-1">{link.desc}</p>
+                  <h4 className="text-lg font-bold text-text group-hover:text-blue-400 transition-colors">{link.title}</h4>
+                  <p className="text-sm text-text-dim mt-1">{link.desc}</p>
                 </div>
               </Card>
             </motion.div>

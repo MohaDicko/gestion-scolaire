@@ -44,8 +44,8 @@ export default function FinanceDashboardPage() {
                 <s.icon size={22} />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{s.label}</div>
-                <div className="text-xl font-black text-white">{s.value}</div>
+                <div className="text-xs font-bold text-text-muted uppercase tracking-wider">{s.label}</div>
+                <div className="text-xl font-black text-text">{s.value}</div>
               </div>
             </Card>
           ))}
@@ -57,25 +57,25 @@ export default function FinanceDashboardPage() {
             <FinanceChart isLoading={false} />
           </div>
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-300">Actions Financières</h3>
-            <Card variant="glass" className="p-4 flex items-center justify-between hover:bg-slate-800 cursor-pointer transition-colors" onClick={() => router.push('/invoices')}>
+            <h3 className="text-lg font-bold text-text-soft">Actions Financières</h3>
+            <Card variant="glass" className="p-4 flex items-center justify-between hover:bg-bg-3 cursor-pointer transition-colors" onClick={() => router.push('/invoices')}>
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><FileText size={18} /></div>
-                <span className="font-semibold text-white">Gestion des Factures</span>
+                <span className="font-semibold text-text">Gestion des Factures</span>
               </div>
               <ChevronRightIcon />
             </Card>
-            <Card variant="glass" className="p-4 flex items-center justify-between hover:bg-slate-800 cursor-pointer transition-colors" onClick={() => router.push('/expenses')}>
+            <Card variant="glass" className="p-4 flex items-center justify-between hover:bg-bg-3 cursor-pointer transition-colors" onClick={() => router.push('/expenses')}>
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg"><DollarSign size={18} /></div>
-                <span className="font-semibold text-white">Journal des Dépenses</span>
+                <span className="font-semibold text-text">Journal des Dépenses</span>
               </div>
               <ChevronRightIcon />
             </Card>
-            <Card variant="glass" className="p-4 flex items-center justify-between hover:bg-slate-800 cursor-pointer transition-colors" onClick={() => router.push('/reports/finance')}>
+            <Card variant="glass" className="p-4 flex items-center justify-between hover:bg-bg-3 cursor-pointer transition-colors" onClick={() => router.push('/reports/finance')}>
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><Download size={18} /></div>
-                <span className="font-semibold text-white">Exporter le Bilan</span>
+                <span className="font-semibold text-text">Exporter le Bilan</span>
               </div>
               <ChevronRightIcon />
             </Card>
@@ -87,5 +87,5 @@ export default function FinanceDashboardPage() {
 }
 
 function ChevronRightIcon() {
-  return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500"><polyline points="9 18 15 12 9 6"></polyline></svg>;
+  return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted"><polyline points="9 18 15 12 9 6"></polyline></svg>;
 }

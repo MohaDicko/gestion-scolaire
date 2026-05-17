@@ -38,37 +38,37 @@ export default function HRDashboardPage() {
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((s, i) => (
-            <Card key={i} variant="glass" className="flex items-center gap-4 p-5 hover:bg-slate-800 transition-colors cursor-default">
+            <Card key={i} variant="glass" className="flex items-center gap-4 p-5 hover:bg-bg-3 transition-colors cursor-default">
               <div className={`p-3 rounded-xl ${s.bg} ${s.color}`}>
                 <s.icon size={22} />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{s.label}</div>
-                <div className="text-xl font-black text-white">{s.value}</div>
+                <div className="text-xs font-bold text-text-muted uppercase tracking-wider">{s.label}</div>
+                <div className="text-xl font-black text-text">{s.value}</div>
               </div>
             </Card>
           ))}
         </div>
 
         {/* Quick Actions */}
-        <h3 className="text-lg font-bold text-slate-300 mt-4">Gestion Administrative</h3>
+        <h3 className="text-lg font-bold text-text-soft mt-4">Gestion Administrative</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card variant="glass" className="p-6 hover:border-blue-500/50 cursor-pointer group transition-all" onClick={() => router.push('/employees')}>
             <Briefcase size={28} className="text-blue-400 mb-4 group-hover:scale-110 transition-transform" />
-            <h4 className="text-lg font-bold text-white mb-1">Dossiers Employés</h4>
-            <p className="text-sm text-slate-400">Gérer les contrats, infos persos et documents.</p>
+            <h4 className="text-lg font-bold text-text mb-1">Dossiers Employés</h4>
+            <p className="text-sm text-text-dim">Gérer les contrats, infos persos et documents.</p>
           </Card>
           
           <Card variant="glass" className="p-6 hover:border-amber-500/50 cursor-pointer group transition-all" onClick={() => router.push('/hr/attendance')}>
             <Clock size={28} className="text-amber-400 mb-4 group-hover:scale-110 transition-transform" />
-            <h4 className="text-lg font-bold text-white mb-1">Pointage & Absences</h4>
-            <p className="text-sm text-slate-400">Suivi quotidien des présences du personnel.</p>
+            <h4 className="text-lg font-bold text-text mb-1">Pointage & Absences</h4>
+            <p className="text-sm text-text-dim">Suivi quotidien des présences du personnel.</p>
           </Card>
 
           <Card variant="glass" className="p-6 hover:border-emerald-500/50 cursor-pointer group transition-all" onClick={() => router.push('/payslips')}>
             <FileText size={28} className="text-emerald-400 mb-4 group-hover:scale-110 transition-transform" />
-            <h4 className="text-lg font-bold text-white mb-1">Traitement de la Paie</h4>
-            <p className="text-sm text-slate-400">Calcul INPS/AMO, génération des fiches de paie.</p>
+            <h4 className="text-lg font-bold text-text mb-1">Traitement de la Paie</h4>
+            <p className="text-sm text-text-dim">Calcul INPS/AMO, génération des fiches de paie.</p>
           </Card>
         </div>
       </div>
