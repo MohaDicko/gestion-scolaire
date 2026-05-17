@@ -11,7 +11,7 @@ import {
   Briefcase, FileText, Receipt, Clock, Settings, LogOut,
   ChevronRight, GraduationCap, BadgeDollarSign, BarChart3,
   UserCog, Menu, X, Bell, Award, ClipboardCheck, Landmark,
-  Zap, Activity, ShieldAlert, Plus, Package, Loader2, MessageSquare
+  Zap, Activity, ShieldAlert, Plus, Package, Loader2, MessageSquare, Moon, Sun
 } from 'lucide-react';
 import AIDashboardAssistant from './AIDashboardAssistant';
 import PushNotificationManager from './PushNotificationManager';
@@ -141,6 +141,24 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+  }, []);
+
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDark(false);
+    } else {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDark(true);
+    }
+  };
 
   const loadNotifications = useCallback(async () => {
     setNotifLoading(true);
@@ -358,6 +376,9 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                </div>
             )}
             {actions}
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9 rounded-full bg-bg-3/50 hover:bg-bg-3 border border-border/40 text-text-muted hover:text-text">
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </Button>
             <PushNotificationManager />
             <div className="flex items-center gap-3">
               {/* ── Notifications Dropdown ── */}
