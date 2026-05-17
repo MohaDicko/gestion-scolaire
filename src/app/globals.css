@@ -11,31 +11,31 @@
 
 :root {
   /* Backgrounds */
-  --bg:        #f8fafc;
+  --bg:        #fbfcfd;
   --bg-2:      #ffffff;
   --bg-3:      #ffffff;
-  --bg-4:      #f1f5f9;
+  --bg-4:      #f4f4f5;
   --bg-glass:  rgba(255, 255, 255, 0.85);
 
   /* Borders */
-  --border:       rgba(15, 23, 42, 0.08);
-  --border-md:    rgba(15, 23, 42, 0.15);
-  --border-light: rgba(37, 99, 235, 0.15);
+  --border:       rgba(9, 9, 11, 0.08);
+  --border-md:    rgba(9, 9, 11, 0.15);
+  --border-light: rgba(79, 70, 229, 0.15);
 
   /* Text */
-  --text:       #0f172a;
-  --text-soft:  #334155;
-  --text-muted: #64748b;
-  --text-dim:   #94a3b8;
+  --text:       #09090b; /* Zinc 950 */
+  --text-soft:  #3f3f46; /* Zinc 700 */
+  --text-muted: #71717a; /* Zinc 500 */
+  --text-dim:   #a1a1aa; /* Zinc 400 */
 
-  /* Primary — Oceanic Blue & Sky */
-  --primary:        #2563eb;
-  --primary-2:      #0ea5e9;
-  --primary-hover:  #1d4ed8;
-  --primary-dim:    rgba(37, 99, 235, 0.08);
-  --primary-glow:   rgba(37, 99, 235, 0.2);
-  --primary-grad:   linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
-  --primary-surface: rgba(37, 99, 235, 0.05);
+  /* Primary — Premium Indigo & Violet */
+  --primary:        #4f46e5;
+  --primary-2:      #7c3aed;
+  --primary-hover:  #4338ca;
+  --primary-dim:    rgba(79, 70, 229, 0.08);
+  --primary-glow:   rgba(79, 70, 229, 0.25);
+  --primary-grad:   linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --primary-surface: rgba(79, 70, 229, 0.04);
 
   /* Accent — Emerald & Gold */
   --accent:       #10b981;
@@ -63,12 +63,12 @@
   --radius-xl: 32px;
 
   /* Advanced Shadows (Multi-layered) */
-  --shadow-sm:    0 2px 4px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
-  --shadow:       0 10px 15px -3px rgba(15, 23, 42, 0.06), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
-  --shadow-lg:    0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
-  --shadow-xl:    0 25px 50px -12px rgba(15, 23, 42, 0.12);
-  --shadow-glow:  0 10px 30px rgba(37, 99, 235, 0.15);
-  --shadow-card:  0 4px 20px rgba(15, 23, 42, 0.04), inset 0 0 0 1px rgba(255,255,255,0.5);
+  --shadow-sm:    0 2px 4px rgba(9, 9, 11, 0.04), 0 1px 2px rgba(9, 9, 11, 0.02);
+  --shadow:       0 10px 15px -3px rgba(9, 9, 11, 0.06), 0 4px 6px -2px rgba(9, 9, 11, 0.03);
+  --shadow-lg:    0 20px 25px -5px rgba(9, 9, 11, 0.08), 0 10px 10px -5px rgba(9, 9, 11, 0.04);
+  --shadow-xl:    0 25px 50px -12px rgba(9, 9, 11, 0.12);
+  --shadow-glow:  0 10px 30px rgba(79, 70, 229, 0.15);
+  --shadow-card:  0 4px 20px rgba(9, 9, 11, 0.04), inset 0 0 0 1px rgba(255,255,255,0.8);
 
   /* Transitions */
   --ease:    cubic-bezier(0.4, 0, 0.2, 1);
@@ -91,8 +91,8 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 4px 15px rgba(37, 99, 235, 0.15); }
-  50%      { box-shadow: 0 0 30px rgba(37, 99, 235, 0.3); }
+  0%, 100% { box-shadow: 0 4px 15px rgba(79, 70, 229, 0.15); }
+  50%      { box-shadow: 0 0 30px rgba(79, 70, 229, 0.3); }
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
@@ -176,8 +176,8 @@ label { font-size: 13px; font-weight: 500; color: var(--text-soft); margin-botto
   overflow: hidden;
   background: var(--bg);
   background-image:
-    radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 0% 100%, rgba(14, 165, 233, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 100% 0%, rgba(79, 70, 229, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 0% 100%, rgba(124, 58, 237, 0.04) 0%, transparent 40%),
     url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
   padding: 16px;
   gap: 16px;
@@ -272,7 +272,7 @@ label { font-size: 13px; font-weight: 500; color: var(--text-soft); margin-botto
 }
 .nav-item:hover {
   color: var(--text);
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(79, 70, 229, 0.08);
   transform: translateX(3px);
 }
 .nav-item.active {
@@ -578,7 +578,7 @@ label { font-size: 13px; font-weight: 500; color: var(--text-soft); margin-botto
 .skeleton-circle { border-radius: 50%; }
 
 /* ── SHADOW VARIANTS ────────────────────────────────────────── */
-.shadow-md   { box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08); }
+.shadow-md   { box-shadow: 0 6px 24px rgba(9, 9, 11, 0.08); }
 
 /* ── PROGRESS BAR ───────────────────────────────────────────── */
 .progress-bar-track {
