@@ -28,8 +28,8 @@ const emptyForm = {
   createParentAccount: false, parentAccountPassword: ''
 };
 
-const inputCls = 'flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
-const selectCls = 'flex h-9 w-full rounded-md border border-input bg-bg-3 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
+const inputCls = 'flex h-9 w-full rounded-md border border-input bg-[#121212] px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
+const selectCls = 'flex h-9 w-full rounded-md border border-input bg-[#121212] px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
 const labelCls = 'text-xs font-bold text-text-muted';
 
 export default function StudentsPage() {
@@ -192,8 +192,8 @@ export default function StudentsPage() {
     >
       {/* ── Import Dialog ── */}
       <Dialog open={showImport} onOpenChange={closeImport}>
-        <DialogContent className="max-w-2xl bg-bg-2 border-border-light shadow-2xl rounded-2xl p-0 overflow-hidden">
-          <DialogHeader className="p-6 border-b border-border bg-bg-2/50">
+        <DialogContent className="max-w-2xl bg-[#0a0a0a] border-border-light shadow-2xl rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-6 border-b border-border bg-[#000000]">
             <DialogTitle className="text-lg font-bold">Importation en Masse</DialogTitle>
             <DialogDescription className="text-text-dim">
               Inscrivez des dizaines d&apos;élèves depuis un fichier Excel.
@@ -209,7 +209,7 @@ export default function StudentsPage() {
             </div>
 
             {/* Step 2 */}
-            <div className="border-2 border-dashed border-border rounded-xl p-8 text-center bg-bg-3 hover:border-primary/40 transition-colors">
+            <div className="border-2 border-dashed border-border rounded-xl p-8 text-center bg-[#121212] hover:border-primary/40 transition-colors">
               <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="hidden" id="excel-upload" />
               <label htmlFor="excel-upload" className="cursor-pointer flex flex-col items-center gap-3">
                 <Upload size={32} className="text-primary/60" />
@@ -222,7 +222,7 @@ export default function StudentsPage() {
 
             {/* Step 3: Config */}
             {importData.length > 0 && !importReport && (
-              <div className="space-y-3 p-4 bg-bg-3 rounded-xl border border-border">
+              <div className="space-y-3 p-4 bg-[#121212] rounded-xl border border-border">
                 <p className="text-xs font-black uppercase tracking-widest text-text-muted">3. Paramètres</p>
                 <div className="space-y-1">
                   <label className={labelCls}>Campus de destination</label>
@@ -245,13 +245,13 @@ export default function StudentsPage() {
                     <div className="text-2xl font-black text-success">{importReport.success}</div>
                     <div className="text-xs text-success">Succès</div>
                   </div>
-                  <div className={`p-4 rounded-xl text-center ${importReport.errors.length > 0 ? 'bg-danger-dim border border-danger' : 'bg-bg-3 border border-border'}`}>
+                  <div className={`p-4 rounded-xl text-center ${importReport.errors.length > 0 ? 'bg-danger-dim border border-danger' : 'bg-[#121212] border border-border'}`}>
                     <div className={`text-2xl font-black ${importReport.errors.length > 0 ? 'text-danger' : 'text-text-muted'}`}>{importReport.errors.length}</div>
                     <div className={`text-xs ${importReport.errors.length > 0 ? 'text-danger' : 'text-text-muted'}`}>Échecs</div>
                   </div>
                 </div>
                 {importReport.errors.length > 0 && (
-                  <div className="max-h-32 overflow-y-auto bg-bg-3 p-3 rounded-lg text-xs text-danger border border-border space-y-1">
+                  <div className="max-h-32 overflow-y-auto bg-[#121212] p-3 rounded-lg text-xs text-danger border border-border space-y-1">
                     <p className="font-bold">Journal des erreurs :</p>
                     {importReport.errors.map((err, i) => <div key={i}>• {err}</div>)}
                   </div>
@@ -273,8 +273,8 @@ export default function StudentsPage() {
 
       {/* ── Add Student Dialog ── */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-3xl bg-bg-2 border-border-light shadow-2xl rounded-2xl p-0 overflow-hidden">
-          <DialogHeader className="p-6 border-b border-border bg-bg-2/50">
+        <DialogContent className="max-w-3xl bg-[#0a0a0a] border-border-light shadow-2xl rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-6 border-b border-border bg-[#000000]">
             <DialogTitle className="text-xl font-bold">Inscrire un Nouvel Élève</DialogTitle>
             <DialogDescription className="text-text-dim">
               Remplissez les informations pour enregistrer un nouvel étudiant dans le système.
