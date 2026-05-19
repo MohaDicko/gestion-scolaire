@@ -39,10 +39,20 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Vérification de sécurité pour les routes privées
-  const token = request.cookies.get('refreshToken')?.value;
+  const cookieToken = request.cookies.get('refreshToken')?.value;
+
+  // Support mobile Flutter : header Authorization: Bearer <accessToken>
+  const authHeader = request.headers.get('Authorization') || request.headers.get('authorization');
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+
+  const token = cookieToken || bearerToken;
 
   if (!token) {
-    // Pas de token -> retour à la page de connexion
+    // Routes API sans token → 401 JSON (pas de redirect pour les clients mobiles)
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Non autorisé. Token manquant.' }, { status: 401 });
+    }
+    // Pages web sans token → redirect login
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -80,7 +90,12 @@ export async function middleware(request: NextRequest) {
 
     return response;
   } catch (error) {
-    // Token expiré ou falsifié -> On détruit le cookie suspect et on redirige
+    // Token expiré ou falsifié
+    if (pathname.startsWith('/api/')) {
+      // Routes API → 401 JSON (les clients mobiles gèrent eux-mêmes la reconnexion)
+      return NextResponse.json({ error: 'Token invalide ou expiré.' }, { status: 401 });
+    }
+    // Pages web → détruire le cookie et rediriger
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('refreshToken');
     return response;
