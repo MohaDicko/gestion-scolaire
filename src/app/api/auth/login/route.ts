@@ -27,7 +27,12 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { email, password } = body;
+    let { email, password } = body;
+    
+    // Nettoyage robuste pour éviter les erreurs de copier-coller (espaces accidentels)
+    if (typeof password === 'string') {
+      password = password.trim();
+    }
 
     // --- Input validation ---
     if (!email || typeof email !== 'string' || !email.includes('@')) {
