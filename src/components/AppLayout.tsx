@@ -55,6 +55,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Élèves & Scolarité', href: '/students',       icon: <Users size={17}/> },
       { label: 'Inscriptions',        href: '/students/enroll', icon: <Plus size={17}/> },
+      { label: 'Cartes Scolaires',    href: '/students/cards',  icon: <BadgeDollarSign size={17}/> },
       { label: 'Classes',            href: '/classrooms',     icon: <School size={17}/> },
       { label: 'Matières',           href: '/subjects',       icon: <BookOpen size={17}/> },
       { label: 'Cahier de Texte',    href: '/lessons',        icon: <ClipboardCheck size={17}/> },
