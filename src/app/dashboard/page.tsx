@@ -10,11 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 // Extracted Components
+import dynamic from 'next/dynamic';
 import { ShadcnStats } from '@/components/dashboard/ShadcnStats';
 import { QuickActionGrid } from '@/components/dashboard/QuickActionGrid';
-import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
-import { FinanceChart } from '@/components/dashboard/FinanceChart';
 import { SystemHealth } from '@/components/shared/SystemHealth';
+
+// Dynamically import heavy components to reduce initial JS bundle
+const FinanceChart = dynamic(() => import('@/components/dashboard/FinanceChart').then(mod => mod.FinanceChart), { ssr: false, loading: () => <div className="h-[280px] w-full animate-pulse bg-slate-100 dark:bg-slate-800 rounded-xl m-2" /> });
+const ActivityFeed = dynamic(() => import('@/components/dashboard/ActivityFeed').then(mod => mod.ActivityFeed), { loading: () => <div className="h-[200px] w-full animate-pulse bg-slate-100 dark:bg-slate-800 rounded-xl m-2" /> });
 
 import { motion } from 'framer-motion';
 

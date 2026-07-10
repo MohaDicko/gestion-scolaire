@@ -4,6 +4,12 @@ import { encrypt } from '@/lib/auth';
 import * as bcrypt from 'bcryptjs';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { logAudit } from '@/lib/audit';
+import { z } from 'zod';
+
+const loginSchema = z.object({
+  email: z.string().email('Adresse email invalide.').trim().toLowerCase(),
+  password: z.string().min(6, 'Mot de passe invalide (minimum 6 caractères).').trim(),
+});
 
 export async function POST(request: Request) {
   // ── Rate Limiting: max 10 login attempts per IP per 15 minutes ──
@@ -27,22 +33,16 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    let { email, password } = body;
     
-    // Nettoyage robuste pour éviter les erreurs de copier-coller (espaces accidentels)
-    if (typeof password === 'string') {
-      password = password.trim();
+    // Validate and sanitize input with Zod
+    const result = loginSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
     }
+    
+    const { email, password } = result.data;
 
-    // --- Input validation ---
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
-      return NextResponse.json({ error: 'Adresse email invalide.' }, { status: 400 });
-    }
-    if (!password || typeof password !== 'string' || password.length < 6) {
-      return NextResponse.json({ error: 'Mot de passe invalide (minimum 6 caractères).' }, { status: 400 });
-    }
-
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    const user = await prisma.user.findUnique({ where: { email } });
 
     // --- Domain/Subdomain Verification ---
     const host = request.headers.get('host') || '';

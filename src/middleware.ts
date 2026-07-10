@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 // Liste des routes accessibles sans être connecté
 const publicPaths = [
@@ -10,7 +11,12 @@ const publicPaths = [
   '/portal',
   '/api/portal',
   '/_next',
-  '/favicon.ico'
+  '/favicon.ico',
+  '/manifest.json',
+  '/manifest.webmanifest',
+  '/sw.js',
+  '/sw.js.map',
+  '/workbox-'
 ];
 
 // Vérifie si le chemin demandé est public
@@ -18,10 +24,36 @@ const isPublicPath = (url: string) => {
   return publicPaths.some(path => url.startsWith(path));
 };
 
+const applySecurityHeaders = (response: NextResponse) => {
+  response.headers.set('X-DNS-Prefetch-Control', 'on');
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data: https:;"
+  );
+  return response;
+};
+
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
   const hostname = request.headers.get('host') || '';
   const { pathname } = url;
+
+  // Global API Rate Limiting (except login which has its own strict limit)
+  if (pathname.startsWith('/api/') && pathname !== '/api/auth/login') {
+    const ip = getClientIp(request as any);
+    const rl = rateLimit(`global_api:${ip}`, { limit: 100, windowSecs: 60 });
+    if (!rl.success) {
+      return applySecurityHeaders(NextResponse.json(
+        { error: 'Trop de requêtes. Veuillez ralentir.' },
+        { status: 429 }
+      ));
+    }
+  }
 
   // Détection du sous-domaine / domaine personnalisé
   const currentHost = process.env.NODE_ENV === 'production' 
@@ -33,9 +65,9 @@ export async function middleware(request: NextRequest) {
     // Si l'utilisateur est déjà connecté et essaie d'aller sur /login, on le redirige vers le dashboard
     const token = request.cookies.get('refreshToken')?.value;
     if (token && pathname === '/login') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return applySecurityHeaders(NextResponse.redirect(new URL('/dashboard', request.url)));
     }
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   }
 
   // 2. Vérification de sécurité pour les routes privées
@@ -50,10 +82,10 @@ export async function middleware(request: NextRequest) {
   if (!token) {
     // Routes API sans token → 401 JSON (pas de redirect pour les clients mobiles)
     if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Non autorisé. Token manquant.' }, { status: 401 });
+      return applySecurityHeaders(NextResponse.json({ error: 'Non autorisé. Token manquant.' }, { status: 401 }));
     }
     // Pages web sans token → redirect login
-    return NextResponse.redirect(new URL('/login', request.url));
+    return applySecurityHeaders(NextResponse.redirect(new URL('/login', request.url)));
   }
 
   try {
@@ -61,7 +93,7 @@ export async function middleware(request: NextRequest) {
     const secretKey = process.env.JWT_SECRET;
     if (!secretKey) {
         console.error('FATAL: JWT_SECRET missing in Middleware');
-        return NextResponse.redirect(new URL('/login', request.url));
+        return applySecurityHeaders(NextResponse.redirect(new URL('/login', request.url)));
     }
     const key = new TextEncoder().encode(secretKey);
     
@@ -70,33 +102,20 @@ export async function middleware(request: NextRequest) {
     // Autorisation spécifique pour les APIs de stats/diagnostics
     if (pathname.startsWith('/api/admin/dashboard/stats') || pathname.startsWith('/api/admin/diagnostics')) {
       if (payload.role !== 'SUPER_ADMIN') {
-        return NextResponse.json({ error: 'Accès refusé. Réservé au Super Admin.' }, { status: 403 });
+        return applySecurityHeaders(NextResponse.json({ error: 'Accès refusé. Réservé au Super Admin.' }, { status: 403 }));
       }
     }
 
     // 4. Configuration des headers de sécurité (Niveau Bancaire / ERP)
-    const response = NextResponse.next();
-    
-    response.headers.set('X-DNS-Prefetch-Control', 'on');
-    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-    response.headers.set('X-XSS-Protection', '1; mode=block');
-    response.headers.set('X-Frame-Options', 'DENY');
-    response.headers.set('X-Content-Type-Options', 'nosniff');
-    response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
-    response.headers.set(
-      'Content-Security-Policy',
-      "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data: https:;"
-    );
-
-    return response;
+    return applySecurityHeaders(NextResponse.next());
   } catch (error) {
     // Token expiré ou falsifié
     if (pathname.startsWith('/api/')) {
       // Routes API → 401 JSON (les clients mobiles gèrent eux-mêmes la reconnexion)
-      return NextResponse.json({ error: 'Token invalide ou expiré.' }, { status: 401 });
+      return applySecurityHeaders(NextResponse.json({ error: 'Token invalide ou expiré.' }, { status: 401 }));
     }
     // Pages web → détruire le cookie et rediriger
-    const response = NextResponse.redirect(new URL('/login', request.url));
+    const response = applySecurityHeaders(NextResponse.redirect(new URL('/login', request.url)));
     response.cookies.delete('refreshToken');
     return response;
   }
@@ -112,6 +131,6 @@ export const config = {
      * - _next/image (images d'optimisation)
      * - favicon.ico (icône du site)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|manifest.webmanifest|sw.js|workbox-).*)',
   ],
 };

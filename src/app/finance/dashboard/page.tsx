@@ -7,7 +7,12 @@ import { motion } from 'framer-motion';
 
 import AppLayout from '@/components/AppLayout';
 import { Card } from '@/components/ui/card';
-import { FinanceChart } from '@/components/dashboard/FinanceChart';
+import dynamic from 'next/dynamic';
+
+const FinanceChart = dynamic(() => import('@/components/dashboard/FinanceChart').then(mod => mod.FinanceChart), { 
+  ssr: false, 
+  loading: () => <div className="h-[280px] w-full animate-pulse bg-bg-2 rounded-xl border border-border" /> 
+});
 
 export default function FinanceDashboardPage() {
   const router = useRouter();

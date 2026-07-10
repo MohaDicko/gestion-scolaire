@@ -23,15 +23,14 @@ export const metadata: Metadata = {
   description: "Plateforme ERP premium pour la gestion des établissements scolaires : Académique, Finance, RH et Stock.",
   keywords: ["ERP scolaire", "gestion école", "logiciel éducation", "portail parent", "paie mali"],
   authors: [{ name: "SchoolERP Team" }],
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "SchoolERP Pro",
   },
   icons: {
-    icon: "/icon.png",
-    apple: "/icon.png",
+    icon: "/icon-192x192.png",
+    apple: "/icon-512x512.png",
   },
 };
 
