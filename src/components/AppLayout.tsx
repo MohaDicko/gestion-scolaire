@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import AIDashboardAssistant from './AIDashboardAssistant';
 import PushNotificationManager from './PushNotificationManager';
+import { CommandPalette } from './ui/CommandPalette';
+import { TourGuide } from './ui/TourGuide';
+import { Search } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -122,6 +125,23 @@ const STUDENT_NAV_SECTIONS: NavSection[] = [
   }
 ];
 
+const PARENT_NAV_SECTIONS: NavSection[] = [
+  {
+    title: 'Espace Famille',
+    items: [
+      { label: 'Mes Enfants',       href: '/parent',          icon: <Users size={17}/> },
+      { label: 'Scolarité & Notes', href: '/parent/grades',   icon: <Award size={17}/> },
+      { label: 'Factures & Paiement', href: '/parent/invoices', icon: <Receipt size={17}/> },
+    ]
+  },
+  {
+    title: 'Communication',
+    items: [
+      { label: 'Messagerie',        href: '/chat',            icon: <MessageSquare size={17}/> },
+    ]
+  }
+];
+
 interface AppLayoutProps {
   children: ReactNode;
   title?: string;
@@ -143,9 +163,20 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   const [notifLoading, setNotifLoading] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const [isDark, setIsDark] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'));
+    
+    // Raccourci Ctrl+K / Cmd+K pour ouvrir la Command Palette
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const toggleTheme = () => {
@@ -240,17 +271,21 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
       {/* Navigation (Nav) */}
       <nav className="sidebar-nav" aria-label="Menu principal" style={{ flex: 1, overflowY: 'auto' }}>
-        {(user?.role === 'STUDENT' ? STUDENT_NAV_SECTIONS : [
-          ...NAV_SECTIONS,
-          ...(user?.role === 'SUPER_ADMIN' ? [{
-            title: 'Super Admin Lab',
-            items: [
-              { label: 'Gestion Écoles',    href: '/admin/schools',       icon: <Landmark size={17}/> },
-              { label: 'Santé Système',     href: '/admin/system-health', icon: <Activity size={17}/> },
-              { label: 'Stress Test',       href: '/admin/stress-test',   icon: <Zap size={17}/> },
-            ]
-          }] : [])
-        ]).map(section => (
+        {(
+          user?.role === 'STUDENT' ? STUDENT_NAV_SECTIONS : 
+          user?.role === 'PARENT' ? PARENT_NAV_SECTIONS :
+          [
+            ...NAV_SECTIONS,
+            ...(user?.role === 'SUPER_ADMIN' ? [{
+              title: 'Super Admin Lab',
+              items: [
+                { label: 'Gestion Écoles',    href: '/admin/schools',       icon: <Landmark size={17}/> },
+                { label: 'Santé Système',     href: '/admin/system-health', icon: <Activity size={17}/> },
+                { label: 'Stress Test',       href: '/admin/stress-test',   icon: <Zap size={17}/> },
+              ]
+            }] : [])
+          ]
+        ).map(section => (
           <div key={section.title}>
             <div className="nav-section-label">{section.title}</div>
             {section.items.map(item => (
@@ -297,7 +332,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="sidebar">
+      <aside className="sidebar" id="tour-sidebar">
         <SidebarContent />
       </aside>
 
@@ -365,6 +400,19 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             ) : null}
           </nav>
 
+          {/* Fausse barre de recherche (ouvre la palette) */}
+          <button 
+            id="tour-search"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-bg-3/50 hover:bg-bg-3 border border-border/40 rounded-lg text-text-muted transition-colors w-[200px] lg:w-[260px] mr-4"
+          >
+            <Search size={14} className="opacity-70" />
+            <span className="text-xs font-medium mr-auto">Rechercher...</span>
+            <kbd className="hidden lg:inline-flex items-center gap-1 font-mono text-[10px] font-medium opacity-60">
+              <span className="text-[11px]">⌘</span>K
+            </kbd>
+          </button>
+
           {/* Top actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {user?.role === 'SUPER_ADMIN' && user.schoolName && (
@@ -385,7 +433,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               {/* ── Notifications Dropdown ── */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full bg-bg-3/50 hover:bg-bg-3 border border-border/40">
+                  <Button id="tour-notifications" variant="ghost" size="icon" className="relative h-9 w-9 rounded-full bg-bg-3/50 hover:bg-bg-3 border border-border/40">
                     <Bell size={18} />
                     {notifications.filter(n => n.priority === 'high').length > 0 && (
                       <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border border-white dark:border-bg-3" />
@@ -435,7 +483,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               {/* ── User Profile Dropdown ── */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="p-1 h-auto flex items-center gap-2 hover:bg-bg-3 rounded-full border border-border/20 pr-3">
+                  <Button id="tour-profile" variant="ghost" className="p-1 h-auto flex items-center gap-2 hover:bg-bg-3 rounded-full border border-border/20 pr-3">
                     <div className="h-8 w-8 rounded-full bg-primary-grad flex items-center justify-center text-white font-black text-xs shadow-glow">
                       {user?.firstName?.charAt(0) || 'U'}
                     </div>
@@ -527,6 +575,13 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
       </main>
 
       <AIDashboardAssistant />
+      
+      <CommandPalette 
+        isOpen={isCommandPaletteOpen} 
+        onClose={() => setIsCommandPaletteOpen(false)} 
+      />
+
+      <TourGuide />
 
       <style jsx>{`
         @media (max-width: 768px) {

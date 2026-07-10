@@ -70,7 +70,7 @@ export default function DashboardPage() {
             router.push('/admin/schools');
             return;
           case 'PARENT':
-            router.push('/parent/dashboard');
+            router.push('/parent');
             return;
           case 'CENSEUR':
           case 'SURVEILLANT':
