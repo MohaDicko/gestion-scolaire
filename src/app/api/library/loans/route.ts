@@ -2,6 +2,27 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
+export async function GET(request: Request) {
+  const session = await getSession();
+  if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  try {
+    const loans = await prisma.loan.findMany({
+      where: { tenantId: session.tenantId },
+      include: {
+        book: true,
+        student: {
+          select: { id: true, firstName: true, lastName: true, studentNumber: true }
+        }
+      },
+      orderBy: { loanDate: 'desc' }
+    });
+    return NextResponse.json(loans);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

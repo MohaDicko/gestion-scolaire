@@ -33,6 +33,9 @@ export default function ChatPage() {
   const [isLoadingConv, setIsLoadingConv] = useState(true);
   const [isLoadingMsgs, setIsLoadingMsgs] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -97,6 +100,47 @@ export default function ChatPage() {
     }
   };
 
+  const handleSearchUsers = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const q = e.target.value;
+    setSearchQuery(q);
+    if (q.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/chat/users?q=${q}`);
+      if (res.ok) setSearchResults(await res.json());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const startNewConversation = async (user: any) => {
+    const existing = conversations.find(c => c.participants.some(p => p.id === user.id));
+    if (existing) {
+      setActiveConvId(existing.id);
+      setIsSearching(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/chat/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ participantIds: [user.id] })
+      });
+      
+      if (res.ok) {
+        const newConv = await res.json();
+        await fetchConversations();
+        setActiveConvId(newConv.id);
+        setIsSearching(false);
+      }
+    } catch (e) {
+      toast.error('Erreur création conversation');
+    }
+  };
+
   const activeConv = conversations.find(c => c.id === activeConvId);
   const otherParticipant = activeConv?.participants.find(p => p.id !== currentUser?.id);
 
@@ -121,12 +165,50 @@ export default function ChatPage() {
           <div style={{ padding: '20px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-3)', padding: '10px 15px', borderRadius: '12px' }}>
               <Search size={16} color="var(--text-dim)" />
-              <input type="text" placeholder="Rechercher..." style={{ border: 'none', background: 'transparent', width: '100%', outline: 'none', fontSize: '14px' }} />
+              <input 
+                type="text" 
+                placeholder="Rechercher..." 
+                value={searchQuery}
+                onChange={handleSearchUsers}
+                onFocus={() => setIsSearching(true)}
+                style={{ border: 'none', background: 'transparent', width: '100%', outline: 'none', fontSize: '14px' }} 
+              />
             </div>
           </div>
           
           <div style={{ flex: 1, overflowY: 'auto' }}>
-            {isLoadingConv ? (
+            {isSearching && searchQuery.length > 0 ? (
+              <div style={{ padding: '10px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-dim)', marginBottom: '10px', paddingLeft: '10px' }}>RÉSULTATS DE RECHERCHE</div>
+                {searchResults.length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-dim)', fontSize: '14px' }}>Aucun utilisateur trouvé.</div>
+                ) : (
+                  searchResults.map(user => (
+                    <div 
+                      key={user.id}
+                      onClick={() => startNewConversation(user)}
+                      style={{ padding: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '8px', transition: 'background 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-3)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-dim)', display: 'grid', placeItems: 'center', fontWeight: 700, color: 'var(--primary)' }}>
+                        {user.firstName[0]}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{user.firstName} {user.lastName}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>{user.role}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div 
+                  onClick={() => setIsSearching(false)}
+                  style={{ textAlign: 'center', padding: '10px', color: 'var(--primary)', cursor: 'pointer', fontSize: '13px', marginTop: '10px' }}
+                >
+                  Fermer la recherche
+                </div>
+              </div>
+            ) : isLoadingConv ? (
               <div style={{ padding: '40px', textAlign: 'center' }}><Loader2 size={24} className="spin" /></div>
             ) : conversations.length > 0 ? (
               conversations.map(conv => {
