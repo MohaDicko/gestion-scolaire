@@ -51,77 +51,133 @@ export default function FinancePaymentsPage() {
         const doc = new jsPDF({
             orientation: 'p',
             unit: 'mm',
-            format: 'a5' // A5 is standard for receipts
+            format: 'a5' // Format A5 (moitié d'une A4)
         });
 
         const width = doc.internal.pageSize.getWidth();
+        const margin = 10;
         
-        // --- Header ---
-        doc.setFillColor(30, 41, 59);
-        doc.rect(0, 0, width, 30, 'F');
-        
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('REÇU DE PAIEMENT', width / 2, 12, { align: 'center' });
-        
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`N° REÇU: RCP-${payment.id.substring(0, 8).toUpperCase()}`, width / 2, 18, { align: 'center' });
-        doc.text(`DATE: ${new Date(payment.paymentDate).toLocaleDateString('fr-FR')}`, width / 2, 23, { align: 'center' });
+        // --- Header (Design Épuré et Blanc) ---
+        // Liseré Mali en haut
+        doc.setFillColor(0, 154, 68); doc.rect(0, 0, width / 3, 2, 'F');
+        doc.setFillColor(252, 209, 22); doc.rect(width / 3, 0, width / 3, 2, 'F');
+        doc.setFillColor(206, 17, 38); doc.rect(2 * width / 3, 0, width / 3, 2, 'F');
 
-        // --- School Info ---
-        doc.setTextColor(30, 41, 59);
-        doc.setFontSize(10);
+        // Titre Officiel
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
-        doc.text('SCHOOLERP PRO ACADEMY', 10, 40);
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Bamako, Mali | Tel: +223 00 00 00 00', 10, 44);
-
-        // --- Client Info ---
-        doc.setDrawColor(230, 230, 230);
-        doc.line(10, 50, width - 10, 50);
+        doc.text('REÇU DE PAIEMENT', width / 2, 16, { align: 'center' });
         
+        // Bordure autour du numéro de reçu
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setFillColor(248, 250, 252); // slate-50
+        doc.roundedRect(width / 2 - 25, 20, 50, 6, 1, 1, 'FD');
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.text('ÉLÈVE:', 10, 58);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`${student.firstName} ${student.lastName} (${student.studentNumber})`, 40, 58);
-        
-        doc.setFont('helvetica', 'bold');
-        doc.text('CLASSE:', 10, 63);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`${student.classroom?.name || 'N/A'}`, 40, 63);
+        doc.text(`N°: RCP-${payment.id.substring(0, 8).toUpperCase()}`, width / 2, 24, { align: 'center' });
 
-        // --- Payment Details ---
-        doc.setFillColor(248, 250, 252);
-        doc.rect(10, 70, width - 20, 30, 'F');
-        
-        doc.setFont('helvetica', 'bold');
-        doc.text('OBJET DU PAIEMENT:', 15, 78);
+        // Date alignée à droite
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text(`${invoice.title} (${invoice.invoiceNumber})`, 50, 78);
-        
-        doc.setFont('helvetica', 'bold');
-        doc.text('MODE DE PAIEMENT:', 15, 83);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`${payment.method}`, 50, 83);
+        doc.setTextColor(100, 116, 139); // slate-500
+        doc.text(`Le ${new Date(payment.paymentDate).toLocaleDateString('fr-FR')}`, width - margin, 24, { align: 'right' });
 
+        // Ligne de séparation
+        doc.line(margin, 32, width - margin, 32);
+
+        // --- Infos de l'École ---
+        doc.setTextColor(15, 23, 42);
         doc.setFontSize(12);
-        doc.text('MONTANT VERSÉ:', 15, 93);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${payment.amount.toLocaleString()} XOF`, width - 15, 93, { align: 'right' });
+        doc.text('SCHOOLERP PRO ACADEMY', margin, 40);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text('Bamako, Mali | Tel: +223 00 00 00 00 | NIF: 000000', margin, 45);
+
+        // --- Infos de l'Élève (Encadré discret) ---
+        let y = 55;
+        doc.setDrawColor(15, 23, 42); // slate-900
+        doc.setLineWidth(0.3);
+        doc.roundedRect(margin, y, width - 2 * margin, 20, 1, 1, 'S');
+
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text('REÇU DE :', margin + 5, y + 6);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${student.firstName} ${student.lastName.toUpperCase()}`, margin + 25, y + 6);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('MATRICULE :', margin + 5, y + 12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${student.studentNumber}`, margin + 25, y + 12);
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('CLASSE :', margin + 5, y + 18);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${student.classroom?.name || 'N/A'}`, margin + 25, y + 18);
+
+        // --- Détails du Paiement ---
+        y += 28;
+        
+        // Header Tableau
+        doc.setFillColor(241, 245, 249); // slate-100
+        doc.rect(margin, y, width - 2 * margin, 8, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.rect(margin, y, width - 2 * margin, 8, 'S');
+        
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.text('DÉSIGNATION / OBJET', margin + 3, y + 5.5);
+        doc.text('MONTANT (FCFA)', width - margin - 3, y + 5.5, { align: 'right' });
+
+        y += 8;
+        // Ligne Objet
+        doc.rect(margin, y, width - 2 * margin, 12, 'S');
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${invoice.title}`, margin + 3, y + 7);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${payment.amount.toLocaleString('fr-FR')}`, width - margin - 3, y + 7, { align: 'right' });
+
+        // --- Mode de paiement & Total ---
+        y += 18;
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text('Mode de règlement:', margin, y);
+        doc.setTextColor(15, 23, 42);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${payment.method}`, margin + 30, y);
+
+        // Bloc Total
+        doc.setFillColor(15, 23, 42); // Fond sombre pour le total uniquement
+        doc.roundedRect(width - 65, y - 6, 55, 12, 1, 1, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.text('MONTANT VERSÉ :', width - 60, y + 2.5);
+        doc.setFontSize(11);
+        doc.text(`${payment.amount.toLocaleString('fr-FR')}`, width - 15, y + 2.5, { align: 'right' });
+
+        // --- Signatures ---
+        y += 25;
+        doc.setDrawColor(203, 213, 225);
+        doc.line(margin, y + 10, margin + 40, y + 10);
+        doc.line(width - margin - 40, y + 10, width - margin, y + 10);
+        
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(8);
+        doc.text('Le Payeur', margin + 20, y + 15, { align: 'center' });
+        doc.text('Le Caissier', width - margin - 20, y + 15, { align: 'center' });
 
         // --- Footer ---
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'italic');
-        doc.text('Merci pour votre confiance.', width / 2, 115, { align: 'center' });
-        
-        doc.setDrawColor(30, 41, 59);
-        doc.line(width - 50, 130, width - 10, 130);
-        doc.setFont('helvetica', 'bold');
-        doc.text('LA COMPTABILITÉ', width - 30, 134, { align: 'center' });
+        doc.setFontSize(6.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(148, 163, 184);
+        doc.text('Ce reçu est une preuve de paiement. Conservez-le précieusement.', width / 2, 190, { align: 'center' });
+        doc.text(`Document généré électroniquement — ${new Date().toLocaleString('fr-FR')} — SchoolERP`, width / 2, 195, { align: 'center' });
 
         doc.save(`Recu_${student.lastName}_${payment.id.substring(0,4)}.pdf`);
     };
