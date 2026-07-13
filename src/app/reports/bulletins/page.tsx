@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { FileText, Search, Printer, Loader2, AlertCircle, ChevronDown, Award, BookOpen, TrendingUp } from 'lucide-react';
+import { FileText, Search, Printer, Loader2, Award, BookOpen, AlertCircle, TrendingUp, CheckCircle2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 interface BulletinData {
@@ -19,16 +19,15 @@ interface BulletinData {
 }
 
 function MentionBadge({ mention }: { mention: string }) {
-  const colors: Record<string, { bg: string; color: string }> = {
-    'Très Bien': { bg: '#dcfce7', color: '#15803d' },
-    'Bien': { bg: '#dbeafe', color: '#1d4ed8' },
-    'Assez Bien': { bg: '#fef9c3', color: '#854d0e' },
-    'Passable': { bg: '#fed7aa', color: '#9a3412' },
-    'Insuffisant': { bg: '#fee2e2', color: '#b91c1c' },
+  const styles: Record<string, string> = {
+    'Très Bien': 'bg-emerald-100 text-emerald-800',
+    'Bien': 'bg-blue-100 text-blue-800',
+    'Assez Bien': 'bg-yellow-100 text-yellow-800',
+    'Passable': 'bg-orange-100 text-orange-800',
+    'Insuffisant': 'bg-red-100 text-red-800',
   };
-  const style = colors[mention] || { bg: '#f1f5f9', color: '#64748b' };
   return (
-    <span style={{ background: style.bg, color: style.color, padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 700 }}>
+    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${styles[mention] || 'bg-slate-100 text-slate-600'}`}>
       {mention}
     </span>
   );
@@ -44,6 +43,8 @@ export default function BulletinsPage() {
   const [bulletin, setBulletin] = useState<BulletinData | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     fetch('/api/academic-years')
@@ -59,15 +60,33 @@ export default function BulletinsPage() {
   }, []);
 
   useEffect(() => {
-    if (!search.trim()) { setStudents([]); return; }
+    if (!search.trim()) { 
+      setStudents([]); 
+      setShowDropdown(false);
+      return; 
+    }
     const t = setTimeout(() => {
       fetch(`/api/students?search=${encodeURIComponent(search)}&pageSize=10`)
         .then(r => r.json())
-        .then(d => setStudents(d.items || []))
+        .then(d => {
+          setStudents(d.items || []);
+          setShowDropdown(true);
+        })
         .catch(() => {});
     }, 300);
     return () => clearTimeout(t);
   }, [search]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const loadBulletin = useCallback(async () => {
     if (!selectedStudentId || !selectedYearId) return;
@@ -80,299 +99,425 @@ export default function BulletinsPage() {
 
   useEffect(() => { if (selectedStudentId) loadBulletin(); }, [selectedStudentId, loadBulletin]);
 
+  // ─── Export PDF Optimisé ───────────────────────────────────────────────────
   const generatePDF = async () => {
     if (!bulletin) return;
     setGenerating(true);
     try {
       const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const { student, school, enrollment, subjectResults, summary, trimestre: t } = bulletin;
-      const pageW = 210; const margin = 18;
+      const pageW = 210; 
+      const margin = 15;
 
-      // ── En-tête ─────────────────────────────────────────────────────
-      doc.setFillColor(15, 23, 42);
-      doc.rect(0, 0, pageW, 36, 'F');
-      // Bandeau Mali
+      // ── En-tête (Design Blanc A4) ───────────────────────────────────
+      // Bandeau Mali tout en haut
       doc.setFillColor(0, 154, 68); doc.rect(0, 0, pageW / 3, 3, 'F');
       doc.setFillColor(252, 209, 22); doc.rect(pageW / 3, 0, pageW / 3, 3, 'F');
       doc.setFillColor(206, 17, 38); doc.rect(2 * pageW / 3, 0, pageW / 3, 3, 'F');
 
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(7); doc.setFont('helvetica', 'normal');
-      doc.text('RÉPUBLIQUE DU MALI — MINISTÈRE DE L\'ÉDUCATION NATIONALE', pageW / 2, 10, { align: 'center' });
-      doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-      doc.text(school.name.toUpperCase(), pageW / 2, 18, { align: 'center' });
-      doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-      doc.text('BULLETIN DE NOTES TRIMESTRIEL', pageW / 2, 25, { align: 'center' });
-      if (school.motto) { doc.setFontSize(7); doc.text(`"${school.motto}"`, pageW / 2, 30, { align: 'center' }); }
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+      doc.text('RÉPUBLIQUE DU MALI', pageW / 2, 12, { align: 'center' });
+      doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+      doc.text('Un Peuple - Un But - Une Foi', pageW / 2, 16, { align: 'center' });
+      
+      // Séparateur
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.line(margin, 20, pageW - margin, 20);
 
-      let y = 44;
+      // Nom de l'école
+      doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+      doc.text(school.name.toUpperCase(), pageW / 2, 28, { align: 'center' });
+      
+      if (school.motto) { 
+        doc.setFontSize(8); doc.setFont('helvetica', 'italic'); doc.setTextColor(100, 116, 139);
+        doc.text(`"${school.motto}"`, pageW / 2, 33, { align: 'center' }); 
+      }
 
-      // ── Infos élève ──────────────────────────────────────────────────
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(226, 232, 240);
+      // Titre du Bulletin
+      doc.setFillColor(241, 245, 249); // slate-100
+      doc.roundedRect(pageW / 2 - 35, 38, 70, 8, 2, 2, 'F');
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text(`BULLETIN DU ${t}${t === 1 ? 'ER' : 'ÈME'} TRIMESTRE`, pageW / 2, 43.5, { align: 'center' });
+
+      let y = 54;
+
+      // ── Infos élève (Design épuré) ──────────────────────────────────
+      doc.setDrawColor(15, 23, 42); // slate-900
       doc.setLineWidth(0.3);
-      doc.roundedRect(margin, y, pageW - 2 * margin, 28, 3, 3, 'FD');
+      doc.roundedRect(margin, y, pageW - 2 * margin, 26, 2, 2, 'S'); // Seulement une bordure (Stroke)
 
       doc.setTextColor(15, 23, 42); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-      doc.text('INFORMATIONS DE L\'ÉLÈVE', margin + 6, y + 7);
+      doc.text('INFORMATIONS DE L\'ÉLÈVE', margin + 4, y + 6);
 
       const infos = [
-        ['Nom & Prénom', `${student.lastName} ${student.firstName}`],
+        ['Nom & Prénom', `${student.lastName.toUpperCase()} ${student.firstName}`],
         ['Matricule', student.studentNumber],
         ['Classe', enrollment.classroom],
-        ['Année Académique', enrollment.academicYear],
-        ['Trimestre', `${t}er Trimestre`],
+        ['Année Scolaire', enrollment.academicYear],
+        ['Né(e) le', new Date(student.dateOfBirth).toLocaleDateString('fr-FR')],
         ['Campus', student.campus],
       ];
+      
       const col1 = infos.slice(0, 3);
       const col2 = infos.slice(3);
+      
       col1.forEach(([label, value], i) => {
-        doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
-        doc.text(label + ' :', margin + 6, y + 14 + i * 5);
+        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
+        doc.text(label + ' :', margin + 4, y + 13 + i * 5);
         doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
-        doc.text(value, margin + 35, y + 14 + i * 5);
+        doc.text(value, margin + 35, y + 13 + i * 5);
       });
+      
       col2.forEach(([label, value], i) => {
-        doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
-        doc.text(label + ' :', pageW / 2 + 4, y + 14 + i * 5);
+        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
+        doc.text(label + ' :', pageW / 2 + 4, y + 13 + i * 5);
         doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
-        doc.text(value, pageW / 2 + 33, y + 14 + i * 5);
+        doc.text(value, pageW / 2 + 35, y + 13 + i * 5);
       });
 
-      y += 34;
+      y += 32;
 
-      // ── Tableau des notes ────────────────────────────────────────────
-      const colWidths = [60, 18, 18, 18, 20, 24, 16];
+      // ── Tableau des notes ───────────────────────────────────────────
       const headers = ['MATIÈRE', 'COEFF', 'NOTE', 'SUR', 'MOY/20', 'MENTION', 'POINTS'];
-      const colX = [margin, margin + 60, margin + 78, margin + 96, margin + 114, margin + 134, margin + 158];
+      const colX = [margin, margin + 65, margin + 83, margin + 101, margin + 119, margin + 139, margin + 165];
 
       // Header tableau
-      doc.setFillColor(30, 41, 59);
+      doc.setFillColor(241, 245, 249); // slate-100
       doc.rect(margin, y, pageW - 2 * margin, 8, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
-      headers.forEach((h, i) => doc.text(h, colX[i] + 1, y + 5.5));
+      doc.setDrawColor(226, 232, 240);
+      doc.rect(margin, y, pageW - 2 * margin, 8, 'S'); // Contour du header
+      
+      doc.setTextColor(15, 23, 42); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+      headers.forEach((h, i) => doc.text(h, colX[i] + 2, y + 5.5));
 
       y += 8;
+      
+      doc.setDrawColor(226, 232, 240); // slate-200
       subjectResults.forEach((r, idx) => {
         const rowBg = idx % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
         doc.setFillColor(rowBg[0], rowBg[1], rowBg[2]);
-        doc.rect(margin, y, pageW - 2 * margin, 7, 'F');
+        doc.rect(margin, y, pageW - 2 * margin, 7, 'F'); // Ligne fond alternatif
+        
+        // Lignes verticales du tableau (optionnel, pour faire plus officiel)
+        doc.line(margin, y, margin, y + 7);
+        doc.line(pageW - margin, y, pageW - margin, y + 7);
 
         // Couleur de la note
-        const noteColor: [number, number, number] = r.average >= 14 ? [21, 128, 61] : r.average >= 10 ? [15, 23, 42] : [185, 28, 28];
-        doc.setTextColor(15, 23, 42); doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
-        doc.text(r.subjectName, colX[0] + 1, y + 4.8);
-        doc.text(r.coefficient.toString(), colX[1] + 1, y + 4.8);
-        doc.setFont('helvetica', 'bold'); doc.setTextColor(noteColor[0], noteColor[1], noteColor[2]);
-        doc.text(r.score.toString(), colX[2] + 1, y + 4.8);
+        const isPass = r.average >= 10;
+        doc.setTextColor(15, 23, 42); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+        doc.text(r.subjectName, colX[0] + 2, y + 4.8);
+        
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
+        doc.text(r.coefficient.toString(), colX[1] + 2, y + 4.8);
+        
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(isPass ? 15 : 185, isPass ? 23 : 28, isPass ? 42 : 28); // Noir si ok, rouge si échec
+        doc.text(r.score.toString(), colX[2] + 2, y + 4.8);
+        
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
+        doc.text(r.maxScore.toString(), colX[3] + 2, y + 4.8);
+        
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(isPass ? 15 : 185, isPass ? 23 : 28, isPass ? 42 : 28);
+        doc.text(r.average.toFixed(2), colX[4] + 2, y + 4.8);
+        
         doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
-        doc.text(r.maxScore.toString(), colX[3] + 1, y + 4.8);
-        doc.setFont('helvetica', 'bold'); doc.setTextColor(noteColor[0], noteColor[1], noteColor[2]);
-        doc.text(r.average.toFixed(2), colX[4] + 1, y + 4.8);
-        doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
-        doc.text(r.mention, colX[5] + 1, y + 4.8);
-        doc.text(r.weighted.toFixed(2), colX[6] + 1, y + 4.8);
+        doc.text(r.mention, colX[5] + 2, y + 4.8);
+        doc.text(r.weighted.toFixed(2), colX[6] + 2, y + 4.8);
 
-        // Ligne de séparation
-        doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.1);
+        // Ligne de séparation horizontale
         doc.line(margin, y + 7, margin + (pageW - 2 * margin), y + 7);
         y += 7;
       });
 
       // ── Résumé ───────────────────────────────────────────────────────
-      y += 8;
-      const avgColor: [number, number, number] = summary.generalAverage >= 14 ? [21, 128, 61] : summary.generalAverage >= 10 ? [30, 41, 59] : [185, 28, 28];
-      doc.setFillColor(avgColor[0], avgColor[1], avgColor[2]);
-      doc.roundedRect(margin, y, pageW - 2 * margin, 18, 3, 3, 'F');
+      y += 6;
+      
+      doc.setDrawColor(15, 23, 42); // slate-900 contour
+      doc.setLineWidth(0.5); // Contour plus épais
+      doc.roundedRect(margin, y, pageW - 2 * margin, 20, 2, 2, 'S');
 
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-      doc.text(`MOYENNE GÉNÉRALE : ${summary.generalAverage.toFixed(2)} / 20`, margin + 8, y + 7);
-      doc.setFontSize(8);
-      doc.text(`MENTION : ${summary.generalMention}`, margin + 8, y + 14);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
-      doc.text(`Total points pondérés : ${(summary.totalCoeff > 0 ? (summary.generalAverage * summary.totalCoeff).toFixed(2) : '0')} / ${(summary.totalCoeff * 20).toFixed(0)}`, pageW - margin - 8, y + 7, { align: 'right' });
-      doc.text(`Nombre de matières : ${summary.subjectCount}`, pageW - margin - 8, y + 14, { align: 'right' });
+      const isGenPass = summary.generalAverage >= 10;
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+      doc.text('MOYENNE GÉNÉRALE :', margin + 6, y + 8);
+      
+      doc.setFontSize(14); doc.setTextColor(isGenPass ? 15 : 185, isGenPass ? 23 : 28, isGenPass ? 42 : 28);
+      doc.text(`${summary.generalAverage.toFixed(2)} / 20`, margin + 55, y + 8);
+      
+      doc.setTextColor(15, 23, 42); doc.setFontSize(9);
+      doc.text(`MENTION : ${summary.generalMention.toUpperCase()}`, margin + 6, y + 15);
+      
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100, 116, 139);
+      doc.text(`Total points : ${(summary.totalCoeff > 0 ? (summary.generalAverage * summary.totalCoeff).toFixed(2) : '0')} / ${(summary.totalCoeff * 20).toFixed(0)}`, pageW - margin - 6, y + 8, { align: 'right' });
+      doc.text(`Total coefficients : ${summary.totalCoeff}`, pageW - margin - 6, y + 14, { align: 'right' });
 
       // ── Signatures ───────────────────────────────────────────────────
-      y += 32;
-      const sigCols = [margin, pageW / 2 - 20, pageW - margin - 50];
-      const sigLabels = ['Directeur/Directrice', 'Censeur(e)', 'Parent/Tuteur'];
+      y += 35;
+      const sigCols = [margin, pageW / 2 - 20, pageW - margin - 48];
+      const sigLabels = ['Le Titulaire', 'Le Directeur', 'Les Parents'];
+      
       sigLabels.forEach((label, i) => {
-        doc.setDrawColor(200, 210, 220); doc.setLineWidth(0.3);
-        doc.line(sigCols[i], y + 20, sigCols[i] + 48, y + 20);
-        doc.setTextColor(100, 116, 139); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
-        doc.text(label, sigCols[i] + 24, y + 25, { align: 'center' });
+        doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.3); // slate-300
+        doc.line(sigCols[i], y + 15, sigCols[i] + 48, y + 15); // Ligne pour signer
+        doc.setTextColor(15, 23, 42); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+        doc.text(label, sigCols[i] + 24, y + 20, { align: 'center' });
       });
 
       // ── Pied de page ─────────────────────────────────────────────────
-      doc.setFillColor(248, 250, 252);
-      doc.rect(0, 282, pageW, 15, 'F');
       doc.setFontSize(6.5); doc.setTextColor(148, 163, 184); doc.setFont('helvetica', 'normal');
-      doc.text(`Document généré le ${new Date().toLocaleDateString('fr-FR')} — ${school.name} — Confidentiel`, pageW / 2, 289, { align: 'center' });
+      doc.text(`Document officiel généré numériquement le ${new Date().toLocaleDateString('fr-FR')} — ${school.name}`, pageW / 2, 285, { align: 'center' });
+      doc.text(`ID Unique : BULT-${student.id.substring(0, 8).toUpperCase()}-${t}-${new Date().getFullYear()}`, pageW / 2, 289, { align: 'center' });
 
-      doc.save(`Bulletin_${student.lastName}_${student.firstName}_T${t}_${enrollment.academicYear}.pdf`);
-    } finally { setGenerating(false); }
+      doc.save(`Bulletin_${student.lastName}_${student.firstName}_T${t}_${enrollment.academicYear.replace('/', '-')}.pdf`);
+    } finally { 
+      setGenerating(false); 
+    }
   };
 
-  const avgColor = bulletin
-    ? bulletin.summary.generalAverage >= 14 ? '#10b981' : bulletin.summary.generalAverage >= 10 ? '#f59e0b' : '#ef4444'
-    : '#64748b';
+  const isPassing = bulletin ? bulletin.summary.generalAverage >= 10 : true;
 
   return (
     <AppLayout
       title="Bulletins de Notes"
       subtitle="Génération et impression des bulletins trimestriels officiels"
-      breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Bulletins' }]}
+      breadcrumbs={[{ label: 'Scolarité', href: '/dashboard' }, { label: 'Bulletins' }]}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-        {/* Filtres */}
-        <div style={{ background: 'white', borderRadius: '16px', padding: '20px 24px', border: '1px solid #f1f5f9', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-end' }}>
-          {/* Recherche élève */}
-          <div style={{ flex: '1 1 220px', minWidth: '180px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Rechercher un élève</label>
-            <div style={{ position: 'relative' }}>
-              <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Nom ou matricule..."
-                style={{ width: '100%', padding: '10px 12px 10px 36px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
-              />
-              {students.length > 0 && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', zIndex: 50, maxHeight: '200px', overflowY: 'auto', marginTop: '4px' }}>
-                  {students.map(s => (
-                    <div key={s.id} onClick={() => { setSelectedStudentId(s.id); setSearch(`${s.firstName} ${s.lastName}`); setStudents([]); }}
-                      style={{ padding: '10px 14px', cursor: 'pointer', fontSize: '13px', borderBottom: '1px solid #f8fafc', transition: 'background 0.15s' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'white')}>
-                      <strong>{s.firstName} {s.lastName}</strong>
-                      <span style={{ color: '#94a3b8', marginLeft: '8px', fontSize: '11px' }}>{s.studentNumber}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+        {/* ── Filtres ── */}
+        <div className="bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            
+            {/* Recherche élève */}
+            <div className="md:col-span-2 relative" ref={searchContainerRef}>
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Rechercher un élève
+              </label>
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Nom, prénom ou matricule..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                />
+                
+                {/* Dropdown Suggestions */}
+                {showDropdown && students.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/50 z-50 max-h-64 overflow-y-auto py-1">
+                    {students.map(s => (
+                      <div 
+                        key={s.id} 
+                        onClick={() => { 
+                          setSelectedStudentId(s.id); 
+                          setSearch(`${s.firstName} ${s.lastName}`); 
+                          setShowDropdown(false); 
+                        }}
+                        className="px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-center justify-between group transition-colors"
+                      >
+                        <span className="font-semibold text-sm text-slate-700 group-hover:text-indigo-600">
+                          {s.firstName} {s.lastName}
+                        </span>
+                        <span className="text-xs text-slate-400 font-mono">
+                          {s.studentNumber}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Année */}
-          <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Année Académique</label>
-            <select value={selectedYearId} onChange={e => setSelectedYearId(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '13px', outline: 'none', background: 'white' }}>
-              <option value="">-- Choisir --</option>
-              {years.map((y: any) => <option key={y.id} value={y.id}>{y.name} {y.isActive ? '★' : ''}</option>)}
-            </select>
-          </div>
+            {/* Année */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Année Scolaire
+              </label>
+              <select 
+                value={selectedYearId} 
+                onChange={e => setSelectedYearId(e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+              >
+                <option value="">-- Choisir --</option>
+                {years.map((y: any) => (
+                  <option key={y.id} value={y.id}>{y.name} {y.isActive ? ' (En cours)' : ''}</option>
+                ))}
+              </select>
+            </div>
 
-          {/* Trimestre */}
-          <div style={{ flex: '0 0 160px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Trimestre</label>
-            <select value={trimestre} onChange={e => setTrimestre(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '13px', outline: 'none', background: 'white' }}>
-              <option value="1">1er Trimestre</option>
-              <option value="2">2ème Trimestre</option>
-              <option value="3">3ème Trimestre</option>
-            </select>
-          </div>
+            {/* Trimestre & Bouton */}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Trimestre
+                </label>
+                <select 
+                  value={trimestre} 
+                  onChange={e => setTrimestre(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                >
+                  <option value="1">1er Trimestre</option>
+                  <option value="2">2ème Trimestre</option>
+                  <option value="3">3ème Trimestre</option>
+                </select>
+              </div>
+              <button 
+                onClick={loadBulletin} 
+                disabled={!selectedStudentId || !selectedYearId || loading}
+                className="mt-6 flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center justify-center shadow-sm"
+              >
+                {loading ? <Loader2 size={18} className="animate-spin" /> : <TrendingUp size={18} />}
+              </button>
+            </div>
 
-          {/* Bouton */}
-          <button onClick={loadBulletin} disabled={!selectedStudentId || !selectedYearId || loading}
-            style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #4f8ef7, #3b6fd4)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', opacity: (!selectedStudentId || !selectedYearId) ? 0.5 : 1 }}>
-            {loading ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <BookOpen size={15} />}
-            Générer
-          </button>
+          </div>
         </div>
 
-        {/* Bulletin Preview */}
+        {/* ── Loader ── */}
         {loading && (
-          <div style={{ background: 'white', borderRadius: '16px', padding: '80px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
-            <Loader2 size={40} color="#4f8ef7" style={{ animation: 'spin 1s linear infinite', marginBottom: '12px' }} />
-            <p style={{ color: '#94a3b8', margin: 0 }}>Chargement du bulletin...</p>
+          <div className="bg-white rounded-2xl border border-slate-200 p-20 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 size={40} className="animate-spin mb-4 text-indigo-500" />
+            <p className="text-sm font-medium">Création du bulletin officiel en cours...</p>
           </div>
         )}
 
+        {/* ── Preview Bulletin ── */}
         {!loading && bulletin && (
-          <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #f1f5f9', boxShadow: '0 8px 32px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-            {/* En-tête bulletin */}
-            <div style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a5f)', padding: '28px 32px', color: 'white', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', height: '4px', marginBottom: '20px', borderRadius: '2px', overflow: 'hidden' }}>
-                <div style={{ flex: 1, background: '#009a44' }} /><div style={{ flex: 1, background: '#fcd116' }} /><div style={{ flex: 1, background: '#ce1126' }} />
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            
+            {/* En-tête Web du Bulletin */}
+            <div className="bg-slate-900 text-white relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full flex h-1.5 opacity-90">
+                <div className="flex-1 bg-[#009a44]" /><div className="flex-1 bg-[#fcd116]" /><div className="flex-1 bg-[#ce1126]" />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+              
+              <div className="px-6 py-8 sm:px-8 sm:py-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 relative z-10">
                 <div>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', letterSpacing: '2px', marginBottom: '4px' }}>BULLETIN DE NOTES OFFICIEL</div>
-                  <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 900 }}>{bulletin.student.firstName} {bulletin.student.lastName}</h2>
-                  <div style={{ marginTop: '8px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                    {[['Matricule', bulletin.student.studentNumber], ['Classe', bulletin.enrollment.classroom], ['Trimestre', `T${bulletin.trimestre}`], ['Année', bulletin.enrollment.academicYear]].map(([l, v]) => (
-                      <div key={l}><span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>{l} : </span><span style={{ fontSize: '12px', fontWeight: 700 }}>{v}</span></div>
-                    ))}
+                  <div className="text-[10px] text-indigo-300 font-bold tracking-[0.2em] mb-1.5 uppercase">Bulletin Officiel</div>
+                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight mb-4">
+                    {bulletin.student.firstName} {bulletin.student.lastName.toUpperCase()}
+                  </h2>
+                  
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 text-xs font-semibold uppercase">Matricule:</span>
+                      <span className="font-bold text-sm bg-slate-800 px-2.5 py-1 rounded-md">{bulletin.student.studentNumber}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 text-xs font-semibold uppercase">Classe:</span>
+                      <span className="font-bold text-sm bg-slate-800 px-2.5 py-1 rounded-md">{bulletin.enrollment.classroom}</span>
+                    </div>
                   </div>
                 </div>
-                <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.08)', borderRadius: '16px', padding: '16px 24px', backdropFilter: 'blur(4px)' }}>
-                  <div style={{ fontSize: '36px', fontWeight: 900, color: avgColor }}>{bulletin.summary.generalAverage.toFixed(2)}</div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>Moyenne / 20</div>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: avgColor, marginTop: '4px' }}>{bulletin.summary.generalMention}</div>
+
+                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 text-center min-w-[160px] shadow-2xl">
+                  <div className={`text-4xl font-black ${isPassing ? 'text-emerald-400' : 'text-red-400'} tracking-tighter leading-none mb-1`}>
+                    {bulletin.summary.generalAverage.toFixed(2)}
+                  </div>
+                  <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-3">Moyenne / 20</div>
+                  <MentionBadge mention={bulletin.summary.generalMention} />
                 </div>
               </div>
-              <button onClick={generatePDF} disabled={generating}
-                style={{ marginTop: '16px', padding: '10px 20px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: 'white', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', backdropFilter: 'blur(4px)' }}>
-                {generating ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <Printer size={15} />}
-                Imprimer en PDF
+
+              {/* Bouton Print Flottant */}
+              <div className="absolute bottom-6 right-8 hidden sm:block">
+                <button 
+                  onClick={generatePDF} 
+                  disabled={generating}
+                  className="px-5 py-2.5 bg-white text-slate-900 hover:bg-slate-50 disabled:opacity-50 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center gap-2 shadow-lg"
+                >
+                  {generating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
+                  Imprimer (PDF Blanc)
+                </button>
+              </div>
+            </div>
+
+            {/* Bouton Print Mobile */}
+            <div className="p-4 bg-slate-50 border-b border-slate-100 sm:hidden">
+              <button 
+                onClick={generatePDF} 
+                disabled={generating}
+                className="w-full px-5 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+              >
+                {generating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
+                Imprimer le Bulletin (PDF)
               </button>
             </div>
 
             {/* Tableau des notes */}
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#f8fafc' }}>
-                    {['Matière', 'Coeff', 'Note', 'Sur', 'Moy/20', 'Mention', 'Points Pondérés', 'Appréciation'].map(h => (
-                      <th key={h} style={{ padding: '12px 16px', fontSize: '10px', fontWeight: 700, color: '#64748b', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '1px solid #f1f5f9' }}>{h}</th>
-                    ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4 border-b border-slate-200">Matière</th>
+                    <th className="px-4 py-4 border-b border-slate-200 text-center">Coeff</th>
+                    <th className="px-4 py-4 border-b border-slate-200 text-right">Note</th>
+                    <th className="px-4 py-4 border-b border-slate-200 text-center">Moy/20</th>
+                    <th className="px-4 py-4 border-b border-slate-200">Mention</th>
+                    <th className="px-6 py-4 border-b border-slate-200">Appréciation</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {bulletin.subjectResults.map((r, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #f8fafc', transition: 'background 0.15s' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#fafbff')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'white')}>
-                      <td style={{ padding: '14px 16px', fontWeight: 700, color: '#1e293b' }}>{r.subjectName}</td>
-                      <td style={{ padding: '14px 16px', color: '#64748b', fontWeight: 600 }}>{r.coefficient}</td>
-                      <td style={{ padding: '14px 16px', fontWeight: 900, color: r.average >= 10 ? '#1e293b' : '#ef4444', fontSize: '15px' }}>{r.score}</td>
-                      <td style={{ padding: '14px 16px', color: '#94a3b8', fontSize: '12px' }}>/{r.maxScore}</td>
-                      <td style={{ padding: '14px 16px', fontWeight: 900, color: r.average >= 14 ? '#10b981' : r.average >= 10 ? '#f59e0b' : '#ef4444', fontSize: '15px' }}>{r.average.toFixed(2)}</td>
-                      <td style={{ padding: '14px 16px' }}><MentionBadge mention={r.mention} /></td>
-                      <td style={{ padding: '14px 16px', color: '#475569', fontWeight: 600 }}>{r.weighted.toFixed(2)}</td>
-                      <td style={{ padding: '14px 16px', color: '#64748b', fontSize: '12px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.comment || '—'}</td>
+                    <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-slate-900">{r.subjectName}</td>
+                      <td className="px-4 py-4 text-center font-semibold text-slate-400">{r.coefficient}</td>
+                      <td className="px-4 py-4 text-right">
+                        <span className="font-bold text-slate-900">{r.score}</span>
+                        <span className="text-xs text-slate-400 ml-1">/{r.maxScore}</span>
+                      </td>
+                      <td className={`px-4 py-4 text-center font-black ${r.average >= 10 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {r.average.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-4">
+                        <MentionBadge mention={r.mention} />
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500 max-w-xs truncate">
+                        {r.comment || '—'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot>
-                  <tr style={{ background: bulletin.summary.generalAverage >= 10 ? 'rgba(16,185,129,0.05)' : 'rgba(239,68,68,0.05)', borderTop: '2px solid #f1f5f9' }}>
-                    <td style={{ padding: '16px', fontWeight: 900, color: '#1e293b', fontSize: '14px' }} colSpan={4}>MOYENNE GÉNÉRALE</td>
-                    <td style={{ padding: '16px', fontWeight: 900, fontSize: '20px', color: avgColor }}>{bulletin.summary.generalAverage.toFixed(2)}</td>
-                    <td style={{ padding: '16px' }}><MentionBadge mention={bulletin.summary.generalMention} /></td>
-                    <td style={{ padding: '16px', fontWeight: 700, color: '#475569' }}>{(bulletin.summary.generalAverage * bulletin.summary.totalCoeff).toFixed(2)}</td>
-                    <td />
+                <tfoot className="bg-slate-50">
+                  <tr>
+                    <td colSpan={3} className="px-6 py-5 text-right font-bold text-slate-500 uppercase text-[11px] tracking-widest">
+                      Moyenne Trimestrielle
+                    </td>
+                    <td className={`px-4 py-5 text-center text-lg font-black ${isPassing ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {bulletin.summary.generalAverage.toFixed(2)}
+                    </td>
+                    <td colSpan={2} className="px-4 py-5">
+                      <div className="flex items-center gap-2">
+                        {isPassing ? <CheckCircle2 size={16} className="text-emerald-500" /> : <AlertCircle size={16} className="text-red-500" />}
+                        <span className="font-bold text-slate-700 text-sm">
+                          {isPassing ? 'Trimestre Validé' : 'Non Validé'}
+                        </span>
+                      </div>
+                    </td>
                   </tr>
                 </tfoot>
               </table>
             </div>
+
           </div>
         )}
 
+        {/* ── Empty State ── */}
         {!loading && !bulletin && (
-          <div style={{ background: 'white', borderRadius: '16px', padding: '80px', textAlign: 'center', border: '1px dashed #e2e8f0' }}>
-            <FileText size={56} color="#cbd5e1" style={{ marginBottom: '16px' }} />
-            <h3 style={{ margin: '0 0 8px', color: '#475569', fontWeight: 700 }}>Sélectionnez un élève</h3>
-            <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>Recherchez un élève et choisissez le trimestre pour générer son bulletin.</p>
+          <div className="bg-slate-50 border border-slate-200 border-dashed rounded-2xl p-16 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-center mb-4">
+              <BookOpen size={24} className="text-slate-400" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-700 mb-2">Sélectionnez un élève</h3>
+            <p className="text-sm text-slate-500 max-w-md">
+              Recherchez un profil dans la barre de recherche et sélectionnez l'année et le trimestre pour générer un bulletin officiel.
+            </p>
           </div>
         )}
+
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </AppLayout>
   );
 }
