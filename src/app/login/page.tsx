@@ -3,35 +3,40 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import {
   Eye, EyeOff, Loader2, ShieldCheck, GraduationCap,
-  BarChart3, Users, ArrowRight, Zap, BookOpen, Award
+  BarChart3, Users, ArrowRight
 } from 'lucide-react';
 
 const FEATURES = [
   {
     icon: GraduationCap,
     label: 'Académique Complet',
-    desc: 'Notes, bulletins, emplois du temps — conforme aux standards maliens',
-    color: '#4f8ef7',
+    desc: 'Notes, bulletins, emplois du temps conformes.',
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
   },
   {
     icon: Users,
     label: 'Ressources Humaines',
-    desc: 'Congés, présences, paie — tout votre personnel en un clic',
-    color: '#10d98e',
+    desc: 'Congés, présences, paie pour tout le personnel.',
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
   },
   {
     icon: BarChart3,
     label: 'Pilotage Financier',
-    desc: 'Scolarités, dépenses, trésorerie — tableaux de bord en temps réel',
-    color: '#f5a623',
+    desc: 'Scolarités, dépenses, trésorerie en temps réel.',
+    color: 'text-amber-500',
+    bg: 'bg-amber-500/10',
   },
   {
     icon: ShieldCheck,
     label: 'Sécurisé & Multi-Écoles',
-    desc: 'Données isolées par établissement, hébergé sur Vercel + Supabase',
-    color: '#a78bfa',
+    desc: 'Données isolées par établissement.',
+    color: 'text-violet-500',
+    bg: 'bg-violet-500/10',
   },
 ];
 
@@ -41,12 +46,10 @@ export default function LoginPage() {
   const [showPwd, setShowPwd]       = useState(false);
   const [error, setError]           = useState('');
   const [loading, setLoading]       = useState(false);
-  const [mounted, setMounted]       = useState(false);
   const [schoolInfo, setSchoolInfo] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => { 
-    setMounted(true); 
     fetch('/api/school/info')
       .then(r => r.json())
       .then(data => {
@@ -78,613 +81,209 @@ export default function LoginPage() {
   };
 
   return (
-    <>
-      <style>{`
-        @keyframes orb-float {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33%  { transform: translate(40px, -30px) scale(1.08); }
-          66%  { transform: translate(-25px, 20px) scale(0.95); }
-        }
-        @keyframes grid-enter {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes card-enter {
-          from { opacity: 0; transform: translateY(28px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes left-enter {
-          from { opacity: 0; transform: translateX(-24px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes badge-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(16,217,142,0.4); }
-          50%      { box-shadow: 0 0 0 8px rgba(16,217,142,0); }
-        }
-        @keyframes shimmer-line {
-          0%   { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        @keyframes float-icon {
-          0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-5px); }
-        }
-
-        .login-root {
-          display: flex;
-          min-height: 100vh;
-          background: #fbfcfd;
-          font-family: 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
-          position: relative;
-        }
-
-        /* ── BACKGROUND ──────────────────────────────────── */
-        .bg-layer {
-          position: absolute; inset: 0; pointer-events: none; z-index: 0;
-          overflow: hidden;
-        }
-        .orb {
-          position: absolute; border-radius: 50%; filter: blur(90px);
-        }
-        .orb-a {
-          width: 600px; height: 600px;
-          background: radial-gradient(circle, rgba(124, 58, 237, 0.4), transparent 65%);
-          top: -150px; left: -100px;
-          animation: orb-float 14s ease-in-out infinite;
-        }
-        .orb-b {
-          width: 500px; height: 500px;
-          background: radial-gradient(circle, rgba(6, 182, 212, 0.3), transparent 65%);
-          bottom: -150px; right: -50px;
-          animation: orb-float 18s ease-in-out infinite reverse;
-        }
-        .orb-c {
-          width: 400px; height: 400px;
-          background: radial-gradient(circle, rgba(79, 70, 229, 0.4), transparent 65%);
-          top: 30%; left: 30%;
-          animation: orb-float 22s ease-in-out infinite 5s;
-        }
-        .dot-grid {
-          position: absolute; inset: 0;
-          background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
-          background-size: 32px 32px;
-          animation: grid-enter 1.5s ease both;
-          mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%);
-        }
-
-        /* ── LEFT PANEL ──────────────────────────────────── */
-        .left-panel {
-          flex: 1.2;
-          background: linear-gradient(145deg, #4f46e5 0%, #312e81 100%);
-          margin: 16px;
-          border-radius: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 64px 56px;
-          position: relative;
-          z-index: 1;
-          overflow: hidden;
-          box-shadow: 0 24px 48px rgba(79, 70, 229, 0.15);
-          animation: left-enter 0.8s cubic-bezier(0.22,1,0.36,1) both;
-        }
-        .left-inner {
-          max-width: 520px;
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          gap: 48px;
-          position: relative;
-          z-index: 2;
-        }
-
-        /* Brand */
-        .brand-row {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-        }
-        .brand-logo {
-          width: 52px; height: 52px;
-          border-radius: 14px;
-          background: linear-gradient(135deg, #ffffff, #f1f5f9);
-          display: grid; place-items: center;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-          animation: float-icon 3s ease-in-out infinite;
-          flex-shrink: 0;
-        }
-        .brand-name {
-          font-size: 24px;
-          font-weight: 900;
-          color: #ffffff;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          letter-spacing: -0.5px;
-        }
-        .brand-pro {
-          background: linear-gradient(135deg, #06b6d4, #34d399);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        /* Hero */
-        .hero-title {
-          font-size: clamp(34px, 4.5vw, 52px);
-          font-weight: 900;
-          line-height: 1.12;
-          color: #ffffff;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          letter-spacing: -1.5px;
-          margin-bottom: 18px;
-        }
-        .hero-highlight {
-          background: linear-gradient(120deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .hero-desc {
-          font-size: 16px;
-          color: rgba(255,255,255,0.8);
-          line-height: 1.75;
-          max-width: 420px;
-        }
-
-        /* Feature cards */
-        .features-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-        }
-        .feature-card {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          padding: 16px;
-          border-radius: 14px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          backdrop-filter: blur(12px);
-          transition: all 0.25s ease;
-          cursor: default;
-        }
-        .feature-card:hover {
-          background: rgba(255,255,255,0.12);
-          border-color: rgba(255,255,255,0.2);
-          transform: translateY(-3px);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        }
-        .feature-icon {
-          width: 36px; height: 36px;
-          border-radius: 10px;
-          display: grid; place-items: center;
-          flex-shrink: 0;
-          font-size: 18px;
-        }
-        .feature-label {
-          font-size: 13px;
-          font-weight: 700;
-          color: #ffffff;
-          margin-bottom: 3px;
-        }
-        .feature-desc {
-          font-size: 11.5px;
-          color: rgba(255,255,255,0.65);
-          line-height: 1.45;
-        }
-
-        /* Stats row */
-        .stats-bar {
-          display: flex;
-          gap: 28px;
-          align-items: center;
-          padding: 16px 20px;
-          background: rgba(0,0,0,0.15);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 14px;
-          backdrop-filter: blur(12px);
-        }
-        .stat-item { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-        .stat-num { font-size: 22px; font-weight: 900; color: #ffffff; font-family: 'Plus Jakarta Sans', sans-serif; }
-        .stat-lbl { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 500; }
-        .stat-sep { width: 1px; height: 32px; background: rgba(255,255,255,0.15); }
-
-        /* ── RIGHT PANEL ─────────────────────────────────── */
-        .right-panel {
-          width: 500px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 40px 40px;
-          position: relative;
-          z-index: 1;
-        }
-        .form-card {
-          width: 100%;
-          background: #ffffff;
-          border: 1px solid rgba(9, 9, 11, 0.08);
-          border-radius: 28px;
-          padding: 48px 44px;
-          box-shadow:
-            0 24px 64px rgba(9, 9, 11, 0.05),
-            0 4px 12px rgba(9, 9, 11, 0.02);
-          position: relative;
-          overflow: hidden;
-          animation: card-enter 0.7s 0.1s cubic-bezier(0.22,1,0.36,1) both;
-        }
-        /* Glowing top border */
-        .form-card::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 15%; right: 15%;
-          height: 2px;
-          background: linear-gradient(90deg, transparent, #4f46e5, #7c3aed, transparent);
-          opacity: 0.8;
-        }
-
-        /* Header */
-        .form-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 5px 14px;
-          border-radius: 99px;
-          background: rgba(16, 185, 129, 0.1);
-          border: 1px solid rgba(16, 185, 129, 0.25);
-          color: #10b981;
-          font-size: 11.5px;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          margin-bottom: 20px;
-          animation: badge-pulse 2s ease infinite;
-        }
-        .form-badge-dot {
-          width: 6px; height: 6px;
-          border-radius: 50%;
-          background: #10b981;
-          box-shadow: 0 0 8px #10b981;
-        }
-        .form-title {
-          font-size: 30px;
-          font-weight: 900;
-          color: #09090b;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          letter-spacing: -0.6px;
-          margin-bottom: 6px;
-        }
-        .form-subtitle {
-          font-size: 14px;
-          color: #71717a;
-          margin-bottom: 32px;
-        }
-
-        /* Error */
-        .form-error {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 12px 16px;
-          background: rgba(239, 68, 68, 0.08);
-          border: 1px solid rgba(239, 68, 68, 0.2);
-          border-radius: 10px;
-          color: #ef4444;
-          font-size: 13px;
-          font-weight: 500;
-          margin-bottom: 20px;
-          animation: card-enter 0.3s ease both;
-        }
-
-        /* Form fields */
-        .field-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-        .field-label {
-          font-size: 13px;
-          font-weight: 600;
-          color: #3f3f46;
-          letter-spacing: 0.01em;
-        }
-        .field-input {
-          padding: 14px 16px;
-          background: #f4f4f5;
-          border: 1px solid rgba(9, 9, 11, 0.08);
-          border-radius: 12px;
-          color: #09090b;
-          font-size: 14.5px;
-          font-family: inherit;
-          outline: none;
-          width: 100%;
-          transition: all 0.25s ease;
-        }
-        .field-input:focus {
-          border-color: #4f46e5;
-          background: #ffffff;
-          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15), 0 0 20px rgba(79, 70, 229, 0.05);
-        }
-        .field-input::placeholder { color: #a1a1aa; }
-        .pwd-wrap { position: relative; }
-        .pwd-toggle {
-          position: absolute;
-          right: 14px; top: 50%;
-          transform: translateY(-50%);
-          color: #71717a;
-          background: none; border: none; cursor: pointer;
-          display: grid; place-items: center;
-          padding: 4px;
-          transition: color 0.15s;
-          border-radius: 6px;
-        }
-        .pwd-toggle:hover { color: #4f46e5; }
-
-        /* Submit */
-        .submit-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 15px 24px;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
-          color: #fff;
-          font-size: 15px;
-          font-weight: 700;
-          border: none;
-          cursor: pointer;
-          width: 100%;
-          margin-top: 8px;
-          font-family: 'Plus Jakarta Sans', inherit;
-          transition: all 0.25s ease;
-          box-shadow: 0 6px 24px rgba(79, 70, 229, 0.25);
-          position: relative;
-          overflow: hidden;
-        }
-        .submit-btn::before {
-          content: '';
-          position: absolute;
-          top: 0; left: -100%; right: 0; bottom: 0;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-          transition: left 0.5s ease;
-        }
-        .submit-btn:hover::before { left: 100%; }
-        .submit-btn:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 32px rgba(79, 70, 229, 0.35);
-          filter: brightness(1.08);
-        }
-        .submit-btn:active { transform: translateY(0); }
-        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        /* Footer text */
-        .form-footer {
-          text-align: center;
-          font-size: 12px;
-          color: #71717a;
-          margin-top: 28px;
-          line-height: 1.6;
-        }
-
-        /* Divider */
-        .divider-line {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin: 24px 0 20px;
-          color: #a1a1aa;
-          font-size: 12px;
-        }
-        .divider-line::before,
-        .divider-line::after {
-          content: '';
-          flex: 1;
-          height: 1px;
-          background: rgba(9, 9, 11, 0.08);
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-          .login-root { flex-direction: column; }
-          .left-panel { padding: 40px 28px 24px; }
-          .features-grid { grid-template-columns: 1fr 1fr; }
-          .right-panel { width: 100%; padding: 20px 24px 48px; }
-        }
-        @media (max-width: 640px) {
-          .left-inner { gap: 28px; }
-          .hero-title { font-size: 28px; letter-spacing: -1px; }
-          .features-grid { display: none; }
-          .stats-bar { display: none; }
-          .left-panel { padding: 32px 20px 20px; }
-          .form-card { padding: 36px 24px; border-radius: 20px; }
-        }
-      `}</style>
-
-      <div className="login-root">
-        {/* ─── LEFT PANEL ─── */}
-        <div className="left-panel">
-          <div className="bg-layer">
-            <div className="orb orb-a" />
-            <div className="orb orb-b" />
-            <div className="orb orb-c" />
-            <div className="dot-grid" />
-          </div>
-          <div className="left-inner">
-
-            {/* Brand */}
-            <div className="brand-row">
-              <div className="brand-logo">
-                <GraduationCap size={26} color="#fff" />
-              </div>
-              <span className="brand-name">
-                SchoolERP <span className="brand-pro">Pro</span>
-              </span>
-            </div>
-
-            {/* Hero */}
-            <div>
-              <h1 className="hero-title">
-                Gérez votre école<br />
-                <span className="hero-highlight">avec intelligence</span>
-              </h1>
-              <p className="hero-desc">
-                La plateforme tout-en-un pour les établissements scolaires maliens — académique, RH et finances, dans un seul outil sécurisé.
-              </p>
-            </div>
-
-            {/* Feature Cards */}
-            <div className="features-grid">
-              {FEATURES.map((f, i) => (
-                <div className="feature-card" key={i} style={{ animationDelay: `${0.1 * i}s` }}>
-                  <div className="feature-icon" style={{ background: `${f.color}18`, color: f.color }}>
-                    <f.icon size={18} />
-                  </div>
-                  <div>
-                    <div className="feature-label">{f.label}</div>
-                    <div className="feature-desc">{f.desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Stats bar */}
-            <div className="stats-bar">
-              <div className="stat-item">
-                <span className="stat-num">6+</span>
-                <span className="stat-lbl">Types d'écoles</span>
-              </div>
-              <div className="stat-sep" />
-              <div className="stat-item">
-                <span className="stat-num">100%</span>
-                <span className="stat-lbl">Cloud Mali</span>
-              </div>
-              <div className="stat-sep" />
-              <div className="stat-item">
-                <span className="stat-num">Multi</span>
-                <span className="stat-lbl">Établissements</span>
-              </div>
-              <div className="stat-sep" />
-              <div className="stat-item">
-                <span className="stat-num">SAP</span>
-                <span className="stat-lbl">Niveau ERP</span>
-              </div>
-            </div>
-          </div>
+    <div className="flex min-h-screen bg-slate-50 font-sans selection:bg-indigo-500/30">
+      {/* ─── LEFT PANEL (Branding) ─── */}
+      <div className="hidden lg:flex flex-1 flex-col justify-between relative overflow-hidden bg-slate-950 p-12">
+        {/* Background Gradients */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-indigo-600/20 blur-[120px]" 
+          />
+          <motion.div 
+            animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.4, 0.2] }}
+            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute bottom-[10%] -right-[20%] w-[60%] h-[60%] rounded-full bg-cyan-600/20 blur-[100px]" 
+          />
         </div>
 
-        {/* ─── RIGHT PANEL ─── */}
-        <div className="right-panel">
-          <div className="form-card">
-            {/* Branding Personnalisé */}
-            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              {schoolInfo?.logoUrl ? (
+        {/* Content */}
+        <div className="relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center gap-3 mb-16"
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30 text-white">
+              <GraduationCap size={22} />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white">
+              SchoolERP <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">Pro</span>
+            </span>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-[1.1] mb-6">
+              Gérez votre école <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
+                avec intelligence
+              </span>
+            </h1>
+            <p className="text-slate-400 text-lg leading-relaxed max-w-md mb-12">
+              La plateforme tout-en-un pour les établissements scolaires maliens.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4 max-w-xl">
+              {FEATURES.map((f, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 + (i * 0.1) }}
+                  className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors"
+                >
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 ${f.bg} ${f.color}`}>
+                    <f.icon size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-200 mb-1">{f.label}</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">{f.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 0.8 }}
+          className="relative z-10 flex items-center gap-6 text-sm text-slate-500 font-medium"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Système Opérationnel
+          </div>
+          <span>•</span>
+          <span>Version 1.1.0</span>
+        </motion.div>
+      </div>
+
+      {/* ─── RIGHT PANEL (Form) ─── */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12 relative overflow-hidden">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, type: "spring", bounce: 0.3 }}
+          className="w-full max-w-[440px] bg-white rounded-[2rem] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] border border-slate-100 p-8 md:p-10 relative z-10"
+        >
+          {/* Form Header */}
+          <div className="text-center mb-8">
+            {schoolInfo?.logoUrl ? (
+              <div className="mx-auto w-16 h-16 relative mb-4 rounded-2xl overflow-hidden shadow-sm border border-slate-100">
                 <Image 
                   src={schoolInfo.logoUrl} 
                   alt={schoolInfo.name} 
-                  width={80}
-                  height={80}
-                  style={{ objectFit: 'contain', marginBottom: '16px', borderRadius: '12px' }} 
+                  fill
+                  className="object-contain p-2"
                 />
-              ) : (
-                <div className="form-badge">
-                  <span className="form-badge-dot" />
-                  Accès Sécurisé
-                </div>
-              )}
-
-              <h2 className="form-title" style={{ fontSize: schoolInfo ? '24px' : '30px' }}>
-                {schoolInfo ? `Bienvenue au ${schoolInfo.name}` : 'Bienvenue 👋'}
-              </h2>
-              <p className="form-subtitle">
-                {schoolInfo?.motto || 'Connectez-vous à votre espace de gestion'}
-              </p>
-              {schoolInfo?.city && (
-                <div style={{ fontSize: '11px', color: '#4f46e5', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '-12px', marginBottom: '20px' }}>
-                  {schoolInfo.city}
-                </div>
-              )}
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div className="form-error">
-                <ShieldCheck size={15} />
-                {error}
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold uppercase tracking-wide mb-6">
+                <ShieldCheck size={14} />
+                Accès Sécurisé
               </div>
             )}
 
-            {/* Form */}
-            <form onSubmit={handleSubmit}>
-              <div className="field-group">
-                <label htmlFor="email" className="field-label">Adresse email</label>
-                <input
-                  id="email"
-                  type="email"
-                  className="field-input"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="directeur@ecole.ml"
-                  required
-                  autoComplete="email"
-                />
-              </div>
-
-              <div className="field-group">
-                <label htmlFor="password" className="field-label">Mot de passe</label>
-                <div className="pwd-wrap">
-                  <input
-                    id="password"
-                    type={showPwd ? 'text' : 'password'}
-                    className="field-input"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    required
-                    autoComplete="current-password"
-                    style={{ paddingRight: '48px' }}
-                  />
-                  <button
-                    type="button"
-                    className="pwd-toggle"
-                    onClick={() => setShowPwd(!showPwd)}
-                    tabIndex={-1}
-                    aria-label={showPwd ? 'Masquer' : 'Afficher'}
-                  >
-                    {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit" disabled={loading} className="submit-btn">
-                {loading ? (
-                  <><Loader2 size={18} className="spin" /> Connexion en cours...</>
-                ) : (
-                  <>Se connecter <ArrowRight size={17} /></>
-                )}
-              </button>
-            </form>
-
-            <div className="divider-line">Technologie & Sécurité</div>
-            
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-              {['Next.js 15', 'Supabase', 'Prisma ORM', 'JWT Auth'].map(tech => (
-                <div key={tech} style={{
-                  fontSize: 11, color: '#71717a', padding: '4px 10px',
-                  borderRadius: 6, border: '1px solid rgba(9, 9, 11, 0.08)',
-                  background: '#f4f4f5'
-                }}>
-                  {tech}
-                </div>
-              ))}
-            </div>
-
-            <p className="form-footer">
-              SchoolERP Pro &copy; {new Date().getFullYear()} • Développé par 
-              <a href="https://sahelmultiservices.com" target="_blank" rel="noopener noreferrer" style={{ color: '#4f46e5', fontWeight: 800, marginLeft: '5px' }}>
-                SAHEL MULTISERVICES
-              </a>
-              <br />
-              <span style={{ color: '#a1a1aa' }}>Version Stable 1.1.0 — Propulsion technologique malienne</span>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">
+              {schoolInfo ? schoolInfo.name : 'Bienvenue 👋'}
+            </h2>
+            <p className="text-sm text-slate-500">
+              {schoolInfo?.motto || 'Connectez-vous à votre espace de gestion'}
             </p>
           </div>
-        </div>
+
+          {/* Error Alert */}
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="flex items-center gap-3 p-4 mb-6 rounded-xl bg-red-50 text-red-600 border border-red-100 text-sm font-medium"
+            >
+              <ShieldCheck size={16} className="shrink-0" />
+              {error}
+            </motion.div>
+          )}
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="text-sm font-semibold text-slate-700">
+                Adresse email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="directeur@ecole.ml"
+                required
+                autoComplete="email"
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all"
+              />
+            </div>
+
+            <div className="space-y-1.5 relative">
+              <label htmlFor="password" className="text-sm font-semibold text-slate-700 flex justify-between">
+                Mot de passe
+                <a href="#" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">Oublié ?</a>
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPwd ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  required
+                  autoComplete="current-password"
+                  className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(!showPwd)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors"
+                >
+                  {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full flex items-center justify-center gap-2 px-4 py-4 mt-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none shadow-sm shadow-slate-900/10"
+            >
+              {loading ? (
+                <><Loader2 size={18} className="animate-spin" /> Connexion...</>
+              ) : (
+                <>Se connecter <ArrowRight size={18} /></>
+              )}
+            </button>
+          </form>
+
+          {/* Footer Tech Stack */}
+          <div className="mt-8 pt-8 border-t border-slate-100">
+            <div className="flex flex-wrap justify-center gap-2">
+              {['Next.js 15', 'Supabase', 'Prisma'].map(tech => (
+                <span key={tech} className="px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs font-medium text-slate-500">
+                  {tech}
+                </span>
+              ))}
+            </div>
+            <p className="text-center text-xs text-slate-400 mt-6">
+              Propulsé par <a href="https://sahelmultiservices.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-600 hover:text-indigo-600 transition-colors">SAHEL MULTISERVICES</a>
+            </p>
+          </div>
+        </motion.div>
       </div>
-    </>
+    </div>
   );
 }
