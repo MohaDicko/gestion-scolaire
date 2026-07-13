@@ -16,114 +16,145 @@ interface ChildSummary {
   latestLesson?: { title: string; date: string; subject: string } | null;
 }
 
-function StatPill({ label, value, color }: { label: string; value: string; color: string }) {
+function StatPill({ label, value, colorClass, bgClass }: { label: string; value: string; colorClass: string; bgClass: string }) {
   return (
-    <div style={{ textAlign: 'center', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <div style={{ fontSize: '18px', fontWeight: 900, color }}>{value}</div>
-      <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
+    <div className={`text-center p-3 sm:p-4 rounded-xl border ${bgClass} transition-all`}>
+      <div className={`text-lg sm:text-xl font-black ${colorClass}`}>{value}</div>
+      <div className="text-[9px] sm:text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{label}</div>
     </div>
   );
 }
 
 function ChildCard({ child, onViewBulletin, onViewInvoices }: { child: ChildSummary; onViewBulletin: () => void; onViewInvoices: () => void }) {
   const initials = `${child.firstName[0]}${child.lastName[0]}`.toUpperCase();
-  const avgColor = child.generalAverage === null ? '#94a3b8' : child.generalAverage >= 14 ? '#10b981' : child.generalAverage >= 10 ? '#f59e0b' : '#ef4444';
-  const attColor = child.attendanceRate === null ? '#94a3b8' : child.attendanceRate >= 85 ? '#10b981' : child.attendanceRate >= 70 ? '#f59e0b' : '#ef4444';
+  
+  // Tailwind color classes logic
+  const avgColors = child.generalAverage === null 
+    ? { text: 'text-slate-400', bg: 'bg-slate-50 border-slate-100' }
+    : child.generalAverage >= 14 
+      ? { text: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' }
+      : child.generalAverage >= 10 
+        ? { text: 'text-amber-600', bg: 'bg-amber-50 border-amber-100' }
+        : { text: 'text-red-600', bg: 'bg-red-50 border-red-100' };
+
+  const attColors = child.attendanceRate === null 
+    ? { text: 'text-slate-400', bg: 'bg-slate-50 border-slate-100' }
+    : child.attendanceRate >= 85 
+      ? { text: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' }
+      : child.attendanceRate >= 70 
+        ? { text: 'text-amber-600', bg: 'bg-amber-50 border-amber-100' }
+        : { text: 'text-red-600', bg: 'bg-red-50 border-red-100' };
+
+  const unpaidColors = child.unpaidAmount > 0 
+    ? { text: 'text-red-600', bg: 'bg-red-50 border-red-100' }
+    : { text: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' };
 
   return (
-    <div style={{
-      background: 'linear-gradient(145deg, rgba(17,25,50,0.95), rgba(10,20,45,0.98))',
-      borderRadius: '20px', border: '1px solid rgba(255,255,255,0.07)',
-      boxShadow: '0 20px 60px rgba(0,0,0,0.4)', overflow: 'hidden',
-      transition: 'transform 0.3s ease', cursor: 'default',
-    }}
-      onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-4px)')}
-      onMouseLeave={e => (e.currentTarget.style.transform = 'none')}
-    >
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col h-full">
+      
       {/* Header accent */}
-      <div style={{ height: '4px', background: 'linear-gradient(90deg, #4f8ef7, #8b5cf6, #ec4899)' }} />
+      <div className="h-1.5 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
-      <div style={{ padding: '24px' }}>
+      <div className="p-5 sm:p-6 flex-1 flex flex-col">
         {/* Identité */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
-          <div style={{
-            width: '56px', height: '56px', borderRadius: '50%', flexShrink: 0,
-            background: 'linear-gradient(135deg, #4f8ef7, #8b5cf6)',
-            display: 'grid', placeItems: 'center',
-            fontSize: '20px', fontWeight: 900, color: 'white',
-            boxShadow: '0 8px 20px rgba(79,142,247,0.3)',
-            position: 'relative', overflow: 'hidden'
-          }}>
-            {child.photoUrl
-              ? <Image src={child.photoUrl} alt="" width={56} height={56} style={{ borderRadius: '50%', objectFit: 'cover' }} />
-              : initials}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full shrink-0 bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl sm:text-2xl font-black shadow-inner relative overflow-hidden ring-4 ring-white">
+            {child.photoUrl ? (
+              <Image src={child.photoUrl} alt="" fill className="object-cover" />
+            ) : (
+              initials
+            )}
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '18px', fontWeight: 900, color: 'white' }}>{child.firstName} {child.lastName}</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg sm:text-xl font-black text-slate-900 truncate">
+              {child.firstName} {child.lastName}
+            </h3>
+            <div className="text-xs sm:text-sm text-slate-500 font-medium truncate mt-0.5">
               {child.currentClass ? `${child.currentClass}` : 'Classe non assignée'}
               {child.campus ? ` — ${child.campus}` : ''}
             </div>
-            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '1px' }}>
-              Matricule : <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>{child.studentNumber}</span>
+            <div className="text-[10px] sm:text-xs text-slate-400 mt-1">
+              Matricule : <span className="font-bold text-slate-600">{child.studentNumber}</span>
             </div>
           </div>
+          
           {child.unpaidCount > 0 && (
-            <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '4px 8px', textAlign: 'center' }}>
-              <div style={{ fontSize: '11px', fontWeight: 800, color: '#ef4444' }}>{child.unpaidCount}</div>
-              <div style={{ fontSize: '9px', color: '#ef4444', opacity: 0.7 }}>impayé(s)</div>
+            <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-center shrink-0 animate-pulse">
+              <div className="text-xs sm:text-sm font-black text-red-600">{child.unpaidCount}</div>
+              <div className="text-[8px] sm:text-[9px] font-bold text-red-500 uppercase tracking-widest mt-0.5">impayé(s)</div>
             </div>
           )}
         </div>
 
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '20px' }}>
-          <StatPill label="Moy. Générale" value={child.generalAverage !== null ? `${child.generalAverage}/20` : '—'} color={avgColor} />
-          <StatPill label="Présence" value={child.attendanceRate !== null ? `${child.attendanceRate}%` : '—'} color={attColor} />
-          <StatPill label="Impayés" value={child.unpaidAmount > 0 ? `${(child.unpaidAmount / 1000).toFixed(0)}K` : '✓'} color={child.unpaidAmount > 0 ? '#ef4444' : '#10b981'} />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+          <StatPill 
+            label="Moyenne" 
+            value={child.generalAverage !== null ? `${child.generalAverage}/20` : '—'} 
+            colorClass={avgColors.text} 
+            bgClass={avgColors.bg} 
+          />
+          <StatPill 
+            label="Présence" 
+            value={child.attendanceRate !== null ? `${child.attendanceRate}%` : '—'} 
+            colorClass={attColors.text} 
+            bgClass={attColors.bg} 
+          />
+          <StatPill 
+            label="Impayés" 
+            value={child.unpaidAmount > 0 ? `${(child.unpaidAmount / 1000).toFixed(0)}K` : '✓'} 
+            colorClass={unpaidColors.text} 
+            bgClass={unpaidColors.bg} 
+          />
         </div>
 
-        {/* Alerte paiement */}
+        {/* Alerte paiement (Next Due) */}
         {child.nextDue && (
-          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Bell size={14} color="#ef4444" />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#ef4444' }}>{child.nextDue.title}</div>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
-                Échéance : {new Date(child.nextDue.dueDate).toLocaleDateString('fr-FR')} — {child.nextDue.amount.toLocaleString('fr-FR')} FCFA
+          <div className="bg-red-50 border border-red-100 rounded-2xl p-3 sm:p-4 mb-6 flex items-start gap-3">
+            <div className="bg-red-100 p-2 rounded-xl shrink-0 mt-0.5">
+              <Bell size={16} className="text-red-600" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs sm:text-sm font-bold text-red-800">{child.nextDue.title}</div>
+              <div className="text-[10px] sm:text-xs text-red-600 font-medium mt-1">
+                Échéance : <span className="font-bold">{new Date(child.nextDue.dueDate).toLocaleDateString('fr-FR')}</span> — {child.nextDue.amount.toLocaleString('fr-FR')} FCFA
               </div>
             </div>
           </div>
         )}
+        
+        {/* Spacer pour pousser les actions en bas si l'alerte n'est pas là */}
+        <div className="flex-1" />
 
-        {/* Actions */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-          <button onClick={onViewBulletin} style={{
-            padding: '11px', borderRadius: '12px', background: 'rgba(79,142,247,0.1)', border: '1px solid rgba(79,142,247,0.2)',
-            color: '#4f8ef7', fontWeight: 700, fontSize: '12px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            transition: 'all 0.2s'
-          }}>
-            <BookOpen size={14} /> Notes
-          </button>
-          <button onClick={onViewInvoices} style={{
-            padding: '11px', borderRadius: '12px',
-            background: child.unpaidCount > 0 ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.1)',
-            border: `1px solid ${child.unpaidCount > 0 ? 'rgba(239,68,68,0.25)' : 'rgba(16,185,129,0.2)'}`,
-            color: child.unpaidCount > 0 ? '#ef4444' : '#10b981',
-            fontWeight: 700, fontSize: '12px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-          }}>
-            <FileText size={14} /> Factures
+        {/* Actions Principales */}
+        <div className="space-y-2 sm:space-y-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <button 
+              onClick={onViewBulletin} 
+              className="w-full py-3 sm:py-4 px-2 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-700 font-bold text-xs sm:text-sm flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all active:scale-95"
+            >
+              <BookOpen size={16} className="mb-1 sm:mb-0" /> Bulletins
+            </button>
+            <button 
+              onClick={onViewInvoices} 
+              className={`w-full py-3 sm:py-4 px-2 rounded-2xl font-bold text-xs sm:text-sm flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all active:scale-95 border ${
+                child.unpaidCount > 0 
+                  ? 'bg-red-600 hover:bg-red-700 text-white border-red-600 shadow-md shadow-red-600/20' 
+                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-100'
+              }`}
+            >
+              <FileText size={16} className="mb-1 sm:mb-0" /> Factures
+            </button>
+          </div>
+          
+          <button 
+            onClick={() => window.location.href = '/lessons'} 
+            className="w-full py-3 sm:py-4 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+          >
+            <ClipboardList size={16} /> Cahier de Texte
           </button>
         </div>
-        <button onClick={() => window.location.href = '/lessons'} style={{
-          width: '100%', padding: '11px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-          color: 'white', fontWeight: 700, fontSize: '12px', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-        }}>
-          <ClipboardList size={14} /> Cahier de Texte (Cours & Devoirs)
-        </button>
+
       </div>
     </div>
   );
@@ -164,49 +195,53 @@ export default function ParentDashboardPage() {
       subtitle={`Bienvenue, ${user?.firstName ?? 'Parent'} ${user?.lastName ?? ''} — Suivi scolaire de vos enfants`}
       breadcrumbs={[{ label: 'Espace Famille' }]}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
 
-        {/* Banner */}
-        <div style={{
-          background: 'linear-gradient(135deg, #0f172a, #1e3a5f)',
-          borderRadius: '20px', padding: '28px 32px', position: 'relative', overflow: 'hidden',
-          border: '1px solid rgba(255,255,255,0.06)'
-        }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 80% 50%, rgba(79,142,247,0.15) 0%, transparent 60%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', height: '3px', marginBottom: '20px', borderRadius: '2px', overflow: 'hidden', maxWidth: '200px' }}>
-              <div style={{ flex: 1, background: '#009a44' }} /><div style={{ flex: 1, background: '#fcd116' }} /><div style={{ flex: 1, background: '#ce1126' }} />
+        {/* ── Banner ── */}
+        <div className="bg-slate-900 rounded-3xl p-6 sm:p-10 relative overflow-hidden border border-slate-800 shadow-xl">
+          {/* Motif décoratif fond */}
+          <div className="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="relative z-10">
+            {/* Liseré Mali */}
+            <div className="flex h-1.5 w-24 mb-6 rounded-full overflow-hidden">
+              <div className="flex-1 bg-[#009a44]" /><div className="flex-1 bg-[#fcd116]" /><div className="flex-1 bg-[#ce1126]" />
             </div>
-            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 900, color: 'white' }}>
+            
+            <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 tracking-tight">
               Bonjour, {user?.firstName ?? 'Parent'} 👋
             </h2>
-            <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,0.5)', fontSize: '14px' }}>
+            <p className="text-sm sm:text-base text-slate-400 font-medium max-w-lg">
               {children.length > 0
-                ? `Vous suivez ${children.length} enfant${children.length > 1 ? 's' : ''} scolarisé${children.length > 1 ? 's' : ''}.`
-                : 'Votre portail famille est prêt.'}
+                ? `Bienvenue sur votre portail sécurisé. Vous y retrouverez le suivi académique et financier de vos ${children.length} enfant${children.length > 1 ? 's' : ''}.`
+                : 'Votre portail famille est en cours de configuration.'}
             </p>
           </div>
         </div>
 
-        {/* États */}
+        {/* ── États (Loading / Error) ── */}
         {isLoading ? (
-          <div style={{ padding: '80px', textAlign: 'center' }}>
-            <Loader2 size={40} color="#4f8ef7" style={{ animation: 'spin 1s linear infinite', marginBottom: '12px' }} />
-            <p style={{ color: '#94a3b8', margin: 0 }}>{`Chargement du dossier scolaire...`}</p>
+          <div className="bg-white rounded-3xl border border-slate-200 py-24 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 size={48} className="animate-spin text-indigo-500 mb-4" />
+            <p className="text-sm font-bold tracking-wide">Chargement du dossier scolaire...</p>
           </div>
         ) : error || children.length === 0 ? (
-          <div style={{ padding: '60px', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px dashed #e2e8f0' }}>
-            <AlertTriangle size={48} color="#f59e0b" style={{ marginBottom: '16px' }} />
-            <h3 style={{ margin: '0 0 8px', color: '#475569' }}>{`Aucun enfant trouvé`}</h3>
-            <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>
-              {`Aucun enfant n'est encore associé à votre compte parent.`}
+          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl py-20 px-6 text-center flex flex-col items-center justify-center">
+            <div className="w-20 h-20 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center mb-6">
+              <AlertTriangle size={32} className="text-amber-500" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-700 mb-2">Aucun enfant trouvé</h3>
+            <p className="text-slate-500 text-sm max-w-sm mb-4">
+              Aucun dossier d'élève n'est actuellement lié à votre adresse e-mail.
             </p>
-            <p style={{ fontSize: '13px', maxWidth: '300px', margin: '8px auto', opacity: 0.7 }}>
-              {`Veuillez contacter l'administration de l'école pour lier vos enfants à votre profil.`}
-            </p>
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm font-semibold px-4 py-3 rounded-xl max-w-md">
+              Veuillez contacter l'administration de l'école (Direction) pour mettre à jour la fiche de renseignement de votre enfant.
+            </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
+          /* ── Grille des Enfants ── */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {children.map(child => (
               <ChildCard
                 key={child.id}
@@ -218,7 +253,6 @@ export default function ParentDashboardPage() {
           </div>
         )}
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </AppLayout>
   );
 }
