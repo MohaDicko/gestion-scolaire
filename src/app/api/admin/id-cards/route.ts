@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
       photoUrl: e.student.photoUrl,
       schoolName: e.student.campus?.school?.name || 'École Inconnue',
       schoolLogo: e.student.campus?.school?.logoUrl || null,
+      primaryColor: e.student.campus?.school?.primaryColor || null,
     }));
 
     return NextResponse.json({ students });

@@ -16,6 +16,7 @@ export interface StudentCardData {
   photoUrl: string | null;
   schoolName: string;
   schoolLogo: string | null;
+  primaryColor?: string | null;
 }
 
 interface IDCardTemplateProps {
@@ -59,7 +60,10 @@ export const IDCardTemplate: React.FC<IDCardTemplateProps> = ({ student }) => {
       {/* Recto (Front) */}
       <div className="w-[85.6mm] h-[53.98mm] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden relative print:shadow-none print:border-slate-300">
         {/* Header background */}
-        <div className="absolute top-0 left-0 w-full h-[18mm] bg-blue-600" />
+        <div 
+          className="absolute top-0 left-0 w-full h-[18mm]" 
+          style={{ backgroundColor: student.primaryColor || '#2563eb' }}
+        />
         
         {/* Header Content */}
         <div className="relative z-10 flex items-center justify-between px-4 pt-2">
@@ -69,7 +73,10 @@ export const IDCardTemplate: React.FC<IDCardTemplateProps> = ({ student }) => {
               <img src={student.schoolLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
             </div>
           ) : (
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">
+            <div 
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center font-bold text-xs"
+              style={{ color: student.primaryColor || '#2563eb' }}
+            >
               LOGO
             </div>
           )}
@@ -108,7 +115,12 @@ export const IDCardTemplate: React.FC<IDCardTemplateProps> = ({ student }) => {
             <div className="flex gap-4 mb-1">
               <div>
                 <p className="text-[7px] text-slate-400 uppercase font-bold">Classe</p>
-                <p className="text-[10px] font-bold text-blue-600 leading-none">{student.classroom}</p>
+                <p 
+                  className="text-[10px] font-bold leading-none"
+                  style={{ color: student.primaryColor || '#2563eb' }}
+                >
+                  {student.classroom}
+                </p>
               </div>
               <div>
                 <p className="text-[7px] text-slate-400 uppercase font-bold">Né(e) le</p>
@@ -123,8 +135,14 @@ export const IDCardTemplate: React.FC<IDCardTemplateProps> = ({ student }) => {
         </div>
         
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 w-full h-[6mm] bg-blue-50 border-t border-blue-100 flex items-center justify-center">
-          <p className="text-[7px] font-bold text-blue-800">
+        <div 
+          className="absolute bottom-0 left-0 w-full h-[6mm] flex items-center justify-center border-t border-slate-100"
+          style={{ backgroundColor: student.primaryColor ? `${student.primaryColor}15` : '#eff6ff' }}
+        >
+          <p 
+            className="text-[7px] font-bold"
+            style={{ color: student.primaryColor || '#1e40af' }}
+          >
             Année Scolaire : {student.academicYear}
           </p>
         </div>
