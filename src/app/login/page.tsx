@@ -46,17 +46,7 @@ export default function LoginPage() {
   const [showPwd, setShowPwd]       = useState(false);
   const [error, setError]           = useState('');
   const [loading, setLoading]       = useState(false);
-  const [schoolInfo, setSchoolInfo] = useState<any>(null);
   const router = useRouter();
-
-  useEffect(() => { 
-    fetch('/api/school/info')
-      .then(r => r.json())
-      .then(data => {
-        if (!data.error && !data.isMain) setSchoolInfo(data);
-      })
-      .catch(() => {});
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,27 +166,16 @@ export default function LoginPage() {
         >
           {/* Form Header */}
           <div className="text-center mb-8">
-            {schoolInfo?.logoUrl ? (
-              <div className="mx-auto w-16 h-16 relative mb-4 rounded-2xl overflow-hidden shadow-sm border border-slate-100">
-                <Image 
-                  src={schoolInfo.logoUrl} 
-                  alt={schoolInfo.name} 
-                  fill
-                  className="object-contain p-2"
-                />
-              </div>
-            ) : (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold uppercase tracking-wide mb-6">
-                <ShieldCheck size={14} />
-                Accès Sécurisé
-              </div>
-            )}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold uppercase tracking-wide mb-6">
+              <ShieldCheck size={14} />
+              Accès Sécurisé
+            </div>
 
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">
-              {schoolInfo ? schoolInfo.name : 'Bienvenue 👋'}
+              Bienvenue 👋
             </h2>
             <p className="text-sm text-slate-500">
-              {schoolInfo?.motto || 'Connectez-vous à votre espace de gestion'}
+              Connectez-vous à votre espace de gestion
             </p>
           </div>
 
