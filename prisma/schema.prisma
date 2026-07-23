@@ -24,11 +24,11 @@ model School {
   logoUrl         String?
   motto           String?
   nationalRNE     String?
-  subdomain       String?        @unique
-  customDomain    String?        @unique
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   plan            Plan           @default(STARTER)
+  customDomain    String?        @unique
+  subdomain       String?        @unique
   primaryColor    String?        @default("#4f8ef7")
   secondaryColor  String?        @default("#0f172a")
   academicYears   AcademicYear[]
@@ -51,6 +51,8 @@ model Campus {
   school      School      @relation(fields: [tenantId], references: [id])
   classrooms  Classroom[]
   students    Student[]
+
+  @@index([tenantId])
 }
 
 model AcademicYear {
@@ -64,6 +66,8 @@ model AcademicYear {
   classrooms  Classroom[]
   enrollments Enrollment[]
   grades      Grade[]
+
+  @@index([tenantId])
 }
 
 model Classroom {
@@ -80,8 +84,12 @@ model Classroom {
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
   campus         Campus       @relation(fields: [campusId], references: [id])
   enrollments    Enrollment[]
-  Timetable      Timetable[]
   lessonLogs     LessonLog[]
+  Timetable      Timetable[]
+
+  @@index([tenantId])
+  @@index([campusId])
+  @@index([academicYearId])
 }
 
 model Student {
@@ -108,6 +116,9 @@ model Student {
   Invoice            Invoice[]
   loans              Loan[]
   campus             Campus       @relation(fields: [campusId], references: [id])
+
+  @@index([tenantId])
+  @@index([campusId])
 }
 
 model Enrollment {
@@ -122,22 +133,26 @@ model Enrollment {
   student        Student          @relation(fields: [studentId], references: [id])
 
   @@unique([studentId, academicYearId])
+  @@index([classroomId])
+  @@index([academicYearId])
 }
 
 model User {
-  id        String   @id @default(uuid())
-  tenantId  String?
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  role      UserRole
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  conversations Conversation[] @relation("UserConversations")
-  sentMessages  Message[]      @relation("SentMessages")
+  id                String             @id @default(uuid())
+  tenantId          String?
+  email             String             @unique
+  password          String
+  firstName         String
+  lastName          String
+  role              UserRole
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  sentMessages      Message[]          @relation("SentMessages")
   pushSubscriptions PushSubscription[]
+  conversations     Conversation[]     @relation("UserConversations")
+
+  @@index([tenantId])
 }
 
 model Department {
@@ -147,6 +162,8 @@ model Department {
   code        String
   description String?
   employees   Employee[]
+
+  @@index([tenantId])
 }
 
 model Employee {
@@ -170,11 +187,15 @@ model Employee {
   contracts       Contract[]
   department      Department        @relation(fields: [departmentId], references: [id])
   LeaveRequest    LeaveRequest[]
+  lessonLogs      LessonLog[]
+  loans           Loan[]
   Payslip         Payslip[]
   StaffAttendance StaffAttendance[]
   Timetable       Timetable[]
-  lessonLogs      LessonLog[]
-  loans           Loan[]
+
+  @@index([tenantId])
+  @@index([departmentId])
+  @@index([campusId])
 }
 
 model Contract {
@@ -190,6 +211,9 @@ model Contract {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   employee     Employee       @relation(fields: [employeeId], references: [id])
+
+  @@index([tenantId])
+  @@index([employeeId])
 }
 
 model Subject {
@@ -201,8 +225,10 @@ model Subject {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   grades      Grade[]
-  Timetable   Timetable[]
   lessonLogs  LessonLog[]
+  Timetable   Timetable[]
+
+  @@index([tenantId])
 }
 
 model Grade {
@@ -220,6 +246,10 @@ model Grade {
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
   student        Student      @relation(fields: [studentId], references: [id])
   subject        Subject      @relation(fields: [subjectId], references: [id])
+
+  @@index([studentId])
+  @@index([subjectId])
+  @@index([academicYearId])
 }
 
 model Payslip {
@@ -247,6 +277,9 @@ model Payslip {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   employee             Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([tenantId])
+  @@index([employeeId])
 }
 
 model Invoice {
@@ -263,24 +296,27 @@ model Invoice {
   paymentMethod String?
   notes         String?
   createdAt     DateTime  @default(now())
+  student       Student   @relation(fields: [studentId], references: [id])
+  payments      Payment[]
 
-  student  Student   @relation(fields: [studentId], references: [id])
-  payments Payment[]
+  @@index([tenantId])
+  @@index([studentId])
 }
 
 model Payment {
-  id            String   @id @default(uuid())
-  tenantId      String
-  invoiceId     String
-  amount        Float
-  paymentDate   DateTime @default(now())
-  method        String   @default("ESPECES") // ESPECES, ORANGE_MONEY, MOOV_MONEY, VIREMENT, CHEQUE
-  reference     String?  // Numéro de reçu, ID de transaction
-  notes         String?
-  
-  createdAt     DateTime @default(now())
+  id          String   @id @default(uuid())
+  tenantId    String
+  invoiceId   String
+  amount      Float
+  paymentDate DateTime @default(now())
+  method      String   @default("ESPECES")
+  reference   String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
 
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  @@index([tenantId])
+  @@index([invoiceId])
 }
 
 model Timetable {
@@ -295,6 +331,11 @@ model Timetable {
   classroom   Classroom @relation(fields: [classroomId], references: [id])
   teacher     Employee  @relation(fields: [employeeId], references: [id])
   subject     Subject   @relation(fields: [subjectId], references: [id])
+
+  @@index([tenantId])
+  @@index([classroomId])
+  @@index([subjectId])
+  @@index([employeeId])
 }
 
 model Attendance {
@@ -307,6 +348,10 @@ model Attendance {
   notes       String?
   classroom   Classroom @relation(fields: [classroomId], references: [id])
   student     Student   @relation(fields: [studentId], references: [id])
+
+  @@index([tenantId])
+  @@index([studentId])
+  @@index([classroomId])
 }
 
 model LessonLog {
@@ -317,15 +362,19 @@ model LessonLog {
   employeeId  String
   date        DateTime  @default(now())
   title       String
-  content     String    @db.Text
-  homework    String?   @db.Text
-  status      String    @default("COMPLETED") // COMPLETED, PLANNED, CANCELLED
+  content     String
+  homework    String?
+  status      String    @default("COMPLETED")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  teacher     Employee  @relation(fields: [employeeId], references: [id])
+  subject     Subject   @relation(fields: [subjectId], references: [id])
 
-  classroom Classroom @relation(fields: [classroomId], references: [id])
-  subject   Subject   @relation(fields: [subjectId], references: [id])
-  teacher   Employee  @relation(fields: [employeeId], references: [id])
+  @@index([tenantId])
+  @@index([classroomId])
+  @@index([subjectId])
+  @@index([employeeId])
 }
 
 model StaffAttendance {
@@ -337,6 +386,9 @@ model StaffAttendance {
   checkOut   String?
   status     String   @default("PRESENT")
   employee   Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([tenantId])
+  @@index([employeeId])
 }
 
 model LeaveRequest {
@@ -349,6 +401,9 @@ model LeaveRequest {
   status     String   @default("PENDING")
   reason     String?
   employee   Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([tenantId])
+  @@index([employeeId])
 }
 
 model Expense {
@@ -360,67 +415,137 @@ model Expense {
   category    String
   status      String   @default("PAID")
   createdAt   DateTime @default(now())
+
+  @@index([tenantId])
 }
 
 model StockItem {
-  id            String             @id @default(uuid())
-  tenantId      String
-  name          String
-  category      String             // Uniform, Textbook, Stationery, Equipment
-  sku           String?            @unique
-  description   String?
-  unitPrice     Float              @default(0)
-  quantity      Int                @default(0)
-  minThreshold  Int                @default(5)
-  isActive      Boolean            @default(true)
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  transactions  StockTransaction[]
+  id           String             @id @default(uuid())
+  tenantId     String
+  name         String
+  category     String
+  sku          String?            @unique
+  description  String?
+  unitPrice    Float              @default(0)
+  quantity     Int                @default(0)
+  minThreshold Int                @default(5)
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  transactions StockTransaction[]
+
+  @@index([tenantId])
 }
 
 model StockTransaction {
-  id          String   @id @default(uuid())
-  tenantId    String
-  itemId      String
-  type        String   // IN, OUT, ADJUSTMENT
-  quantity    Int
-  date        DateTime @default(now())
-  performer   String?  // Name of person who did the action
-  notes       String?
-  
-  item        StockItem @relation(fields: [itemId], references: [id])
+  id        String    @id @default(uuid())
+  tenantId  String
+  itemId    String
+  type      String
+  quantity  Int
+  date      DateTime  @default(now())
+  performer String?
+  notes     String?
+  item      StockItem @relation(fields: [itemId], references: [id])
+
+  @@index([tenantId])
+  @@index([itemId])
 }
 
 model Book {
-  id              String      @id @default(uuid())
+  id              String   @id @default(uuid())
   tenantId        String
   title           String
   author          String
-  isbn            String?     @unique
-  category        String      // Fiction, Science, History, etc.
-  totalCopies     Int         @default(1)
-  availableCopies Int         @default(1)
+  isbn            String?  @unique
+  category        String
+  totalCopies     Int      @default(1)
+  availableCopies Int      @default(1)
   shelfLocation   String?
-  isActive        Boolean     @default(true)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   loans           Loan[]
+
+  @@index([tenantId])
 }
 
 model Loan {
-  id            String    @id @default(uuid())
-  tenantId      String
-  bookId        String
-  studentId     String?
-  employeeId    String?
-  loanDate      DateTime  @default(now())
-  dueDate       DateTime
-  returnDate    DateTime?
-  status        String    @default("BORROWED") // BORROWED, RETURNED, OVERDUE, LOST
+  id         String    @id @default(uuid())
+  tenantId   String
+  bookId     String
+  studentId  String?
+  employeeId String?
+  loanDate   DateTime  @default(now())
+  dueDate    DateTime
+  returnDate DateTime?
+  status     String    @default("BORROWED")
+  book       Book      @relation(fields: [bookId], references: [id])
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+  student    Student?  @relation(fields: [studentId], references: [id])
 
-  book          Book      @relation(fields: [bookId], references: [id])
-  student       Student?  @relation(fields: [studentId], references: [id])
-  employee      Employee? @relation(fields: [employeeId], references: [id])
+  @@index([tenantId])
+  @@index([bookId])
+  @@index([studentId])
+  @@index([employeeId])
+}
+
+model Conversation {
+  id           String    @id @default(uuid())
+  tenantId     String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  messages     Message[]
+  participants User[]    @relation("UserConversations")
+
+  @@index([tenantId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  createdAt      DateTime     @default(now())
+  isRead         Boolean      @default(false)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  tenantId    String
+  userId      String?
+  userRole    String?
+  userEmail   String?
+  action      AuditAction
+  entityType  String
+  entityId    String
+  oldValues   Json?
+  newValues   Json?
+  ipAddress   String?
+  userAgent   String?
+  description String?
+  createdAt   DateTime    @default(now())
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum Gender {
@@ -506,52 +631,6 @@ enum Plan {
   ELITE
 }
 
-model Conversation {
-  id        String    @id @default(uuid())
-  tenantId  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  participants User[] @relation("UserConversations")
-  messages     Message[]
-
-  @@index([tenantId])
-}
-
-model Message {
-  id             String       @id @default(uuid())
-  conversationId String
-  senderId       String
-  content        String       @db.Text
-  createdAt      DateTime     @default(now())
-  isRead         Boolean      @default(false)
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
-
-  @@index([conversationId])
-  @@index([senderId])
-}
-
-model AuditLog {
-  id           String      @id @default(uuid())
-  tenantId     String      // Pour isoler les logs par école
-  userId       String?     // L'utilisateur qui a fait l'action (peut être null si système)
-  userRole     String?     // Le rôle de l'utilisateur au moment de l'action
-  userEmail    String?
-  action       AuditAction
-  entityType   String      // ex: "Payment", "Grade", "Student", "Payslip"
-  entityId     String      // l'ID de l'objet modifié
-  oldValues    Json?       // Valeurs avant modification (pour l'historique)
-  newValues    Json?       // Valeurs après modification
-  ipAddress    String?
-  userAgent    String?
-  description  String?     // Description lisible de l'action
-  createdAt    DateTime    @default(now())
-
-  @@index([tenantId])
-  @@index([entityType, entityId])
-  @@index([createdAt])
-}
-
 enum AuditAction {
   CREATE
   UPDATE
@@ -561,16 +640,4 @@ enum AuditAction {
   EXPORT
   APPROVE
   REJECT
-}
-
-model PushSubscription {
-  id        String   @id @default(uuid())
-  userId    String
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
 }

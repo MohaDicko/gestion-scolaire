@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
   } catch (error) {
     // No stack trace in production logs
-    console.error('[AUTH] Login error occurred');
+    console.error('[AUTH] Login error occurred', error);
     return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
   }
 }

@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
   // Global API Rate Limiting (except login which has its own strict limit)
   if (pathname.startsWith('/api/') && pathname !== '/api/auth/login') {
     const ip = getClientIp(request as any);
-    const rl = rateLimit(`global_api:${ip}`, { limit: 100, windowSecs: 60 });
+    const rl = await rateLimit(`global_api:${ip}`, { limit: 100, windowSecs: 60 });
     if (!rl.success) {
       return applySecurityHeaders(NextResponse.json(
         { error: 'Trop de requêtes. Veuillez ralentir.' },

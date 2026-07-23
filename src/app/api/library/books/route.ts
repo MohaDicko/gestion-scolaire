@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUniversal } from '@/lib/auth';
+import { getCachedData, setCachedData, invalidateCache } from '@/lib/cache';
 
 export async function GET(request: Request) {
   try {
@@ -11,6 +12,12 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('q');
+
+    const cacheKey = `books:${session.tenantId}:${search || 'all'}`;
+    const cachedBooks = await getCachedData(cacheKey);
+    if (cachedBooks) {
+      return NextResponse.json({ books: cachedBooks });
+    }
 
     const books = await prisma.book.findMany({
       where: {
@@ -26,6 +33,8 @@ export async function GET(request: Request) {
       },
       orderBy: { title: 'asc' }
     });
+
+    await setCachedData(cacheKey, books, 300); // Cache for 5 minutes
 
     return NextResponse.json({ books });
   } catch (error) {
@@ -59,6 +68,8 @@ export async function POST(request: Request) {
         shelfLocation: data.shelfLocation || null
       }
     });
+
+    await invalidateCache(`books:${session.tenantId}:all`);
 
     return NextResponse.json({ book }, { status: 201 });
   } catch (error) {
