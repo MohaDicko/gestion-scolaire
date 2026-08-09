@@ -14,7 +14,7 @@ const loginSchema = z.object({
 export async function POST(request: Request) {
   // ── Rate Limiting: max 10 login attempts per IP per 15 minutes ──
   const ip = getClientIp(request);
-  const rl = rateLimit(`login:${ip}`, { limit: 10, windowSecs: 15 * 60 });
+  const rl = await rateLimit(`login:${ip}`, { limit: 10, windowSecs: 15 * 60 });
 
   if (!rl.success) {
     const retryAfterSecs = Math.ceil((rl.resetAt - Date.now()) / 1000);
