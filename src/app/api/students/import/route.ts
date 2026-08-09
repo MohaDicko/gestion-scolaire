@@ -3,6 +3,26 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import * as bcrypt from 'bcryptjs';
 
+function parseDate(dateStr: any): Date {
+  if (!dateStr) return new Date('2010-01-01');
+  
+  if (typeof dateStr === 'number' || (typeof dateStr === 'string' && !isNaN(Number(dateStr)))) {
+     const excelDays = Number(dateStr);
+     if (excelDays > 20000 && excelDays < 80000) {
+        return new Date(Math.round((excelDays - 25569) * 86400 * 1000));
+     }
+  }
+
+  const str = String(dateStr).trim();
+  const frDateMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (frDateMatch) {
+     return new Date(Number(frDateMatch[3]), Number(frDateMatch[2]) - 1, Number(frDateMatch[1]));
+  }
+  
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? new Date('2010-01-01') : d;
+}
+
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -55,18 +75,23 @@ export async function POST(request: Request) {
         const rawRelation = (s.Relation || s.parentRelationship || 'OTHER').toString().toUpperCase();
         const parentRelationship = RELATION_MAP[rawRelation] || 'OTHER';
 
-        const studentNumber = s.Matricule || s.studentNumber || `MAT-${Math.floor(Math.random() * 900000)}`;
+        let finalStudentNumber = String(s.Matricule || s.studentNumber || `MAT-${Math.floor(Math.random() * 900000)}`);
 
         await prisma.$transaction(async (tx) => {
+          const existing = await tx.student.findUnique({ where: { studentNumber: finalStudentNumber } });
+          if (existing) {
+             finalStudentNumber = `${finalStudentNumber}-${Math.floor(Math.random() * 10000)}`;
+          }
+
           const student = await tx.student.create({
             data: {
               tenantId: session.tenantId!,
               campusId: targetCampusId,
               firstName: String(firstName),
               lastName: String(lastName),
-              studentNumber: String(studentNumber),
+              studentNumber: finalStudentNumber,
               gender: gender as any,
-              dateOfBirth: s.DateNaissance || s.dateOfBirth ? new Date(s.DateNaissance || s.dateOfBirth) : new Date('2010-01-01'),
+              dateOfBirth: parseDate(s.DateNaissance || s.dateOfBirth),
               nationalId: (s.nationalId || s.CNI || 'N/A').toString(),
               parentName: s.parentName || s.Parent || 'À préciser',
               parentPhone: (s.parentPhone || s.Telephone || '00000000').toString(),
@@ -78,11 +103,16 @@ export async function POST(request: Request) {
 
           // Création de compte élève si demandé
           if (createAccounts) {
-            const email = s.EmailPerso || s.studentEmail || `${student.studentNumber.toLowerCase()}@school.erp`;
+            let email = (s.EmailPerso || s.studentEmail || `${student.studentNumber.toLowerCase()}@school.erp`).toLowerCase();
+            const existingUser = await tx.user.findUnique({ where: { email } });
+            if (existingUser) {
+              email = `${student.studentNumber.toLowerCase()}-${Math.floor(Math.random() * 1000)}@school.erp`;
+            }
+
             await tx.user.create({
               data: {
                 tenantId: session.tenantId!,
-                email: email.toLowerCase(),
+                email: email,
                 password: defaultPassword,
                 firstName: student.firstName,
                 lastName: student.lastName,

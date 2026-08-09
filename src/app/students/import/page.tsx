@@ -66,8 +66,8 @@ export default function ImportStudentsPage() {
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         
-        // Lecture ligne par ligne (tableau 2D)
-        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+        // Lecture ligne par ligne avec raw: false pour garder les zéros des téléphones et formater les dates
+        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false }) as any[][];
         
         let headerRowIndex = -1;
         let normalizedHeaders: string[] = [];
