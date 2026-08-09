@@ -65,7 +65,8 @@ export async function POST(request: Request) {
         const lastName = s.Nom || s.lastName;
         
         if (!firstName || !lastName) {
-          report.errors.push(`Ligne ignorée : Nom ou Prénom manquant.`);
+          const keys = Object.keys(s).join(', ');
+          report.errors.push(`Ligne ignorée : Nom ou Prénom manquant. (Colonnes trouvées: ${keys})`);
           continue;
         }
 
