@@ -126,6 +126,22 @@ export default function StudentsPage() {
     toast.success('Export Excel généré avec succès.');
   };
 
+  const normalizeHeader = (header: string) => {
+    if (!header) return '';
+    let h = header.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    if (h.includes('prenom')) return 'Prenom';
+    if (h === 'noms' || h === 'nom') return 'Nom';
+    if (h === 'sexe' || h === 'genre') return 'Genre';
+    if (h.includes('matricule')) return 'Matricule';
+    if (h.includes('naissance')) return 'DateNaissance';
+    if (h.includes('cni') || h.includes('nina')) return 'CNI';
+    if (h.includes('classe') || h.includes('niveau')) return 'Classe';
+    if (h.includes('parent') || h.includes('tuteur')) return 'Parent';
+    if (h.includes('tel') || h.includes('phone') || h.includes('contact')) return 'Telephone';
+    if (h.includes('relation') || h.includes('lien')) return 'Relation';
+    return header.trim();
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -136,9 +152,48 @@ export default function StudentsPage() {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet);
-        if (json.length === 0) throw new Error('Le fichier est vide');
-        setImportData(json);
+        
+        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false }) as any[][];
+        
+        let headerRowIndex = -1;
+        let normalizedHeaders: string[] = [];
+        
+        for (let i = 0; i < Math.min(rows.length, 20); i++) {
+           const row = rows[i];
+           if (!row || !Array.isArray(row)) continue;
+           
+           const rowStr = row.map(cell => String(cell || '').toLowerCase().trim());
+           if (rowStr.some(c => c.includes('nom') || c.includes('matricule') || c.includes('prenom'))) {
+               headerRowIndex = i;
+               normalizedHeaders = row.map(h => normalizeHeader(h));
+               break;
+           }
+        }
+
+        if (headerRowIndex === -1) {
+           toast.error("Impossible de trouver la ligne des en-têtes (Nom, Prénom, etc.) dans votre fichier.");
+           return;
+        }
+
+        const jsonData = [];
+        for (let i = headerRowIndex + 1; i < rows.length; i++) {
+           const row = rows[i];
+           if (!row || row.length === 0 || !row.some(Boolean)) continue;
+           
+           const obj: any = {};
+           normalizedHeaders.forEach((header, index) => {
+               if (header && row[index] !== undefined) {
+                 obj[header] = row[index];
+               }
+           });
+           
+           if (obj.Nom || obj.Prenom) {
+              jsonData.push(obj);
+           }
+        }
+        
+        if (jsonData.length === 0) throw new Error('Le fichier est vide ou aucune donnée valide trouvée');
+        setImportData(jsonData);
         setImportReport(null);
       } catch (err: any) {
         toast.error(`Erreur de lecture : ${err.message}`);

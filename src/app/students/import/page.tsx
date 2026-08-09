@@ -17,7 +17,7 @@ export default function ImportStudentsPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: number; errors: string[]; total: number } | null>(null);
 
-  const expectedHeaders = ['Matricule', 'Prénom', 'Nom', 'Genre', 'DateNaissance', 'CNI', 'Parent', 'Telephone', 'Relation'];
+  const expectedHeaders = ['Matricule', 'Prénom', 'Nom', 'Genre', 'Classe', 'DateNaissance', 'CNI', 'Parent', 'Telephone', 'Relation'];
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([{
@@ -25,6 +25,7 @@ export default function ImportStudentsPage() {
       Prénom: 'Mamadou',
       Nom: 'Diaby',
       Genre: 'M',
+      Classe: '1ère Année E.A',
       DateNaissance: '2010-05-15',
       CNI: 'N/A',
       Parent: 'Ousmane Diaby',
@@ -50,6 +51,7 @@ export default function ImportStudentsPage() {
     if (h.includes('matricule')) return 'Matricule';
     if (h.includes('naissance')) return 'DateNaissance';
     if (h.includes('cni') || h.includes('nina')) return 'CNI';
+    if (h.includes('classe') || h.includes('niveau')) return 'Classe';
     if (h.includes('parent') || h.includes('tuteur')) return 'Parent';
     if (h.includes('tel') || h.includes('phone') || h.includes('contact')) return 'Telephone';
     if (h.includes('relation') || h.includes('lien')) return 'Relation';
@@ -289,6 +291,7 @@ export default function ImportStudentsPage() {
                         <td className="px-4 py-3 font-medium">{row['Prénom'] || row.Prenom || row.firstName || '-'}</td>
                         <td className="px-4 py-3 font-medium">{row.Nom || row.lastName || '-'}</td>
                         <td className="px-4 py-3">{row.Genre || row.gender || '-'}</td>
+                        <td className="px-4 py-3 font-semibold text-blue-600 dark:text-blue-400">{row.Classe || '-'}</td>
                         <td className="px-4 py-3 text-slate-500">{row.DateNaissance || row.dateOfBirth || '-'}</td>
                         <td className="px-4 py-3 text-slate-500">{row.CNI || row.nationalId || '-'}</td>
                         <td className="px-4 py-3 text-slate-500">{row.Parent || row.parentName || '-'}</td>
