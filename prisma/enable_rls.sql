@@ -1,0 +1,9 @@
+DO $$ 
+DECLARE 
+    r RECORD;
+BEGIN 
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') 
+    LOOP 
+        EXECUTE 'ALTER TABLE "public"."' || r.tablename || '" ENABLE ROW LEVEL SECURITY;'; 
+    END LOOP; 
+END $$;

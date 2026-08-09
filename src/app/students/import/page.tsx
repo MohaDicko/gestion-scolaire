@@ -41,6 +41,21 @@ export default function ImportStudentsPage() {
     if (selectedFile) processFile(selectedFile);
   };
 
+  const normalizeHeader = (header: string) => {
+    if (!header) return '';
+    let h = header.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    if (h.includes('prenom')) return 'Prenom';
+    if (h === 'noms' || h === 'nom') return 'Nom';
+    if (h === 'sexe' || h === 'genre') return 'Genre';
+    if (h.includes('matricule')) return 'Matricule';
+    if (h.includes('naissance')) return 'DateNaissance';
+    if (h.includes('cni') || h.includes('nina')) return 'CNI';
+    if (h.includes('parent') || h.includes('tuteur')) return 'Parent';
+    if (h.includes('tel') || h.includes('phone') || h.includes('contact')) return 'Telephone';
+    if (h.includes('relation') || h.includes('lien')) return 'Relation';
+    return header.trim();
+  };
+
   const processFile = (selectedFile: File) => {
     setFile(selectedFile);
     const reader = new FileReader();
@@ -50,7 +65,50 @@ export default function ImportStudentsPage() {
         const workbook = XLSX.read(data, { type: 'binary' });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        
+        // Lecture ligne par ligne (tableau 2D)
+        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+        
+        let headerRowIndex = -1;
+        let normalizedHeaders: string[] = [];
+        
+        // Chercher la ligne d'en-têtes dans les 20 premières lignes
+        for (let i = 0; i < Math.min(rows.length, 20); i++) {
+           const row = rows[i];
+           if (!row || !Array.isArray(row)) continue;
+           
+           const rowStr = row.map(cell => String(cell || '').toLowerCase().trim());
+           // Un en-tête est trouvé si on détecte des mots-clés courants
+           if (rowStr.some(c => c.includes('nom') || c.includes('matricule') || c.includes('prenom'))) {
+               headerRowIndex = i;
+               normalizedHeaders = row.map(h => normalizeHeader(h));
+               break;
+           }
+        }
+
+        if (headerRowIndex === -1) {
+           alert("Impossible de trouver la ligne des en-têtes (Nom, Prénom, etc.) dans votre fichier.");
+           return;
+        }
+
+        // Construire les objets JSON
+        const jsonData = [];
+        for (let i = headerRowIndex + 1; i < rows.length; i++) {
+           const row = rows[i];
+           if (!row || row.length === 0 || !row.some(Boolean)) continue; // Ignorer les lignes vides
+           
+           const obj: any = {};
+           normalizedHeaders.forEach((header, index) => {
+               if (header && row[index] !== undefined) {
+                 obj[header] = row[index];
+               }
+           });
+           
+           if (obj.Nom || obj.Prenom) {
+              jsonData.push(obj);
+           }
+        }
+        
         setPreviewData(jsonData);
       } catch (err) {
         console.error("Erreur de lecture Excel", err);

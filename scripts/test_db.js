@@ -10,7 +10,7 @@ async function testConnection() {
   
   try {
     // Test 1: Ping simple
-    const ping = await prisma.$queryRawUnsafe('SELECT 1 as ok');
+    const ping = await prisma.$queryRaw`SELECT 1 as ok`;
     console.log('✅ Connexion DB: OK', ping);
 
     // Test 2: Utilisateurs
