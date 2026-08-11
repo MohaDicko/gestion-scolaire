@@ -127,8 +127,12 @@ export default function TimetablePage() {
             
             if (!res.ok) {
                 if (data.details && data.details.length > 0) {
-                    const detailsText = data.details.join('\n');
-                    alert(`❌ Erreur d'importation:\n\n${data.error}\n\nDétails:\n${detailsText}`);
+                    // Show each error as a toast
+                    toast.error(`❌ ${data.error}`);
+                    data.details.forEach((detail: string) => {
+                        console.warn('[IMPORT]', detail);
+                        toast.error(detail, );
+                    });
                 } else {
                     toast.error(data.error || 'Erreur lors de l\'import');
                 }
