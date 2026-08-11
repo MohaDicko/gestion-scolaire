@@ -126,9 +126,9 @@ export default function TimetablePage() {
             const data = await res.json();
             
             if (!res.ok) {
-                if (data.details) {
-                    console.error("Import erreurs:", data.details);
-                    toast.error(data.error + " (Voir console pour détails)");
+                if (data.details && data.details.length > 0) {
+                    const detailsText = data.details.join('\n');
+                    alert(`❌ Erreur d'importation:\n\n${data.error}\n\nDétails:\n${detailsText}`);
                 } else {
                     toast.error(data.error || 'Erreur lors de l\'import');
                 }

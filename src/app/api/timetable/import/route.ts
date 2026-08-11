@@ -33,13 +33,14 @@ export async function POST(request: Request) {
     }
 
     // 1. Fetch all existing references for the tenant to resolve IDs
+    // NOTE: We fetch ALL employees regardless of type (teachers can have various types)
     const [classrooms, subjects, employees] = await Promise.all([
       prisma.classroom.findMany({ where: { tenantId: session.tenantId } }),
       prisma.subject.findMany({ where: { tenantId: session.tenantId } }),
-      prisma.employee.findMany({ where: { tenantId: session.tenantId, employeeType: 'TEACHER' } }),
+      prisma.employee.findMany({ where: { tenantId: session.tenantId } }),
     ]);
 
-    // Fast lookups
+    // Fast lookups (case-insensitive)
     const classMap = new Map(classrooms.map(c => [c.name.trim().toLowerCase(), c.id]));
     const subjectMap = new Map(subjects.map(s => [s.name.trim().toLowerCase(), s.id]));
     const empMap = new Map(employees.map(e => [`${e.firstName} ${e.lastName}`.trim().toLowerCase(), e.id]));
@@ -52,30 +53,39 @@ export async function POST(request: Request) {
     for (let index = 0; index < data.length; index++) {
       const row = data[index];
       const className = (row['Classe'] || '').toString().trim();
-      const subjectName = (row['Matière'] || '').toString().trim();
-      const teacherName = (row['Enseignant'] || '').toString().trim();
-      const dayStr = row['Jour (1=Lun...7=Dim)'];
-      const startTime = (row['Heure Début'] || '').toString().trim();
-      const endTime = (row['Heure Fin'] || '').toString().trim();
+      const subjectName = (row['Matière'] || row['Matiere'] || row['MATIERE'] || '').toString().trim();
+      const teacherName = (row['Enseignant'] || row['ENSEIGNANT'] || '').toString().trim();
+      const dayStr = row['Jour (1=Lun...7=Dim)'] ?? row['Jour'] ?? row['JOUR'];
+      const startTime = (row['Heure Début'] || row['Heure Debut'] || row['HEURE_DEBUT'] || row['Heure_Debut'] || '').toString().trim();
+      const endTime = (row['Heure Fin'] || row['HEURE_FIN'] || row['Heure_Fin'] || '').toString().trim();
 
-      if (!className || !subjectName || !teacherName || !dayStr || !startTime || !endTime) {
-        // Skip completely empty rows
-        if (!className && !subjectName) continue;
-        missingReferences.push(`Ligne ${index + 2}: Champs obligatoires manquants.`);
+      // Skip completely empty rows
+      if (!className && !subjectName && !teacherName) continue;
+
+      // Report rows with missing fields
+      if (!className || !subjectName || !teacherName || dayStr === undefined || dayStr === null || !startTime || !endTime) {
+        const missing = [];
+        if (!className) missing.push('Classe');
+        if (!subjectName) missing.push('Matière');
+        if (!teacherName) missing.push('Enseignant');
+        if (dayStr === undefined || dayStr === null) missing.push('Jour');
+        if (!startTime) missing.push('Heure Début');
+        if (!endTime) missing.push('Heure Fin');
+        missingReferences.push(`Ligne ${index + 2}: Champs manquants: ${missing.join(', ')}`);
         continue;
       }
 
       const classroomId = classMap.get(className.toLowerCase());
       const subjectId = subjectMap.get(subjectName.toLowerCase());
       const employeeId = empMap.get(teacherName.toLowerCase());
-      const dayOfWeek = parseInt(dayStr, 10);
+      const dayOfWeek = parseInt(String(dayStr), 10);
 
-      if (!classroomId) missingReferences.push(`Ligne ${index + 2}: Classe '${className}' introuvable.`);
-      if (!subjectId) missingReferences.push(`Ligne ${index + 2}: Matière '${subjectName}' introuvable.`);
-      if (!employeeId) missingReferences.push(`Ligne ${index + 2}: Enseignant '${teacherName}' introuvable.`);
-      if (isNaN(dayOfWeek) || dayOfWeek < 1 || dayOfWeek > 7) missingReferences.push(`Ligne ${index + 2}: Jour invalide (1-7 attendu).`);
+      if (!classroomId) missingReferences.push(`Ligne ${index + 2}: Classe "${className}" introuvable dans le système.`);
+      if (!subjectId) missingReferences.push(`Ligne ${index + 2}: Matière "${subjectName}" introuvable dans le système.`);
+      if (!employeeId) missingReferences.push(`Ligne ${index + 2}: Enseignant "${teacherName}" introuvable dans le système.`);
+      if (isNaN(dayOfWeek) || dayOfWeek < 1 || dayOfWeek > 7) missingReferences.push(`Ligne ${index + 2}: Jour "${dayStr}" invalide (doit être 1=Lun à 7=Dim).`);
 
-      if (classroomId && subjectId && employeeId && !isNaN(dayOfWeek)) {
+      if (classroomId && subjectId && employeeId && !isNaN(dayOfWeek) && dayOfWeek >= 1 && dayOfWeek <= 7) {
         classesProcessed.add(classroomId);
         recordsToInsert.push({
           tenantId: session.tenantId,
@@ -91,13 +101,13 @@ export async function POST(request: Request) {
 
     if (missingReferences.length > 0) {
       return NextResponse.json({ 
-        error: 'Des erreurs de référence ont été trouvées. Veuillez corriger le fichier.', 
-        details: missingReferences.slice(0, 10) // Only send first 10 to not overload the client
+        error: `${missingReferences.length} erreur(s) trouvée(s) dans le fichier. Vérifiez que les noms correspondent exactement à ceux du système.`,
+        details: missingReferences.slice(0, 15)
       }, { status: 400 });
     }
 
     if (recordsToInsert.length === 0) {
-      return NextResponse.json({ error: 'Aucune donnée valide à importer' }, { status: 400 });
+      return NextResponse.json({ error: 'Aucune donnée valide à importer. Vérifiez le format du fichier.' }, { status: 400 });
     }
 
     // 3. Perform the actual DB operations in a transaction
@@ -119,7 +129,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: `${recordsToInsert.length} créneaux importés avec succès pour ${classesProcessed.size} classe(s).` 
+      message: `✅ ${recordsToInsert.length} créneaux importés avec succès pour ${classesProcessed.size} classe(s).` 
     }, { status: 200 });
 
   } catch (error: any) {
