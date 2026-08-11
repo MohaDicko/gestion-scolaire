@@ -13,7 +13,7 @@ import {
   UserCog, Menu, X, Bell, Award, ClipboardCheck, Landmark,
   Zap, Activity, ShieldAlert, Plus, Package, Loader2, MessageSquare, Moon, Sun, Search
 } from 'lucide-react';
-import AIDashboardAssistant from './AIDashboardAssistant';
+
 import PushNotificationManager from './PushNotificationManager';
 import { CommandPalette } from './ui/CommandPalette';
 import { TourGuide } from './ui/TourGuide';
@@ -478,7 +478,6 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
         </div>
       </main>
 
-      <AIDashboardAssistant />
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
       <TourGuide />
     </div>
