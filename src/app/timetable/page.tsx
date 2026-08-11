@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { CalendarDays, Plus, Clock, Trash2, Loader2, X, AlertCircle, Printer, Sparkles } from 'lucide-react';
+import { CalendarDays, Plus, Clock, Trash2, Loader2, X, AlertCircle, Printer, Download, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
@@ -29,6 +29,8 @@ export default function TimetablePage() {
     const [schedule, setSchedule] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
 
     const [showModal, setShowModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +87,63 @@ export default function TimetablePage() {
     useEffect(() => {
         fetchSchedule();
     }, [fetchSchedule]);
+
+    const exportExcel = async () => {
+        setIsExporting(true);
+        try {
+            const res = await fetch('/api/timetable/export');
+            if (!res.ok) throw new Error();
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'emplois_du_temps.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success('Fichier Excel exporté avec succès');
+        } catch (e) {
+            toast.error('Erreur lors de l\'export');
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsImporting(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/timetable/import', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (!res.ok) {
+                if (data.details) {
+                    console.error("Import erreurs:", data.details);
+                    toast.error(data.error + " (Voir console pour détails)");
+                } else {
+                    toast.error(data.error || 'Erreur lors de l\'import');
+                }
+                return;
+            }
+            
+            toast.success(data.message || 'Importation réussie');
+            fetchSchedule();
+        } catch (err) {
+            toast.error('Erreur de connexion lors de l\'import');
+        } finally {
+            setIsImporting(false);
+            e.target.value = ''; // reset file input
+        }
+    };
 
     const generatePDF = () => {
         if (!selectedClassroom || schedule.length === 0) return;
@@ -190,31 +249,17 @@ export default function TimetablePage() {
                     </button>
                     <button 
                         className="btn-outline" 
-                        onClick={async () => {
-                          if (!selectedClassroom) return;
-                          if (!confirm("Voulez-vous générer automatiquement l'emploi du temps ? Cela remplacera le planning existant pour cette classe.")) return;
-                          setIsGenerating(true);
-                          try {
-                            const res = await fetch('/api/timetable/generate', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ classroomId: selectedClassroom })
-                            });
-                            if (!res.ok) throw new Error();
-                            toast.success("Emploi du temps généré avec succès !");
-                            fetchSchedule();
-                          } catch (e) {
-                            toast.error("Erreur lors de la génération");
-                          } finally {
-                            setIsGenerating(false);
-                          }
-                        }}
-                        disabled={!selectedClassroom || isGenerating}
-                        style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}
+                        onClick={exportExcel}
+                        disabled={isExporting}
                     >
-                        {isGenerating ? <Loader2 size={15} className="spin" /> : <Sparkles size={15} />}
-                        Générer via IA
+                        {isExporting ? <Loader2 size={15} className="spin" /> : <Download size={15} />}
+                        Exporter Excel
                     </button>
+                    <label className={`btn-outline ${isImporting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                        {isImporting ? <Loader2 size={15} className="spin" /> : <Upload size={15} />}
+                        Importer Excel
+                        <input type="file" accept=".xlsx, .xls" style={{ display: 'none' }} onChange={handleImportExcel} disabled={isImporting} />
+                    </label>
                     <button 
                         className="btn-primary" 
                         onClick={() => setShowModal(true)}
