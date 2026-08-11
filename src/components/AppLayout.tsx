@@ -44,7 +44,6 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Mon Espace',
     items: [
       { label: 'Tableau de Bord',   href: '/dashboard',       icon: <LayoutDashboard size={18}/> },
-      { label: 'Messagerie',        href: '/chat',            icon: <MessageSquare size={18}/> },
     ]
   },
   {

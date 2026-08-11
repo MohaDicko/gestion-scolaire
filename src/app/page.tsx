@@ -150,7 +150,7 @@ export default function LandingPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
               </span>
-              Nouvelle version 3.0 propulsée par l'IA
+              Plateforme 100% Cloud pour Établissements d'Excellence
             </motion.div>
             
             <motion.h1 variants={fadeUp} className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1]">

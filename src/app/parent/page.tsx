@@ -5,7 +5,7 @@ import AppLayout from '@/components/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, BookOpen, Receipt, AlertTriangle, CheckCircle2, ChevronRight, BellRing } from 'lucide-react';
+import { Loader2, User, BookOpen, Receipt, AlertTriangle, CheckCircle2, ChevronRight, BellRing, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function ParentDashboard() {
@@ -47,9 +47,11 @@ export default function ParentDashboard() {
               Suivez la scolarité de vos enfants en temps réel. S'il y a une urgence, l'école vous contactera directement via la messagerie.
             </p>
           </div>
-          <Button onClick={() => router.push('/chat')} className="rounded-xl shrink-0">
-            <BellRing className="w-4 h-4 mr-2" /> Contacter l'école
+          <div className="flex flex-col sm:flex-row gap-4 mt-6">
+          <Button variant="outline" className="rounded-xl flex-1 justify-between bg-zinc-50 border-zinc-200">
+            Dernier Bulletin <FileText size={16} className="text-zinc-500" />
           </Button>
+        </div>
         </div>
 
         {/* Loading State */}
