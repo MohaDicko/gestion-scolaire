@@ -248,19 +248,6 @@ export default function TimetablePage() {
                         {isGenerating ? 'Génération...' : 'Imprimer PDF'}
                     </button>
                     <button 
-                        className="btn-outline" 
-                        onClick={exportExcel}
-                        disabled={isExporting}
-                    >
-                        {isExporting ? <Loader2 size={15} className="spin" /> : <Download size={15} />}
-                        Exporter Excel
-                    </button>
-                    <label className={`btn-outline ${isImporting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                        {isImporting ? <Loader2 size={15} className="spin" /> : <Upload size={15} />}
-                        Importer Excel
-                        <input type="file" accept=".xlsx, .xls" style={{ display: 'none' }} onChange={handleImportExcel} disabled={isImporting} />
-                    </label>
-                    <button 
                         className="btn-primary" 
                         onClick={() => setShowModal(true)}
                         disabled={!selectedClassroom}
@@ -271,14 +258,40 @@ export default function TimetablePage() {
             }
         >
             <div className="card shadow-sm" style={{ padding: '24px', marginBottom: '8px' }}>
-                <div className="form-group" style={{ maxWidth: '400px' }}>
-                    <label>Sélectionner une Classe</label>
-                    <select value={selectedClassroom} onChange={(e) => setSelectedClassroom(e.target.value)} className="form-input">
-                        <option value="">-- Choisissez une classe --</option>
-                        {classrooms.map(c => (
-                            <option key={c.id} value={c.id}>{c.name} {c.stream ? `(${c.stream})` : ''}</option>
-                        ))}
-                    </select>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', flexWrap: 'wrap' }}>
+                    <div className="form-group" style={{ flex: '1', minWidth: '200px', maxWidth: '400px', marginBottom: 0 }}>
+                        <label>Sélectionner une Classe</label>
+                        <select value={selectedClassroom} onChange={(e) => setSelectedClassroom(e.target.value)} className="form-input">
+                            <option value="">-- Choisissez une classe --</option>
+                            {classrooms.map(c => (
+                                <option key={c.id} value={c.id}>{c.name} {c.stream ? `(${c.stream})` : ''}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', paddingBottom: '2px' }}>
+                        <button
+                            className="btn-outline"
+                            onClick={exportExcel}
+                            disabled={isExporting}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            {isExporting ? <Loader2 size={15} className="spin" /> : <Download size={15} />}
+                            Exporter Excel
+                        </button>
+                        <label
+                            style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                                padding: '8px 16px', borderRadius: '8px', cursor: isImporting ? 'not-allowed' : 'pointer',
+                                border: '1px solid var(--border)', background: 'transparent',
+                                color: 'var(--text)', fontSize: '14px', fontWeight: 500,
+                                opacity: isImporting ? 0.6 : 1, transition: 'all 0.2s'
+                            }}
+                        >
+                            {isImporting ? <Loader2 size={15} className="spin" /> : <Upload size={15} />}
+                            Importer Excel
+                            <input type="file" accept=".xlsx, .xls" style={{ display: 'none' }} onChange={handleImportExcel} disabled={isImporting} />
+                        </label>
+                    </div>
                 </div>
             </div>
 
