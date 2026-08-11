@@ -1,23 +1,16 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Activity, Clock, UserCheck, GraduationCap, BookOpen, ChevronRight, Sun, Moon, CloudSun } from 'lucide-react';
+import { 
+  Activity, Clock, UserCheck, GraduationCap, BookOpen, 
+  ChevronRight, Sun, Moon, CloudSun, AlertCircle, 
+  CheckCircle2, Plus, Receipt, FileText, ArrowRight, Wallet
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { Button } from '@/components/ui/button';
-
-// Extracted Components
-import dynamic from 'next/dynamic';
-import { ShadcnStats } from '@/components/dashboard/ShadcnStats';
-import { QuickActionGrid } from '@/components/dashboard/QuickActionGrid';
-import { SystemHealth } from '@/components/shared/SystemHealth';
-
-// Dynamically import heavy components
-const FinanceChart = dynamic(() => import('@/components/dashboard/FinanceChart').then(mod => mod.FinanceChart), { ssr: false, loading: () => <div className="h-[280px] w-full animate-pulse bg-slate-100 dark:bg-slate-800/50 rounded-3xl m-2" /> });
-const ActivityFeed = dynamic(() => import('@/components/dashboard/ActivityFeed').then(mod => mod.ActivityFeed), { loading: () => <div className="h-[200px] w-full animate-pulse bg-slate-100 dark:bg-slate-800/50 rounded-3xl m-2" /> });
-
 import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
@@ -57,11 +50,11 @@ export default function DashboardPage() {
         setStats(data);
       }
     } catch {
-      toast.error('Échec du chargement des statistiques');
+      // toast.error('Échec du chargement des statistiques');
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     try {
@@ -83,123 +76,159 @@ export default function DashboardPage() {
     fetchStats(); 
   }, [fetchStats, router]);
 
-  const secondaryKpis = [
-    { label: 'Congés en attente', value: stats.pendingLeaves || 3, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10', href: '/hr/leaves' },
-    { label: 'Taux de présence', value: '92%', icon: UserCheck, color: 'text-emerald-500', bg: 'bg-emerald-500/10', href: '/attendance' },
-    { label: 'Classes actives', value: '12', icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10', href: '/classrooms' },
-    { label: 'Cours planifiés', value: '48', icon: BookOpen, color: 'text-purple-500', bg: 'bg-purple-500/10', href: '/timetable' },
+  // Actions métier rapides
+  const quickActions = [
+    { label: "Nouvelle Inscription", icon: Plus, desc: "Ajouter un élève", color: "bg-indigo-500", href: "/students/enroll" },
+    { label: "Encaisser un paiement", icon: Wallet, desc: "Frais de scolarité", color: "bg-emerald-500", href: "/finance/payments" },
+    { label: "Saisie des notes", icon: FileText, desc: "Trimestre en cours", color: "bg-purple-500", href: "/grades" },
+    { label: "Faire l'appel", icon: UserCheck, desc: "Présences du jour", color: "bg-amber-500", href: "/attendance" },
+  ];
+
+  // Tâches en attente (Logique métier pure)
+  const pendingTasks = [
+    { id: 1, type: 'finance', title: '12 factures échues', desc: 'Frais de scolarité non réglés (Novembre)', priority: 'high', action: 'Relancer' },
+    { id: 2, type: 'hr', title: '3 demandes de congé', desc: 'Professeurs absents pour la semaine prochaine', priority: 'medium', action: 'Examiner' },
+    { id: 3, type: 'academic', title: 'Validation des bulletins', desc: 'Bulletins du 1er trimestre prêts pour signature', priority: 'medium', action: 'Valider' },
   ];
 
   return (
     <AppLayout
-      title={`${greeting}, Ousmane 👋`}
-      subtitle="Voici un aperçu en temps réel de votre établissement."
-      breadcrumbs={[{ label: 'Tableau de bord' }]}
+      title={`${greeting} 👋`}
+      subtitle="Que souhaitez-vous faire aujourd'hui ?"
+      breadcrumbs={[{ label: 'Espace de Travail' }]}
       actions={
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
             <WeatherIcon size={18} className="text-amber-500" />
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
               {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
           </div>
-          <Button 
-            onClick={fetchStats} 
-            className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-xl shadow-lg transition-transform active:scale-95"
-          >
-            <Activity size={16} className="mr-2" />
-            Actualiser
-          </Button>
         </div>
       }
     >
       <motion.div 
-        className="flex flex-col gap-8 pb-10"
+        className="flex flex-col gap-8 pb-10 max-w-6xl mx-auto"
         initial="hidden"
         animate="visible"
         variants={{
           hidden: { opacity: 0 },
           visible: {
             opacity: 1,
-            transition: { staggerChildren: 0.15 }
+            transition: { staggerChildren: 0.1 }
           }
         }}
       >
         
-        {/* KPI Grid (Top) */}
-        <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }}>
-          <ShadcnStats stats={stats} isLoading={isLoading} />
+        {/* ── Section : Raccourcis Métier ── */}
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <h2 className="text-lg font-black text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+            <Activity size={20} className="text-indigo-500" />
+            Actions Rapides
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {quickActions.map((action, idx) => (
+              <div
+                key={idx}
+                onClick={() => router.push(action.href)}
+                className="group cursor-pointer bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 hover:shadow-xl hover:border-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden"
+              >
+                <div className={`absolute top-0 right-0 w-24 h-24 ${action.color}/5 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity`} />
+                <div className={`w-12 h-12 rounded-xl ${action.color} text-white flex items-center justify-center mb-4 shadow-lg shadow-${action.color}/30`}>
+                  <action.icon size={24} />
+                </div>
+                <h3 className="font-bold text-zinc-900 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  {action.label}
+                </h3>
+                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                  {action.desc}
+                </p>
+                <div className="absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
+                  <ArrowRight size={20} className="text-indigo-500" />
+                </div>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
-        {/* Bento Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4">
           
-          {/* Main Chart Section (Spans 8 cols) */}
-          <motion.div 
-            className="lg:col-span-8 flex flex-col gap-6"
-            variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}
-          >
-            <FinanceChart isLoading={isLoading} />
+          {/* ── Section : Actions Requises (To-Do) ── */}
+          <motion.div className="lg:col-span-2 flex flex-col gap-4" variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}>
+            <h2 className="text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
+              <AlertCircle size={20} className="text-amber-500" />
+              Tâches en attente
+            </h2>
             
-            {/* Secondary KPIs (Horizontal Scroll on Mobile, Grid on Desktop) */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {secondaryKpis.map((kpi, i) => (
-                <div
-                  key={i}
-                  className="group relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-                  onClick={() => router.push(kpi.href)}
-                >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-transparent to-slate-100 dark:to-slate-800/50 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative z-10">
-                    <div className={`w-10 h-10 rounded-xl ${kpi.bg} ${kpi.color} flex items-center justify-center mb-4`}>
-                      <kpi.icon size={20} strokeWidth={2.5} />
-                    </div>
-                    <div className="text-2xl font-black text-slate-900 dark:text-white mb-1">
-                      {isLoading ? '...' : kpi.value}
-                    </div>
-                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                      <span>{kpi.label}</span>
-                      <ChevronRight size={14} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-slate-400" />
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-2 shadow-sm">
+              {pendingTasks.map((task, idx) => (
+                <div key={task.id} className={`flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center p-4 sm:p-5 ${idx !== pendingTasks.length - 1 ? 'border-b border-zinc-100 dark:border-zinc-800/60' : ''} hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-2xl transition-colors`}>
+                  <div className="flex items-start gap-4">
+                    <div className={`w-2 h-2 mt-2 rounded-full shrink-0 ${task.priority === 'high' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]'}`} />
+                    <div>
+                      <h4 className="font-bold text-zinc-900 dark:text-white text-base leading-snug">{task.title}</h4>
+                      <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">{task.desc}</p>
                     </div>
                   </div>
+                  <Button variant="outline" className="shrink-0 w-full sm:w-auto font-bold hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 border-zinc-200 dark:border-zinc-700">
+                    {task.action}
+                  </Button>
                 </div>
               ))}
+              <div className="p-4 text-center">
+                <button className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                  Voir toutes les tâches (12)
+                </button>
+              </div>
             </div>
-            
-            <ActivityFeed />
           </motion.div>
 
-          {/* Right Sidebar Section (Spans 4 cols) */}
-          <motion.div 
-            className="lg:col-span-4 flex flex-col gap-6"
-            variants={{ hidden: { opacity: 0, x: 20 }, visible: { opacity: 1, x: 0 } }}
-          >
-            <QuickActionGrid />
+          {/* ── Section : État Rapide ── */}
+          <motion.div className="flex flex-col gap-4" variants={{ hidden: { opacity: 0, x: 20 }, visible: { opacity: 1, x: 0 } }}>
+            <h2 className="text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
+              <CheckCircle2 size={20} className="text-emerald-500" />
+              État de la journée
+            </h2>
             
-            {/* Ad / Banner Block (Realistic SaaS touch) */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-white shadow-xl shadow-indigo-500/20">
-              <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
-              <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-black/10 blur-2xl" />
-              
-              <div className="relative z-10">
-                <div className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-white/20">
-                  Nouveau
+            <div className="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="flex flex-col gap-6">
+                <div>
+                  <div className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-1">Présence Élèves</div>
+                  <div className="flex items-end gap-2">
+                    <span className="text-4xl font-black">94%</span>
+                    <span className="text-sm font-medium text-emerald-400 mb-1">+2% vs hier</span>
+                  </div>
+                  <div className="w-full bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '94%' }} />
+                  </div>
                 </div>
-                <h3 className="text-xl font-black mb-2 leading-tight">Portail Parents Actif</h3>
-                <p className="text-sm text-indigo-100 font-medium mb-6">
-                  Invitez les parents à consulter les notes et absences de leurs enfants en temps réel via leur portail.
-                </p>
-                <Button className="w-full bg-white text-indigo-600 hover:bg-slate-50 font-bold rounded-xl shadow-lg">
-                  Gérer les accès
-                </Button>
+
+                <div className="h-px w-full bg-white/10" />
+
+                <div>
+                  <div className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-1">Recouvrement</div>
+                  <div className="flex items-end gap-2">
+                    <span className="text-4xl font-black">12.5M</span>
+                    <span className="text-sm font-medium text-indigo-200 mb-1">FCFA</span>
+                  </div>
+                  <p className="text-xs text-indigo-200 mt-2 font-medium">85% des frais du mois réglés</p>
+                </div>
               </div>
             </div>
 
-            <SystemHealth />
+            {/* Aide rapide */}
+            <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-3xl p-5 mt-2">
+              <h4 className="font-bold text-indigo-900 dark:text-indigo-200 mb-2">Besoin d'aide ?</h4>
+              <p className="text-sm text-indigo-700/80 dark:text-indigo-300/80 font-medium mb-4 leading-relaxed">
+                Notre nouvel assistant IA peut vous aider à générer des rapports ou trouver un élève instantanément.
+              </p>
+              <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">
+                Ouvrir l'Assistant
+              </Button>
+            </div>
           </motion.div>
-          
-        </div>
 
+        </div>
       </motion.div>
     </AppLayout>
   );

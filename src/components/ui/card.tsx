@@ -16,9 +16,9 @@ function Card({
   noPadding?: boolean;
 }) {
   const variantMap: Record<CardVariant, string> = {
-    default:  'bg-bg-3/80 border border-border',
-    glass:    'bg-bg-glass backdrop-blur-xl border border-border-md',
-    elevated: 'bg-bg-3 border border-border shadow-card',
+    default:  'bg-bg-2 dark:bg-zinc-950 border border-border shadow-sm hover:shadow-md transition-all duration-300',
+    glass:    'bg-white/40 dark:bg-zinc-950/40 backdrop-blur-xl border border-white/20 dark:border-zinc-800/50 shadow-xl shadow-indigo-900/5 hover:shadow-2xl hover:shadow-indigo-900/10 transition-all duration-500',
+    elevated: 'bg-bg-2 border border-border shadow-lg shadow-black/5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300',
     flat:     'bg-transparent border-none shadow-none',
   };
   return (

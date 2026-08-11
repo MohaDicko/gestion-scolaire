@@ -2,16 +2,34 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { 
   Shield, Zap, Users, BarChart3, ArrowRight, 
   GraduationCap, Globe, Lock, Cpu, Star, CheckCircle2,
-  Menu, X, Play
+  Menu, X, Play, ChevronRight, BookOpen, Clock, Activity
 } from 'lucide-react';
+
+// Animation Variants
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 15 } }
+};
 
 export default function LandingPage() {
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { scrollY } = useScroll();
+  const y1 = useTransform(scrollY, [0, 1000], [0, 200]);
+  const y2 = useTransform(scrollY, [0, 1000], [0, -200]);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -21,614 +39,434 @@ export default function LandingPage() {
 
   const features = [
     {
-      icon: <Users size={24} />,
+      icon: <Users className="text-indigo-600 dark:text-indigo-400" size={28} />,
       title: "Gestion des Élèves",
-      desc: "Suivi complet du cycle de vie de l'élève, de l'inscription à la diplomation avec cartes d'identité à codes-barres."
+      desc: "Suivi complet du cycle de vie de l'élève, de l'inscription à la diplomation avec cartes d'identité à codes-barres.",
+      color: "bg-indigo-100 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800/60"
     },
     {
-      icon: <BarChart3 size={24} />,
+      icon: <BarChart3 className="text-purple-600 dark:text-purple-400" size={28} />,
       title: "Pilotage Stratégique",
-      desc: "Tableaux de bord exécutifs en temps réel pour une vision claire de la santé financière et académique."
+      desc: "Tableaux de bord exécutifs en temps réel pour une vision claire de la santé financière et académique.",
+      color: "bg-purple-100 dark:bg-purple-900/40 border-purple-200 dark:border-purple-800/60"
     },
     {
-      icon: <Shield size={24} />,
+      icon: <Shield className="text-emerald-600 dark:text-emerald-400" size={28} />,
       title: "Sécurité Multi-Tenant",
-      desc: "Isolation stricte des données et protection de grade bancaire pour la confidentialité de votre établissement."
+      desc: "Isolation stricte des données et protection de grade bancaire pour la confidentialité de votre établissement.",
+      color: "bg-emerald-100 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800/60"
     },
     {
-      icon: <Zap size={24} />,
+      icon: <Zap className="text-amber-600 dark:text-amber-400" size={28} />,
       title: "Paie Malienne Intégrée",
-      desc: "Calcul automatique de l'ITS, INPS et AMO conforme au Code du Travail et au CGI du Mali."
+      desc: "Calcul automatique de l'ITS, INPS et AMO conforme au Code du Travail et au CGI du Mali.",
+      color: "bg-amber-100 dark:bg-amber-900/40 border-amber-200 dark:border-amber-800/60"
     }
   ];
 
   return (
-    <div className="landing-root">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans overflow-x-hidden selection:bg-indigo-500/30">
+      
       {/* ── Navigation ────────────────────────────────────────── */}
-      <nav className={`nav ${isScrolled ? 'nav-scrolled' : ''}`}>
-        <div className="nav-container">
-          <div className="nav-logo" onClick={() => window.scrollTo(0, 0)}>
-            <div className="logo-box">
-              <GraduationCap size={22} color="#fff" />
+      <motion.nav 
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled 
+            ? 'py-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 shadow-sm' 
+            : 'py-6 bg-transparent'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo(0, 0)}>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
+              <GraduationCap size={24} className="text-white" />
             </div>
-            <span className="logo-text">SchoolERP<span className="text-primary">.pro</span></span>
+            <span className="text-xl font-bold tracking-tight">
+              SchoolERP<span className="text-indigo-600 dark:text-indigo-400">.pro</span>
+            </span>
           </div>
 
-          <div className="nav-links desktop-only">
-            <a href="#features">Fonctionnalités</a>
-            <a href="#solutions">Solutions</a>
-            <a href="#pricing">Tarifs</a>
-            <button className="btn-login" onClick={() => router.push('/login')}>Connexion Admin</button>
-            <button className="btn-get-started" onClick={() => router.push('/login')}>Essai Gratuit</button>
+          <div className="hidden md:flex items-center gap-8 font-medium text-sm">
+            <a href="#features" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Fonctionnalités</a>
+            <a href="#solutions" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Solutions</a>
+            <a href="#pricing" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Tarifs</a>
+            
+            <div className="flex items-center gap-4 ml-4">
+              <button 
+                onClick={() => router.push('/login')}
+                className="px-5 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors font-semibold"
+              >
+                Connexion
+              </button>
+              <button 
+                onClick={() => router.push('/login')}
+                className="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 transition-all hover:scale-105 active:scale-95 font-semibold"
+              >
+                Essai Gratuit
+              </button>
+            </div>
           </div>
 
-          <button className="mobile-menu-toggle mobile-only" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <button className="md:hidden text-zinc-900 dark:text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* ── Mobile Menu ───────────────────────────────────────── */}
       {mobileMenuOpen && (
-        <div className="mobile-menu animate-fade">
-          <a href="#features" onClick={() => setMobileMenuOpen(false)}>Fonctionnalités</a>
-          <a href="#solutions" onClick={() => setMobileMenuOpen(false)}>Solutions</a>
-          <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Tarifs</a>
-          <button className="btn-primary w-full" onClick={() => router.push('/login')}>Démarrer</button>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed inset-x-0 top-[72px] bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 p-6 flex flex-col gap-4 z-40 shadow-2xl md:hidden"
+        >
+          <a href="#features" className="text-lg font-medium p-2 border-b border-zinc-100 dark:border-zinc-900" onClick={() => setMobileMenuOpen(false)}>Fonctionnalités</a>
+          <a href="#solutions" className="text-lg font-medium p-2 border-b border-zinc-100 dark:border-zinc-900" onClick={() => setMobileMenuOpen(false)}>Solutions</a>
+          <a href="#pricing" className="text-lg font-medium p-2 border-b border-zinc-100 dark:border-zinc-900" onClick={() => setMobileMenuOpen(false)}>Tarifs</a>
+          <button className="w-full mt-4 py-3 rounded-xl bg-indigo-600 text-white font-bold" onClick={() => router.push('/login')}>Démarrer</button>
+        </motion.div>
       )}
 
       {/* ── Hero Section ──────────────────────────────────────── */}
-      <section className="hero">
-        <div className="hero-bg-orbs">
-          <div className="orb orb-1"></div>
-          <div className="orb orb-2"></div>
+      <section className="relative pt-40 pb-20 md:pt-52 md:pb-32 overflow-hidden">
+        {/* Background Gradients */}
+        <div className="absolute top-0 inset-x-0 h-screen overflow-hidden pointer-events-none -z-10">
+          <motion.div style={{ y: y1 }} className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] rounded-full bg-indigo-500/20 dark:bg-indigo-600/20 blur-[120px]" />
+          <motion.div style={{ y: y2 }} className="absolute top-[20%] -left-[10%] w-[500px] h-[500px] rounded-full bg-purple-500/20 dark:bg-purple-600/20 blur-[100px]" />
+          <div className="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-zinc-50 dark:from-zinc-950 to-transparent" />
         </div>
 
-        <div className="container hero-content">
-          <div className="hero-text animate-up">
-            <div className="badge-promo">
-              <span className="pulse"></span> Nouvelle version 2.0 disponible
-            </div>
-            <h1 className="hero-title">
-              L'Elite de la Gestion <br />
-              <span className="text-grad">Scolaire au Mali</span>
-            </h1>
-            <p className="hero-lead">
+        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+          <motion.div 
+            initial="hidden"
+            animate="show"
+            variants={staggerContainer}
+            className="max-w-2xl"
+          >
+            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-sm font-semibold mb-8">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+              </span>
+              Nouvelle version 3.0 propulsée par l'IA
+            </motion.div>
+            
+            <motion.h1 variants={fadeUp} className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1]">
+              L'Élite de la Gestion <br />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                Scolaire au Mali
+              </span>
+            </motion.h1>
+            
+            <motion.p variants={fadeUp} className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 mb-10 leading-relaxed">
               Digitalisez votre établissement avec la plateforme la plus avancée du marché. 
-              Gérez inscriptions, emplois du temps, notes et paie en toute simplicité.
-            </p>
-            <div className="hero-actions">
-              <button className="btn-hero-primary" onClick={() => router.push('/login')}>
-                Démarrer maintenant <ArrowRight size={18} />
+              Pilotez les inscriptions, les notes, et la paie (ITS, INPS, AMO) depuis un espace unifié et sécurisé.
+            </motion.p>
+            
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 mb-12">
+              <button 
+                onClick={() => router.push('/login')}
+                className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg shadow-xl shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95"
+              >
+                Démarrer l'expérience <ArrowRight size={20} />
               </button>
-              <button className="btn-hero-outline">
-                <Play size={16} fill="currentColor" /> Voir la démo
+              <button className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white font-bold text-lg shadow-sm hover:shadow-md transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                <Play size={20} className="text-indigo-600 dark:text-indigo-400" /> Voir la démo
               </button>
-            </div>
-            <div className="hero-social">
-              <div className="avatars">
-                {[1,2,3,4].map(i => <div key={i} className="avatar-mini" style={{background: `var(--bg-${i})`, border: '2px solid var(--bg)'}} />)}
+            </motion.div>
+            
+            <motion.div variants={fadeUp} className="flex items-center gap-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <div className="flex -space-x-3">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className={`w-10 h-10 rounded-full border-2 border-white dark:border-zinc-950 bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-700 z-${4-i}`} />
+                ))}
               </div>
-              <span>Rejoint par +150 établissements en Afrique de l'Ouest</span>
-            </div>
-          </div>
+              <p>Adopté par <strong className="text-zinc-900 dark:text-white">+150 établissements</strong> d'excellence</p>
+            </motion.div>
+          </motion.div>
 
-          <div className="hero-visual animate-fade">
-             <div className="glass-mockup">
-                <div className="mockup-header">
-                  <div className="dots"><span></span><span></span><span></span></div>
-                  <div className="address-bar">admin.schoolerp.pro</div>
+          <motion.div 
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, type: 'spring' }}
+            className="relative hidden md:block"
+          >
+            {/* Main Glass Mockup */}
+            <div className="relative z-10 w-full rounded-3xl border border-white/40 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl shadow-2xl shadow-indigo-900/10 p-3 overflow-hidden transform perspective-[2000px] rotate-y-[-12deg] rotate-x-[8deg]">
+              <div className="bg-white dark:bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-200/50 dark:border-zinc-800/50 shadow-inner">
+                {/* Mockup Header */}
+                <div className="flex items-center gap-2 px-4 py-3 bg-zinc-100/50 dark:bg-zinc-900/50 border-b border-zinc-200/50 dark:border-zinc-800/50">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400 shadow-sm" />
+                    <div className="w-3 h-3 rounded-full bg-amber-400 shadow-sm" />
+                    <div className="w-3 h-3 rounded-full bg-green-400 shadow-sm" />
+                  </div>
+                  <div className="mx-auto bg-white dark:bg-zinc-950 px-6 py-1.5 rounded-md text-[11px] text-zinc-500 font-medium shadow-sm border border-zinc-200/50 dark:border-zinc-800/50 flex items-center gap-2">
+                    <Lock size={12} /> admin.schoolerp.pro
+                  </div>
                 </div>
-                <div className="mockup-content">
-                   <div className="skeleton-line" style={{width: '60%', height: '14px', marginBottom: '20px'}}></div>
-                   <div className="mockup-grid">
-                      <div className="skeleton-card"></div>
-                      <div className="skeleton-card"></div>
-                      <div className="skeleton-card"></div>
-                      <div className="skeleton-card"></div>
-                   </div>
-                   <div className="skeleton-line" style={{width: '100%', height: '100px', marginTop: '20px', borderRadius: '12px'}}></div>
+                {/* Mockup Body */}
+                <div className="p-8">
+                  <div className="flex justify-between items-center mb-8">
+                    <div>
+                      <div className="h-6 w-40 bg-zinc-200 dark:bg-zinc-800 rounded-md mb-3" />
+                      <div className="h-4 w-60 bg-zinc-100 dark:bg-zinc-900 rounded-md" />
+                    </div>
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+                       <div className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-950" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-6 mb-8">
+                    <div className="p-5 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-200/50 dark:bg-indigo-500/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                      <Users className="text-indigo-600 dark:text-indigo-400 mb-3" size={24} />
+                      <div className="text-3xl font-extrabold text-zinc-900 dark:text-white mb-1">1,420</div>
+                      <div className="text-sm text-indigo-600/80 dark:text-indigo-400 font-semibold">Élèves Actifs</div>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-emerald-200/50 dark:bg-emerald-500/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                      <Activity className="text-emerald-600 dark:text-emerald-400 mb-3" size={24} />
+                      <div className="text-3xl font-extrabold text-zinc-900 dark:text-white mb-1">98%</div>
+                      <div className="text-sm text-emerald-600/80 dark:text-emerald-400 font-semibold">Taux Présence</div>
+                    </div>
+                  </div>
+                  <div className="h-40 w-full rounded-2xl bg-gradient-to-r from-zinc-100 to-zinc-50 dark:from-zinc-900 dark:to-zinc-800 border border-zinc-200/50 dark:border-zinc-800/50 flex flex-col justify-end p-4">
+                     {/* Fake Chart Lines */}
+                     <div className="flex items-end gap-2 h-full opacity-50">
+                       {[30, 50, 40, 70, 60, 90, 80, 100].map((h, i) => (
+                         <div key={i} className="flex-1 bg-indigo-200 dark:bg-indigo-800/50 rounded-t-md" style={{ height: `${h}%` }}></div>
+                       ))}
+                     </div>
+                  </div>
                 </div>
-             </div>
-             <div className="floating-stat stat-1 animate-float">
-                <Users size={16} color="var(--primary)" />
-                <div>
-                   <div className="stat-n">1,420</div>
-                   <div className="stat-l">Élèves actifs</div>
-                </div>
-             </div>
-             <div className="floating-stat stat-2 animate-float" style={{animationDelay: '1s'}}>
-                <Zap size={16} color="#f5a623" />
-                <div>
-                   <div className="stat-n">100%</div>
-                   <div className="stat-l">Conformité DREN</div>
-                </div>
-             </div>
-          </div>
+              </div>
+            </div>
+
+            {/* Floating Elements */}
+            <motion.div 
+              animate={{ y: [0, -20, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -left-16 top-1/3 z-20 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md p-4 rounded-2xl shadow-xl shadow-indigo-900/10 border border-zinc-200 dark:border-zinc-800 flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                <CheckCircle2 size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-zinc-900 dark:text-white">Paie Validée</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">INPS & AMO calculés</p>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              animate={{ y: [0, 20, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute -right-12 bottom-1/4 z-20 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md p-4 rounded-2xl shadow-xl shadow-purple-900/10 border border-zinc-200 dark:border-zinc-800 flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800/60">
+                <GraduationCap size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-zinc-900 dark:text-white">Notes publiées</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">1er Trimestre 2026</p>
+              </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── Features Grid ─────────────────────────────────────── */}
-      <section id="features" className="features">
-        <div className="container">
-          <div className="section-header text-center animate-up">
-            <h2 className="section-title">Tout ce dont vous avez besoin</h2>
-            <p className="section-subtitle">
-              Une solution de bout-en-bout conçue pour les directeurs d'établissements exigeants.
+      {/* ── Features Section ──────────────────────────────────── */}
+      <section id="features" className="py-32 bg-white dark:bg-zinc-950 relative z-10 border-y border-zinc-200 dark:border-zinc-900">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight">
+              Tout ce dont vous avez besoin, <br/><span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">réinventé.</span>
+            </h2>
+            <p className="text-xl text-zinc-600 dark:text-zinc-400">
+              Une architecture modulaire pensée pour les directeurs d'établissements exigeants. Fini les tableurs Excel dispersés et les erreurs de paie.
             </p>
           </div>
 
-          <div className="features-grid">
-            {features.map((f, i) => (
-              <div key={i} className="feature-card animate-up" style={{animationDelay: `${i * 0.1}s`}}>
-                <div className="feature-icon">{f.icon}</div>
-                <h3 className="feature-title">{f.title}</h3>
-                <p className="feature-desc">{f.desc}</p>
-              </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, delay: i * 0.1, type: "spring", stiffness: 100 }}
+                className="group relative p-8 rounded-[2rem] bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 dark:bg-indigo-400/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+                <div className={`w-16 h-16 rounded-2xl ${feature.color} border flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 relative z-10`}>
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold mb-4 text-zinc-900 dark:text-white relative z-10">{feature.title}</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed text-sm relative z-10">
+                  {feature.desc}
+                </p>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Pricing Section ─────────────────────────────────────── */}
-      <section id="pricing" className="pricing">
-        <div className="container">
-          <div className="section-header text-center animate-up">
-            <h2 className="section-title">Des Tarifs Transparents</h2>
-            <p className="section-subtitle">
-              Choisissez le pack adapté à la taille de votre établissement.
+      {/* ── Pricing Section ───────────────────────────────────── */}
+      <section id="pricing" className="py-32 relative overflow-hidden bg-zinc-50 dark:bg-zinc-900/30">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-indigo-500/10 dark:bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-20">
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight">Des tarifs transparents</h2>
+            <p className="text-xl text-zinc-600 dark:text-zinc-400">
+              Des forfaits adaptés à la taille et aux ambitions de votre établissement. Sans frais cachés.
             </p>
           </div>
 
-          <div className="pricing-grid">
+          <div className="grid md:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
             {/* Starter */}
-            <div className="pricing-card animate-up">
-              <div className="p-header">
-                <h3 className="p-name">Starter</h3>
-                <div className="p-price">150.000 <span>FCFA / an</span></div>
-                <p className="p-target">Idéal pour les structures de moins de 250 élèves.</p>
-              </div>
-              <ul className="p-features">
-                <li><CheckCircle2 size={18} className="text-primary" /> Inscriptions & Dossiers élèves</li>
-                <li><CheckCircle2 size={18} className="text-primary" /> Bulletins de notes digitaux</li>
-                <li><CheckCircle2 size={18} className="text-primary" /> Suivi des frais de scolarité</li>
-                <li className="disabled"><X size={18} /> Module RH & Paie Mali</li>
-                <li className="disabled"><X size={18} /> Notifications Automatiques</li>
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="p-8 rounded-[2.5rem] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-xl"
+            >
+              <h3 className="text-2xl font-bold mb-2">Starter</h3>
+              <p className="text-zinc-500 text-sm mb-6 font-medium">Idéal pour les structures &lt; 250 élèves</p>
+              <div className="text-4xl font-extrabold mb-8 text-zinc-900 dark:text-white">150.000 <span className="text-lg text-zinc-400 font-medium">FCFA/an</span></div>
+              <ul className="space-y-4 mb-8">
+                {['Inscriptions & Dossiers', 'Bulletins digitaux', 'Suivi de scolarité'].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 font-medium text-zinc-700 dark:text-zinc-300">
+                    <CheckCircle2 size={22} className="text-indigo-500 shrink-0" /> {item}
+                  </li>
+                ))}
+                {['Module RH & Paie', 'SMS Automatiques'].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 font-medium text-zinc-400 dark:text-zinc-600 line-through">
+                    <X size={22} className="shrink-0" /> {item}
+                  </li>
+                ))}
               </ul>
-              <button className="btn-p-outline" onClick={() => router.push('/login')}>Démarrer</button>
-            </div>
+              <button onClick={() => router.push('/login')} className="w-full py-4 rounded-2xl font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">Démarrer Starter</button>
+            </motion.div>
 
             {/* Business */}
-            <div className="pricing-card featured animate-up">
-              <div className="p-badge">Plus Populaire</div>
-              <div className="p-header">
-                <h3 className="p-name">Business</h3>
-                <div className="p-price">350.000 <span>FCFA / an</span></div>
-                <p className="p-target">Pour les écoles de 250 à 750 élèves.</p>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="relative p-10 rounded-[2.5rem] bg-gradient-to-b from-indigo-900 to-zinc-950 dark:from-indigo-950 dark:to-zinc-950 border border-indigo-500/50 shadow-2xl shadow-indigo-500/20 text-white transform md:-translate-y-4"
+            >
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg shadow-indigo-500/20 border border-indigo-400/30">
+                Plus Populaire
               </div>
-              <ul className="p-features">
-                <li><CheckCircle2 size={18} className="text-primary" /> <strong>Tout du pack Starter</strong></li>
-                <li><CheckCircle2 size={18} className="text-primary" /> Reçus de paiement PDF</li>
-                <li><CheckCircle2 size={18} className="text-primary" /> Cartes ID avec Code-Barres</li>
-                <li><CheckCircle2 size={18} className="text-primary" /> Notifications Emails & SMS</li>
-                <li><CheckCircle2 size={18} className="text-primary" /> Emplois du temps avancés</li>
+              <h3 className="text-2xl font-bold mb-2">Business</h3>
+              <p className="text-indigo-200/80 text-sm mb-6 font-medium">Pour les écoles de 250 à 750 élèves</p>
+              <div className="text-5xl font-extrabold mb-8">350.000 <span className="text-lg text-indigo-300/60 font-medium">FCFA/an</span></div>
+              <ul className="space-y-4 mb-8">
+                {['Tout du pack Starter', 'Reçus PDF automatiques', 'Cartes ID Code-Barres', 'Emails & SMS', 'Emplois du temps avancés'].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 font-medium text-indigo-50">
+                    <CheckCircle2 size={22} className="text-indigo-400 shrink-0" /> {item}
+                  </li>
+                ))}
               </ul>
-              <button className="btn-p-primary" onClick={() => router.push('/login')}>Choisir Business</button>
-            </div>
+              <button onClick={() => router.push('/login')} className="w-full py-4 rounded-2xl font-bold text-indigo-950 bg-white hover:bg-zinc-100 transition-colors shadow-lg hover:scale-105 active:scale-95 duration-200">Choisir Business</button>
+            </motion.div>
 
             {/* Elite */}
-            <div className="pricing-card animate-up">
-              <div className="p-header">
-                <h3 className="p-name">Elite</h3>
-                <div className="p-price">750.000 <span>FCFA / an</span></div>
-                <p className="p-target">Complexes scolaires & Multi-Campus.</p>
-              </div>
-              <ul className="p-features">
-                <li><CheckCircle2 size={18} className="text-primary" /> <strong>Tout du pack Business</strong></li>
-                <li><CheckCircle2 size={18} className="text-primary" /> Paie Malienne (ITS, INPS, AMO)</li>
-                <li><CheckCircle2 size={18} className="text-primary" /> Gestion Multi-Campus centralisée</li>
-                <li><CheckCircle2 size={18} className="text-primary" /> Audit Santé & Stress Test</li>
-                <li><CheckCircle2 size={18} className="text-primary" /> Support VIP 24h/24</li>
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="p-8 rounded-[2.5rem] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-xl"
+            >
+              <h3 className="text-2xl font-bold mb-2">Elite</h3>
+              <p className="text-zinc-500 text-sm mb-6 font-medium">Complexes & Multi-Campus</p>
+              <div className="text-4xl font-extrabold mb-8 text-zinc-900 dark:text-white">750.000 <span className="text-lg text-zinc-400 font-medium">FCFA/an</span></div>
+              <ul className="space-y-4 mb-8">
+                {['Tout du pack Business', 'Paie Malienne (INPS/AMO)', 'Gestion Multi-Campus', 'Audit & Stress Test', 'Support VIP 24/7'].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 font-medium text-zinc-700 dark:text-zinc-300">
+                    <CheckCircle2 size={22} className="text-indigo-500 shrink-0" /> {item}
+                  </li>
+                ))}
               </ul>
-              <button className="btn-p-outline" onClick={() => router.push('/login')}>Démarrer Elite</button>
-            </div>
+              <button onClick={() => router.push('/login')} className="w-full py-4 rounded-2xl font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">Démarrer Elite</button>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ── CTA Section ───────────────────────────────────────── */}
-      <section className="cta animate-fade">
-        <div className="cta-container">
-          <h2 className="cta-title">Prêt à transformer votre établissement ?</h2>
-          <p className="cta-desc">Rejoignez la révolution de l'éducation numérique au Mali.</p>
-          <button className="btn-cta" onClick={() => router.push('/login')}>Créer mon compte établissement</button>
+      {/* ── CTA ───────────────────────────────────────────────── */}
+      <section className="py-32 bg-white dark:bg-zinc-950">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="relative rounded-[3rem] overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 px-8 py-20 md:px-20 md:py-32 text-center shadow-2xl shadow-indigo-900/20"
+          >
+            {/* Background elements */}
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay pointer-events-none"></div>
+            <div className="absolute -top-24 -right-24 w-[500px] h-[500px] bg-purple-500/50 rounded-full mix-blend-screen filter blur-[100px] opacity-60 pointer-events-none"></div>
+            <div className="absolute -bottom-24 -left-24 w-[500px] h-[500px] bg-indigo-400/40 rounded-full mix-blend-screen filter blur-[100px] opacity-60 pointer-events-none"></div>
+            
+            <div className="relative z-10">
+              <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-8 tracking-tight">Prêt à transformer votre école ?</h2>
+              <p className="text-xl md:text-2xl text-indigo-100/90 mb-12 max-w-2xl mx-auto font-medium">
+                Rejoignez la révolution de l'éducation numérique au Mali avec la plateforme la plus performante.
+              </p>
+              <button onClick={() => router.push('/login')} className="px-10 py-5 rounded-2xl bg-white text-indigo-900 font-extrabold text-lg hover:scale-105 active:scale-95 transition-transform shadow-xl shadow-white/10 border border-white/20">
+                Créer mon espace maintenant
+              </button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* ── Footer ────────────────────────────────────────────── */}
-      <footer className="footer">
-        <div className="container">
-          <div className="footer-grid">
-            <div className="footer-brand">
-              <div className="nav-logo">
-                <div className="logo-box"><GraduationCap size={20} color="#fff" /></div>
-                <span className="logo-text">SchoolERP<span className="text-primary">.pro</span></span>
+      <footer className="bg-zinc-50 dark:bg-zinc-950 py-20 border-t border-zinc-200 dark:border-zinc-900">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16">
+          <div className="col-span-2 lg:col-span-2">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <GraduationCap size={20} className="text-white" />
               </div>
-              <p>Modernisation du système éducatif malien par l'innovation technologique.</p>
+              <span className="text-xl font-bold">SchoolERP<span className="text-indigo-600 dark:text-indigo-400">.pro</span></span>
             </div>
-            <div className="footer-links">
-              <h4>Plateforme</h4>
-              <a href="/login">Académie</a>
-              <a href="/login">Finance</a>
-              <a href="/login">RH & Paie</a>
-            </div>
-            <div className="footer-links">
-              <h4>Support</h4>
-              <a href="mailto:support@schoolerp.pro">Aide</a>
-              <a href="mailto:contact@sahelmultiservices.com">Contact</a>
-              <a href="#">Status</a>
-            </div>
-            <div className="footer-links">
-              <h4>Légal</h4>
-              <a href="/login">Confidentialité</a>
-              <a href="/login">Conditions</a>
-            </div>
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm max-w-sm leading-relaxed font-medium">
+              Modernisation du système éducatif malien par l'innovation technologique et l'excellence logicielle. Conçu pour les leaders.
+            </p>
           </div>
-          <div className="footer-bottom">
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              <p>© 2026 SchoolERP Pro. Tous droits réservés.</p>
-              <div className="hidden md:block w-px h-4 bg-zinc-200 mx-2"></div>
-              <p className="text-xs opacity-60">Développé par 
-                <a href="https://sahelmultiservices.com" target="_blank" rel="noopener noreferrer" className="ml-2 text-primary font-black hover:underline">
-                  SAHEL MULTISERVICES
-                </a>
-              </p>
-            </div>
-            <div className="social-icons">
-               <Globe size={18} />
-               <Cpu size={18} />
-               <Star size={18} />
-            </div>
+          <div>
+            <h4 className="font-extrabold text-zinc-900 dark:text-white mb-6 uppercase tracking-wider text-xs">Plateforme</h4>
+            <ul className="space-y-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <li><a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Académie</a></li>
+              <li><a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Finance & Paie</a></li>
+              <li><a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Ressources Humaines</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-extrabold text-zinc-900 dark:text-white mb-6 uppercase tracking-wider text-xs">Support</h4>
+            <ul className="space-y-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <li><a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Centre d'aide</a></li>
+              <li><a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Contactez-nous</a></li>
+              <li><a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Status système</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-extrabold text-zinc-900 dark:text-white mb-6 uppercase tracking-wider text-xs">Légal</h4>
+            <ul className="space-y-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <li><a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Confidentialité</a></li>
+              <li><a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">CGV</a></li>
+            </ul>
           </div>
         </div>
+        <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-zinc-200 dark:border-zinc-900 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">© 2026 SchoolERP Pro. Tous droits réservés.</p>
+          <p className="text-sm font-medium text-zinc-400 dark:text-zinc-500 flex items-center gap-2">
+            Développé avec <span className="text-red-500">❤️</span> par <a href="https://sahelmultiservices.com" className="font-bold text-zinc-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">SAHEL MULTISERVICES</a>
+          </p>
+        </div>
       </footer>
-
-      <style jsx>{`
-        .landing-root {
-          background: #fbfcfd;
-          color: #09090b;
-          font-family: 'Inter', sans-serif;
-          overflow-x: hidden;
-        }
-
-        .container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 24px;
-        }
-
-        /* ── NAV ── */
-        .nav {
-          position: fixed;
-          top: 0; left: 0; right: 0;
-          z-index: 1000;
-          padding: 24px 0;
-          transition: all 0.3s var(--ease);
-        }
-        .nav-scrolled {
-          background: rgba(255, 255, 255, 0.85);
-          backdrop-filter: blur(20px);
-          padding: 16px 0;
-          border-bottom: 1px solid rgba(9, 9, 11, 0.05);
-        }
-        .nav-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 24px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-        .nav-logo {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          cursor: pointer;
-        }
-        .logo-box {
-          width: 36px; height: 36px;
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
-          border-radius: 10px;
-          display: grid;
-          place-items: center;
-          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-        .logo-text { font-size: 19px; font-weight: 800; letter-spacing: -0.5px; color: #09090b; }
-        .text-primary { color: #4f46e5; }
-
-        .nav-links { display: flex; align-items: center; gap: 32px; font-size: 14px; font-weight: 500; }
-        .nav-links a { color: #71717a; transition: color 0.2s; }
-        .nav-links a:hover { color: #09090b; }
-        .btn-login { color: #09090b; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(9, 9, 11, 0.1); background: #ffffff; transition: background 0.2s; }
-        .btn-login:hover { background: #f4f4f5; }
-        .btn-get-started { background: #4f46e5; color: #fff; font-weight: 700; padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25); border: none; transition: background 0.2s; cursor: pointer; }
-        .btn-get-started:hover { background: #4338ca; }
-        
-        .mobile-menu-toggle { background: transparent; border: none; color: #09090b; }
-
-        /* ── HERO ── */
-        .hero {
-          position: relative;
-          padding: 180px 0 120px;
-          overflow: hidden;
-        }
-        .hero-bg-orbs {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-        }
-        .orb {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(80px);
-          opacity: 0.15;
-          animation: orb-move 20s infinite alternate;
-        }
-        .orb-1 { width: 600px; height: 600px; background: #4f46e5; top: -100px; right: -200px; }
-        .orb-2 { width: 500px; height: 500px; background: #c084fc; bottom: -100px; left: -200px; }
-
-        .hero-content {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 60px;
-          align-items: center;
-        }
-        .hero-text { max-width: 580px; }
-        .badge-promo {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 12px;
-          background: rgba(79, 70, 229, 0.1);
-          border: 1px solid rgba(79, 70, 229, 0.2);
-          border-radius: 99px;
-          color: #4f46e5;
-          font-size: 12px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 24px;
-        }
-        .pulse { width: 6px; height: 6px; background: #4f46e5; border-radius: 50%; display: block; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
-
-        .hero-title { font-size: 64px; font-weight: 900; line-height: 1.1; margin-bottom: 24px; letter-spacing: -2px; color: #09090b; }
-        .text-grad { background: linear-gradient(90deg, #4f46e5, #9333ea, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero-lead { font-size: 20px; color: #71717a; margin-bottom: 40px; line-height: 1.6; }
-        
-        .hero-actions { display: flex; gap: 16px; margin-bottom: 48px; }
-        .btn-hero-primary { 
-          padding: 16px 32px; background: #4f46e5; color: #fff; border-radius: 12px; 
-          font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 10px; border: none; cursor: pointer;
-          box-shadow: 0 10px 25px rgba(79, 70, 229, 0.35); transition: all 0.3s;
-        }
-        .btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(79, 70, 229, 0.45); }
-        .btn-hero-outline { 
-          padding: 16px 32px; background: #ffffff; color: #09090b; border-radius: 12px; 
-          font-weight: 700; font-size: 16px; border: 1px solid rgba(9, 9, 11, 0.1); cursor: pointer;
-          display: flex; align-items: center; gap: 10px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(9, 9, 11, 0.05);
-        }
-        .btn-hero-outline:hover { background: #f4f4f5; transform: translateY(-3px); }
-
-        .hero-social { display: flex; align-items: center; gap: 16px; color: #71717a; font-size: 14px; font-weight: 500; }
-        .avatars { display: flex; }
-        .avatar-mini { width: 32px; height: 32px; border-radius: 50%; margin-left: -8px; background: #e4e4e7; border: 2px solid #ffffff; }
-        .avatar-mini:first-child { margin-left: 0; }
-
-        /* ── VISUAL ── */
-        .hero-visual { position: relative; }
-        .glass-mockup {
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(9, 9, 11, 0.08);
-          border-radius: 20px;
-          box-shadow: 0 30px 60px rgba(9, 9, 11, 0.08);
-          overflow: hidden;
-          width: 100%;
-          transform: perspective(1000px) rotateY(-10deg) rotateX(10deg);
-        }
-        .mockup-header { padding: 12px 20px; background: #f4f4f5; border-bottom: 1px solid rgba(9, 9, 11, 0.05); display: flex; align-items: center; gap: 16px; }
-        .dots { display: flex; gap: 6px; }
-        .dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(9, 9, 11, 0.2); }
-        .address-bar { flex: 1; background: #ffffff; border-radius: 6px; padding: 4px 12px; font-size: 10px; color: #71717a; text-align: center; border: 1px solid rgba(9, 9, 11, 0.05); }
-        .mockup-content { padding: 30px; }
-        .skeleton-line { background: #f4f4f5; border-radius: 4px; }
-        .mockup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .skeleton-card { height: 60px; background: #ffffff; border-radius: 10px; border: 1px solid rgba(9, 9, 11, 0.05); box-shadow: 0 2px 8px rgba(9, 9, 11, 0.02); }
-
-        .floating-stat {
-          position: absolute;
-          background: #ffffff;
-          color: #09090b;
-          padding: 12px 20px;
-          border-radius: 16px;
-          box-shadow: 0 10px 30px rgba(9, 9, 11, 0.08);
-          border: 1px solid rgba(9, 9, 11, 0.05);
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          z-index: 10;
-        }
-        .stat-n { font-weight: 800; font-size: 16px; line-height: 1; }
-        .stat-l { font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; font-weight: 600; }
-        .stat-1 { top: 20%; left: -40px; }
-        .stat-2 { bottom: 10%; right: -20px; }
-
-        @keyframes orb-move {
-          0% { transform: translate(0, 0) scale(1); }
-          100% { transform: translate(40px, 40px) scale(1.1); }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-15px); }
-        }
-
-        /* ── FEATURES ── */
-        .features { padding: 120px 0; background: #ffffff; }
-        .section-header { margin-bottom: 70px; max-width: 600px; margin-left: auto; margin-right: auto; text-align: center; }
-        .section-title { font-size: 40px; font-weight: 800; margin-bottom: 16px; color: #09090b; }
-        .section-subtitle { color: #71717a; font-size: 18px; }
-
-        .features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
-        .feature-card {
-           padding: 40px 30px; background: #fbfcfd; border: 1px solid rgba(9, 9, 11, 0.05); 
-           border-radius: 24px; transition: all 0.3s;
-        }
-        .feature-card:hover { transform: translateY(-10px); border-color: #4f46e5; background: #ffffff; box-shadow: 0 20px 40px rgba(9, 9, 11, 0.05); }
-        .feature-icon { 
-          width: 56px; height: 56px; background: rgba(79, 70, 229, 0.1); 
-          color: #4f46e5; border-radius: 16px; display: grid; place-items: center; 
-          margin-bottom: 24px;
-        }
-        .feature-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #09090b; }
-        .feature-desc { color: #71717a; font-size: 14px; line-height: 1.6; }
-
-        /* ── CTA ── */
-        .cta { padding: 100px 24px; }
-        .cta-container {
-          max-width: 1000px;
-          margin: 0 auto;
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
-          padding: 80px 40px;
-          border-radius: 40px;
-          text-align: center;
-          position: relative;
-          overflow: hidden;
-        }
-        .cta-container::before {
-          content: ''; position: absolute; inset: 0; 
-          background: radial-gradient(circle at top right, rgba(255,255,255,0.2), transparent);
-        }
-        .cta-title { font-size: 44px; font-weight: 800; margin-bottom: 16px; position: relative; color: #ffffff; }
-        .cta-desc { font-size: 20px; color: rgba(255,255,255,0.9); margin-bottom: 40px; position: relative; }
-        .btn-cta { 
-           padding: 20px 48px; background: #fff; color: #4f46e5; border-radius: 16px; border: none; cursor: pointer;
-           font-weight: 800; font-size: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-           position: relative; transition: transform 0.3s;
-        }
-        .btn-cta:hover { transform: scale(1.05); }
-
-        /* ── FOOTER ── */
-        .footer { padding: 80px 0 40px; border-top: 1px solid rgba(9, 9, 11, 0.08); background: #ffffff; }
-        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 60px; }
-        .footer-brand p { color: #71717a; margin-top: 20px; max-width: 280px; }
-        .footer-links h4 { font-size: 16px; font-weight: 700; margin-bottom: 24px; color: #09090b; }
-        .footer-links a { display: block; color: #71717a; margin-bottom: 12px; transition: color 0.2s; text-decoration: none; font-weight: 500; }
-        .footer-links a:hover { color: #4f46e5; }
-        .footer-bottom { 
-          padding-top: 40px; border-top: 1px solid rgba(9, 9, 11, 0.08); 
-          display: flex; justify-content: space-between; align-items: center; color: #71717a; font-size: 13px; font-weight: 500;
-        }
-        .social-icons { display: flex; gap: 20px; }
-
-        /* ── MOBILE ── */
-        @media (max-width: 992px) {
-          .hero-content { grid-template-columns: 1fr; text-align: center; }
-          .hero-text { max-width: 100%; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
-          .hero-actions { justify-content: center; }
-          .hero-visual { margin-top: 40px; display: none; }
-          .hero-title { font-size: 48px; }
-          .features-grid { grid-template-columns: 1fr 1fr; }
-        }
-        @media (max-width: 600px) {
-          .features-grid { grid-template-columns: 1fr; }
-          .footer-grid { grid-template-columns: 1fr 1fr; }
-          .footer-brand { grid-column: span 2; }
-          .desktop-only { display: none; }
-        }
-
-        .mobile-only { display: none; }
-        @media (max-width: 768px) { .mobile-only { display: block; } }
-
-        .mobile-menu {
-          position: fixed; top: 80px; left: 0; right: 0; background: #ffffff;
-          padding: 24px; display: flex; flex-direction: column; gap: 20px;
-          z-index: 999; border-bottom: 1px solid rgba(9, 9, 11, 0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        .mobile-menu a { color: #09090b; font-weight: 600; text-decoration: none; padding: 12px 0; border-bottom: 1px solid rgba(9, 9, 11, 0.05); }
-
-        /* ── PRICING STYLES ── */
-        .pricing { padding: 120px 0; background: #fbfcfd; position: relative; }
-        .pricing-grid { 
-          display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 60px; 
-          align-items: stretch;
-        }
-        .pricing-card {
-          background: #ffffff;
-          border: 1px solid rgba(9, 9, 11, 0.08);
-          border-radius: 32px;
-          padding: 48px 32px;
-          position: relative;
-          transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-          display: flex;
-          flex-direction: column;
-        }
-        .pricing-card:hover {
-          transform: translateY(-12px);
-          box-shadow: 0 30px 60px rgba(9, 9, 11, 0.05);
-        }
-        .pricing-card.featured {
-          background: #ffffff;
-          border: 2px solid #4f46e5;
-          box-shadow: 0 20px 50px rgba(79, 70, 229, 0.15);
-          transform: scale(1.05);
-          z-index: 2;
-        }
-        .pricing-card.featured:hover {
-          transform: scale(1.05) translateY(-12px);
-        }
-        .p-badge {
-          position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
-          background: #4f46e5; color: #fff; padding: 6px 16px;
-          border-radius: 99px; font-size: 12px; font-weight: 800;
-          text-transform: uppercase; letter-spacing: 0.05em;
-          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-        .p-header { margin-bottom: 32px; }
-        .p-name { font-size: 24px; font-weight: 800; margin-bottom: 16px; color: #09090b; }
-        .p-price { font-size: 36px; font-weight: 900; color: #09090b; margin-bottom: 8px; }
-        .p-price span { font-size: 14px; font-weight: 500; color: #71717a; }
-        .p-target { font-size: 14px; color: #71717a; line-height: 1.5; font-weight: 500; }
-        
-        .p-features { list-style: none; padding: 0; margin: 0 0 40px 0; flex: 1; }
-        .p-features li { 
-          display: flex; align-items: center; gap: 12px; 
-          font-size: 14px; color: #3f3f46; margin-bottom: 16px; font-weight: 500;
-        }
-        .p-features li.disabled { color: #a1a1aa; text-decoration: line-through; }
-        
-        .btn-p-outline {
-          width: 100%; padding: 14px; border-radius: 12px; background: transparent; cursor: pointer;
-          border: 1px solid rgba(9, 9, 11, 0.15); color: #09090b;
-          font-weight: 700; transition: all 0.2s;
-        }
-        .btn-p-outline:hover { background: #f4f4f5; border-color: rgba(9, 9, 11, 0.2); }
-        
-        .btn-p-primary {
-          width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer;
-          background: #4f46e5; color: #fff;
-          font-weight: 700; transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-        .btn-p-primary:hover { background: #4338ca; transform: scale(1.02); }
-
-        @media (max-width: 992px) {
-          .pricing-grid { grid-template-columns: 1fr; max-width: 450px; margin-left: auto; margin-right: auto; }
-          .pricing-card.featured { transform: scale(1); }
-          .pricing-card.featured:hover { transform: translateY(-12px); }
-        }
-      `}</style>
     </div>
   );
 }
