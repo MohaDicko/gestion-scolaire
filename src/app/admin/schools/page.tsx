@@ -5,7 +5,7 @@ import {
   Building2, Plus, Search, MapPin, Phone, Globe,
   Trash2, Edit3, ExternalLink, GraduationCap, Users,
   DollarSign, BookOpen, X, Save, CheckCircle, AlertCircle,
-  Activity, RefreshCw, Landmark, ShieldCheck, TrendingUp, UserCheck, School
+  Activity, RefreshCw, Landmark, ShieldCheck, TrendingUp, UserCheck, School, ChevronRight
 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
