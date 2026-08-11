@@ -197,8 +197,8 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
     return pathname.startsWith(href);
   };
 
-  const initials = user ? \`\${user.firstName?.[0] || ''}\${user.lastName?.[0] || ''}\`.toUpperCase() : 'A';
-  const displayName = user ? \`\${user.firstName || ''} \${user.lastName || ''}\`.trim() : 'Utilisateur';
+  const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : 'A';
+  const displayName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Utilisateur';
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
@@ -246,13 +246,13 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                     key={item.href}
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
-                    className={\`group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 \${
+                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
                       active 
                         ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-bold shadow-sm border border-indigo-100 dark:border-indigo-500/20' 
                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-200 font-medium'
-                    }\`}
+                    }`}
                   >
-                    <span className={\`transition-colors duration-200 \${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300'}\`}>
+                    <span className={`transition-colors duration-200 ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300'}`}>
                       {item.icon}
                     </span>
                     <span className="flex-1 text-[13px]">{item.label}</span>

@@ -96,7 +96,7 @@ function StudentCardPreview({ student, qrDataUrl, isSelected, onToggle }: {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = \`Carte_Scolaire_\${student.firstName}_\${student.lastName}.svg\`;
+    a.download = `Carte_Scolaire_${student.firstName}_${student.lastName}.svg`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -116,11 +116,11 @@ function StudentCardPreview({ student, qrDataUrl, isSelected, onToggle }: {
 
       <div 
         onClick={onToggle} 
-        className={\`cursor-pointer select-none group/card relative transition-all duration-300 w-full max-w-[280px] mx-auto aspect-[54/85.6] rounded-[1.5rem] p-1 flex flex-col \${
+        className={`cursor-pointer select-none group/card relative transition-all duration-300 w-full max-w-[280px] mx-auto aspect-[54/85.6] rounded-[1.5rem] p-1 flex flex-col ${
           isSelected 
             ? 'shadow-[0_20px_50px_rgba(79,70,229,0.3)] scale-[1.02] bg-gradient-to-br from-indigo-500 to-purple-500' 
             : 'shadow-lg hover:shadow-2xl bg-zinc-200 dark:bg-zinc-800'
-        }\`}
+        }`}
       >
         {/* Intérieur de la carte */}
         <div className="w-full h-full bg-gradient-to-b from-indigo-950 to-slate-900 rounded-[1.25rem] overflow-hidden flex flex-col relative">
@@ -221,9 +221,9 @@ export default function StudentCardsPage() {
       const payload = JSON.stringify({
         id: s.id,
         num: s.studentNumber,
-        nom: \`\${s.firstName} \${s.lastName}\`,
+        nom: `${s.firstName} ${s.lastName}`,
         classe: s.classroom?.name || '',
-        url: \`https://saheledu.com/portal/\${s.id}\`,
+        url: `https://saheledu.com/portal/${s.id}`,
       });
       cache[s.id] = await QRCode.toDataURL(payload, {
         width: 200, margin: 1,
@@ -235,7 +235,7 @@ export default function StudentCardsPage() {
 
   useEffect(() => {
     setIsLoading(true);
-    fetch(\`/api/students?search=\${encodeURIComponent(searchTerm)}&pageSize=50\`)
+    fetch(`/api/students?search=${encodeURIComponent(searchTerm)}&pageSize=50`)
       .then(res => res.json())
       .then(data => {
         const items: Student[] = data.items || [];
@@ -268,7 +268,7 @@ export default function StudentCardsPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = \`Carte_Scolaire_\${student.firstName}_\${student.lastName}.svg\`;
+        a.download = `Carte_Scolaire_${student.firstName}_${student.lastName}.svg`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -323,7 +323,7 @@ export default function StudentCardsPage() {
               disabled={students.length === 0}
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-indigo-500/30"
             >
-              <DownloadCloud size={18} /> Télécharger SVG {selectedStudents.size > 0 ? \`(\${selectedStudents.size})\` : '(Tout)'}
+              <DownloadCloud size={18} /> Télécharger SVG {selectedStudents.size > 0 ? `(${selectedStudents.size})` : '(Tout)'}
             </button>
           </div>
         </div>
