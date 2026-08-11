@@ -5,39 +5,48 @@ import {
   Building2, Plus, Search, MapPin, Phone, Globe,
   Trash2, Edit3, ExternalLink, GraduationCap, Users,
   DollarSign, BookOpen, X, Save, CheckCircle, AlertCircle,
-  Activity, BarChart3, ChevronRight, RefreshCw, Landmark,
-  ShieldCheck, TrendingUp, UserCheck, School
+  Activity, RefreshCw, Landmark, ShieldCheck, TrendingUp, UserCheck, School
 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const SCHOOL_TYPES = ['PRIMAIRE','FONDAMENTAL','LYCEE','TECHNIQUE','SANTE','UNIVERSITE'];
 const PLANS = ['STARTER', 'BUSINESS', 'ELITE'];
-const PLAN_COLORS: Record<string, string> = {
-  STARTER: '#94a3b8',
-  BUSINESS: '#4f8ef7',
-  ELITE: '#a855f7'
+
+const PLAN_COLORS: Record<string, { bg: string, text: string, border: string }> = {
+  STARTER: { bg: 'bg-slate-100 dark:bg-slate-500/10', text: 'text-slate-700 dark:text-slate-400', border: 'border-slate-200 dark:border-slate-500/20' },
+  BUSINESS: { bg: 'bg-blue-50 dark:bg-blue-500/10', text: 'text-blue-700 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-500/20' },
+  ELITE: { bg: 'bg-purple-50 dark:bg-purple-500/10', text: 'text-purple-700 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-500/20' }
 };
-const TYPE_COLORS: Record<string, string> = {
-  LYCEE: '#6366f1', SANTE: '#10b981', TECHNIQUE: '#f59e0b',
-  FONDAMENTAL: '#3b82f6', PRIMAIRE: '#ec4899', UNIVERSITE: '#8b5cf6'
+
+const TYPE_COLORS: Record<string, { bg: string, text: string, border: string }> = {
+  LYCEE: { bg: 'bg-indigo-50 dark:bg-indigo-500/10', text: 'text-indigo-700 dark:text-indigo-400', border: 'border-indigo-200 dark:border-indigo-500/20' },
+  SANTE: { bg: 'bg-emerald-50 dark:bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-500/20' },
+  TECHNIQUE: { bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-500/20' },
+  FONDAMENTAL: { bg: 'bg-blue-50 dark:bg-blue-500/10', text: 'text-blue-700 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-500/20' },
+  PRIMAIRE: { bg: 'bg-pink-50 dark:bg-pink-500/10', text: 'text-pink-700 dark:text-pink-400', border: 'border-pink-200 dark:border-pink-500/20' },
+  UNIVERSITE: { bg: 'bg-violet-50 dark:bg-violet-500/10', text: 'text-violet-700 dark:text-violet-400', border: 'border-violet-200 dark:border-violet-500/20' }
 };
 
 function formatXOF(n: number) {
-  return n.toLocaleString('fr-FR') + ' FCFA';
+  return (n || 0).toLocaleString('fr-FR') + ' FCFA';
 }
 
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) {
+function StatCard({ icon, label, value, colorClass }: { icon: React.ReactNode; label: string; value: string | number; colorClass: string }) {
   return (
-    <div style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-      <div style={{ width: 42, height: 42, borderRadius: 11, background: color + '20', color, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+    <motion.div 
+      whileHover={{ y: -4 }}
+      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-300"
+    >
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${colorClass}`}>
         {icon}
       </div>
       <div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>{value}</div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+        <div className="text-2xl font-bold text-zinc-900 dark:text-white">{value}</div>
+        <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">{label}</div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -143,152 +152,192 @@ export default function SchoolsManagementPage() {
       subtitle={`Super Administrateur — ${schools.length} établissement(s) enregistré(s)`}
       breadcrumbs={[{ label: 'Admin', href: '/admin/system-health' }, { label: 'Écoles' }]}
       actions={
-        <button className="btn-primary" onClick={() => { setEditSchool(null); setShowForm(true); }}>
-          <Plus size={15} /> Nouvel Établissement
-        </button>
+        <motion.button 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-indigo-500/30 transition-all"
+          onClick={() => { setEditSchool(null); setShowForm(true); }}
+        >
+          <Plus size={18} /> Nouvel Établissement
+        </motion.button>
       }
     >
       {/* Network KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 28 }}>
-        <StatCard icon={<Landmark size={20}/>} label="Établissements" value={schools.length} color="#6366f1" />
-        <StatCard icon={<Users size={20}/>} label="Élèves Total" value={schools.reduce((s, sc) => s + (sc.stats?.studentCount || 0), 0).toLocaleString()} color="#10b981" />
-        <StatCard icon={<UserCheck size={20}/>} label="Personnel Total" value={schools.reduce((s, sc) => s + (sc.stats?.employeeCount || 0), 0)} color="#f59e0b" />
-        <StatCard icon={<BookOpen size={20}/>} label="Classes Total" value={schools.reduce((s, sc) => s + (sc.stats?.classroomCount || 0), 0)} color="#3b82f6" />
-        <StatCard icon={<TrendingUp size={20}/>} label="Recouvrement Moy." value={schools.length ? Math.round(schools.reduce((s, sc) => s + (sc.stats?.collectionRate || 0), 0) / schools.length) + '%' : '—'} color="#ec4899" />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <StatCard icon={<Landmark size={24}/>} label="Établissements" value={schools.length} colorClass="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400" />
+        <StatCard icon={<Users size={24}/>} label="Élèves Total" value={schools.reduce((s, sc) => s + (sc.stats?.studentCount || 0), 0).toLocaleString()} colorClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" />
+        <StatCard icon={<UserCheck size={24}/>} label="Personnel Total" value={schools.reduce((s, sc) => s + (sc.stats?.employeeCount || 0), 0)} colorClass="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" />
+        <StatCard icon={<BookOpen size={24}/>} label="Classes Total" value={schools.reduce((s, sc) => s + (sc.stats?.classroomCount || 0), 0)} colorClass="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" />
+        <StatCard icon={<TrendingUp size={24}/>} label="Recouvrement Moy." value={schools.length ? Math.round(schools.reduce((s, sc) => s + (sc.stats?.collectionRate || 0), 0) / schools.length) + '%' : '—'} colorClass="bg-pink-50 text-pink-600 dark:bg-pink-500/10 dark:text-pink-400" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selectedSchool ? '1fr 420px' : '1fr', gap: 24 }}>
+      <div className={`grid gap-6 ${selectedSchool ? 'lg:grid-cols-[1fr_450px]' : 'grid-cols-1'}`}>
         
         {/* LEFT: School List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="flex flex-col gap-6">
           {/* Filters */}
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', flex: '1 1 220px' }}>
-              <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} size={16} />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
               <input
-                className="form-input"
-                style={{ paddingLeft: 38 }}
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
                 placeholder="Rechercher par nom, code, ville..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
-            <select className="form-input" style={{ flex: '0 1 160px' }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+            <select 
+              className="py-2.5 px-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none cursor-pointer"
+              value={typeFilter} 
+              onChange={e => setTypeFilter(e.target.value)}
+            >
               <option value="">Tous les types</option>
               {SCHOOL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
-            <button className="btn-secondary" onClick={fetchSchools}>
-              <RefreshCw size={14} />
+            <button 
+              className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors"
+              onClick={fetchSchools}
+            >
+              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
 
           {/* List */}
           {loading ? (
-            <div style={{ display: 'grid', gap: 12 }}>
-              {[1,2,3,4].map(i => <div key={i} style={{ height: 90, borderRadius: 14, background: 'var(--bg-3)', animation: 'pulse 1.5s infinite' }} />)}
+            <div className="grid gap-3">
+              {[1,2,3,4].map(i => <div key={i} className="h-24 rounded-2xl bg-zinc-200 dark:bg-zinc-800 animate-pulse" />)}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-dim)' }}>
-              <Building2 size={40} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-              <p>Aucun établissement trouvé</p>
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-16 text-center text-zinc-500">
+              <Building2 size={48} className="mx-auto mb-4 opacity-30" />
+              <p className="text-lg font-medium">Aucun établissement trouvé</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {filtered.map(school => {
-                const isSelected = selectedSchool?.id === school.id;
-                const color = TYPE_COLORS[school.type] || '#6366f1';
-                return (
-                  <div
-                    key={school.id}
-                    onClick={() => handleSelectSchool(school)}
-                    style={{
-                      background: isSelected ? 'var(--bg-accent)' : 'var(--bg-3)',
-                      border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
-                      borderRadius: 14,
-                      padding: '16px 20px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 16,
-                      transition: 'all 0.15s'
-                    }}
-                  >
-                    {/* Icon */}
-                    <div style={{ width: 46, height: 46, borderRadius: 12, background: color + '22', color, display: 'grid', placeItems: 'center', flexShrink: 0, border: `1.5px solid ${color}40` }}>
-                      <School size={22} />
-                    </div>
-
-                    {/* Info */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{school.name}</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, background: color + '20', color, padding: '2px 7px', borderRadius: 6, flexShrink: 0 }}>{school.type}</span>
-                        <span style={{ fontSize: 10, fontWeight: 800, background: (PLAN_COLORS[school.plan] || '#4f8ef7') + '20', color: PLAN_COLORS[school.plan] || '#4f8ef7', padding: '2px 7px', borderRadius: 6, flexShrink: 0, border: `1px solid ${PLAN_COLORS[school.plan] || '#4f8ef7'}40` }}>{school.plan}</span>
-                        {!school.isActive && <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--danger-dim)', color: 'var(--danger)', padding: '2px 7px', borderRadius: 6 }}>INACTIF</span>}
+            <div className="flex flex-col gap-3">
+              <AnimatePresence>
+                {filtered.map((school, i) => {
+                  const isSelected = selectedSchool?.id === school.id;
+                  const typeTheme = TYPE_COLORS[school.type] || TYPE_COLORS['LYCEE'];
+                  const planTheme = PLAN_COLORS[school.plan] || PLAN_COLORS['STARTER'];
+                  
+                  return (
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: i * 0.05 }}
+                      key={school.id}
+                      onClick={() => handleSelectSchool(school)}
+                      className={`
+                        group relative flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-200
+                        ${isSelected 
+                          ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-300 dark:border-indigo-500/30 shadow-md ring-1 ring-indigo-500/20' 
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-500/30 hover:-translate-y-0.5'
+                        } border
+                      `}
+                    >
+                      {/* Icon */}
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${typeTheme.bg} ${typeTheme.text} ${typeTheme.border}`}>
+                        <School size={24} />
                       </div>
-                      <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-muted)' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={11} />{school.city || 'N/A'}</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Users size={11} />{school.stats?.studentCount ?? 0} élèves</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><UserCheck size={11} />{school.stats?.employeeCount ?? 0} staff</span>
-                      </div>
-                    </div>
 
-                    {/* Rate badge */}
-                    <div style={{ textAlign: 'center', flexShrink: 0 }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: (school.stats?.collectionRate ?? 0) >= 70 ? 'var(--success)' : 'var(--warning)' }}>
-                        {school.stats?.collectionRate ?? 0}%
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{school.name}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${typeTheme.bg} ${typeTheme.text} ${typeTheme.border}`}>
+                            {school.type}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${planTheme.bg} ${planTheme.text} ${planTheme.border}`}>
+                            {school.plan}
+                          </span>
+                          {!school.isActive && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20">
+                              INACTIF
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-4 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                          <span className="flex items-center gap-1.5"><MapPin size={12} />{school.city || 'N/A'}</span>
+                          <span className="flex items-center gap-1.5"><Users size={12} />{school.stats?.studentCount ?? 0} élèves</span>
+                          <span className="flex items-center gap-1.5"><UserCheck size={12} />{school.stats?.employeeCount ?? 0} staff</span>
+                        </div>
                       </div>
-                      <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>Recouvrement</div>
-                    </div>
 
-                    <ChevronRight size={16} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
-                  </div>
-                );
-              })}
+                      {/* Rate badge */}
+                      <div className="text-center shrink-0 px-2">
+                        <div className={`text-lg font-black ${(school.stats?.collectionRate ?? 0) >= 70 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                          {school.stats?.collectionRate ?? 0}%
+                        </div>
+                        <div className="text-[10px] font-bold uppercase text-zinc-400">Recouvrement</div>
+                      </div>
+
+                      <ChevronRight size={20} className="text-zinc-300 dark:text-zinc-600 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all shrink-0" />
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             </div>
           )}
         </div>
 
         {/* RIGHT: Detail Panel */}
         {selectedSchool && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Header */}
-            <div className="card" style={{ padding: '20px 24px' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 13, background: (TYPE_COLORS[selectedSchool.type] || '#6366f1') + '22', color: TYPE_COLORS[selectedSchool.type] || '#6366f1', display: 'grid', placeItems: 'center' }}>
-                    <School size={24} />
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col gap-4 sticky top-6 self-start"
+          >
+            {/* Header Card */}
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm relative overflow-hidden">
+              {/* Subtle background decoration */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-bl-[100px] -z-0" />
+              
+              <div className="flex items-start justify-between mb-6 relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${TYPE_COLORS[selectedSchool.type]?.bg || 'bg-zinc-100'} ${TYPE_COLORS[selectedSchool.type]?.text || 'text-zinc-500'} ${TYPE_COLORS[selectedSchool.type]?.border || 'border-zinc-200'}`}>
+                    <School size={28} />
                   </div>
                   <div>
-                    <h2 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>{selectedSchool.name}</h2>
-                    <code style={{ fontSize: 11, color: 'var(--text-muted)' }}>{selectedSchool.code}</code>
+                    <h2 className="text-lg font-black text-zinc-900 dark:text-white leading-tight">{selectedSchool.name}</h2>
+                    <code className="text-xs font-bold text-zinc-400 mt-1 block">{selectedSchool.code}</code>
                   </div>
                 </div>
-                <button className="btn-icon" onClick={() => { setSelectedSchool(null); setDetailData(null); }}><X size={16} /></button>
+                <button 
+                  className="p-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-full text-zinc-500 transition-colors" 
+                  onClick={() => { setSelectedSchool(null); setDetailData(null); }}
+                >
+                  <X size={18} />
+                </button>
               </div>
 
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button className="btn-secondary" style={{ fontSize: 12 }} onClick={() => { setEditSchool(selectedSchool); setShowForm(true); }}>
-                  <Edit3 size={13} /> Modifier
+              <div className="flex flex-wrap gap-2 relative z-10">
+                <button 
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold rounded-lg transition-colors" 
+                  onClick={() => { setEditSchool(selectedSchool); setShowForm(true); }}
+                >
+                  <Edit3 size={14} /> Modifier
                 </button>
                 <button
-                  className="btn-secondary"
-                  style={{ fontSize: 12, color: selectedSchool.isActive ? 'var(--warning)' : 'var(--success)' }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${
+                    selectedSchool.isActive 
+                      ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' 
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                  }`}
                   onClick={() => handleToggleActive(selectedSchool)}
                 >
-                  {selectedSchool.isActive ? <AlertCircle size={13} /> : <CheckCircle size={13} />}
+                  {selectedSchool.isActive ? <AlertCircle size={14} /> : <CheckCircle size={14} />}
                   {selectedSchool.isActive ? 'Désactiver' : 'Activer'}
                 </button>
                 <button
-                  className="btn-secondary"
-                  style={{ fontSize: 12, color: 'var(--danger)' }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20 text-xs font-bold rounded-lg transition-colors"
                   onClick={() => handleDelete(selectedSchool.id, selectedSchool.name)}
                 >
-                  <Trash2 size={13} /> Supprimer
+                  <Trash2 size={14} /> Supprimer
                 </button>
                 <button
-                  className="btn-primary"
-                  style={{ fontSize: 12, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}
+                  className="ml-auto flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 text-xs font-bold rounded-lg shadow-md shadow-indigo-500/20 transition-colors"
                   onClick={async () => {
                     toast.success('Connexion à l\'établissement en cours...');
                     try {
@@ -301,83 +350,97 @@ export default function SchoolsManagementPage() {
                         const data = await res.json();
                         localStorage.setItem('auth_token', data.accessToken);
                         localStorage.setItem('auth_user', JSON.stringify(data.user));
-                        window.location.href = '/students';
+                        window.location.href = '/dashboard';
                       } else {
                         toast.error('Erreur lors du changement d\'espace');
                       }
-                    } catch {
-                      toast.error('Erreur réseau');
-                    }
+                    } catch { toast.error('Erreur réseau'); }
                   }}
                 >
-                  <ExternalLink size={13} /> Accéder
+                  <ExternalLink size={14} /> Accéder au Dashboard
                 </button>
               </div>
             </div>
 
             {/* Live Stats */}
             {detailLoading ? (
-              <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-dim)' }}>
-                <RefreshCw size={24} className="spin" style={{ margin: '0 auto' }} />
-                <p style={{ marginTop: 12, fontSize: 13 }}>Chargement des statistiques...</p>
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-12 text-center text-zinc-400">
+                <RefreshCw size={32} className="animate-spin mx-auto opacity-50" />
+                <p className="mt-4 text-sm font-medium">Récupération des métriques en temps réel...</p>
               </div>
             ) : detailData ? (
-              <>
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col gap-4"
+              >
                 {/* Stats Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="grid grid-cols-2 gap-3">
                   {[
-                    { icon: <Users size={16}/>, label: 'Élèves', value: detailData.stats.studentCount, color: '#6366f1' },
-                    { icon: <UserCheck size={16}/>, label: 'Personnel', value: detailData.stats.employeeCount, color: '#10b981' },
-                    { icon: <BookOpen size={16}/>, label: 'Classes', value: detailData.stats.classroomCount, color: '#3b82f6' },
-                    { icon: <Building2 size={16}/>, label: 'Campus', value: detailData.stats.campusCount, color: '#f59e0b' },
+                    { icon: <Users size={18}/>, label: 'Élèves', value: detailData.stats.studentCount, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
+                    { icon: <UserCheck size={18}/>, label: 'Personnel', value: detailData.stats.employeeCount, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+                    { icon: <BookOpen size={18}/>, label: 'Classes', value: detailData.stats.classroomCount, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+                    { icon: <Building2 size={18}/>, label: 'Campus', value: detailData.stats.campusCount, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-500/10' },
                   ].map(s => (
-                    <div key={s.label} className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ color: s.color }}>{s.icon}</div>
+                    <div key={s.label} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.bg} ${s.color}`}>
+                        {s.icon}
+                      </div>
                       <div>
-                        <div style={{ fontSize: 18, fontWeight: 800 }}>{s.value}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{s.label}</div>
+                        <div className="text-xl font-black text-zinc-900 dark:text-white">{s.value}</div>
+                        <div className="text-xs font-bold text-zinc-500">{s.label}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {/* Financial */}
-                <div className="card" style={{ padding: '18px 20px' }}>
-                  <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, marginBottom: 16 }}>
-                    <DollarSign size={15} color="var(--success)" /> Situation Financière
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+                  <h4 className="flex items-center gap-2 text-sm font-black text-zinc-900 dark:text-white mb-4">
+                    <DollarSign size={18} className="text-emerald-500" /> Situation Financière
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {[
-                      { label: 'Total Facturé', value: formatXOF(detailData.stats.financial.totalInvoiced), color: 'var(--text)' },
-                      { label: 'Total Encaissé', value: formatXOF(detailData.stats.financial.totalPaid), color: 'var(--success)' },
-                      { label: 'Factures Impayées', value: detailData.stats.financial.unpaidCount + ' facture(s)', color: 'var(--warning)' },
-                    ].map(row => (
-                      <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>{row.label}</span>
-                        <span style={{ fontWeight: 700, color: row.color }}>{row.value}</span>
-                      </div>
-                    ))}
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Taux de Recouvrement</span>
-                        <span style={{ fontWeight: 800, color: detailData.stats.financial.collectionRate >= 70 ? 'var(--success)' : 'var(--warning)' }}>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex justify-between items-center py-2 border-b border-zinc-100 dark:border-zinc-800">
+                      <span className="text-sm font-medium text-zinc-500">Total Facturé</span>
+                      <span className="text-sm font-bold text-zinc-900 dark:text-white">{formatXOF(detailData.stats.financial.totalInvoiced)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-zinc-100 dark:border-zinc-800">
+                      <span className="text-sm font-medium text-zinc-500">Total Encaissé</span>
+                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatXOF(detailData.stats.financial.totalPaid)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-zinc-100 dark:border-zinc-800">
+                      <span className="text-sm font-medium text-zinc-500">Factures Impayées</span>
+                      <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{detailData.stats.financial.unpaidCount} facture(s)</span>
+                    </div>
+                    
+                    <div className="mt-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-bold text-zinc-500 uppercase">Taux de Recouvrement</span>
+                        <span className={`text-sm font-black ${detailData.stats.financial.collectionRate >= 70 ? 'text-emerald-500' : 'text-amber-500'}`}>
                           {detailData.stats.financial.collectionRate}%
                         </span>
                       </div>
-                      <div style={{ height: 6, background: 'var(--border)', borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${detailData.stats.financial.collectionRate}%`, background: detailData.stats.financial.collectionRate >= 70 ? 'var(--success)' : 'var(--warning)', transition: 'width 0.5s' }} />
+                      <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${detailData.stats.financial.collectionRate}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className={`h-full rounded-full ${detailData.stats.financial.collectionRate >= 70 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                        />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Subscription Plan Card */}
-                <div className="card" style={{ padding: '18px 20px', background: (PLAN_COLORS[selectedSchool.plan] || '#4f8ef7') + '08', border: `1px solid ${PLAN_COLORS[selectedSchool.plan] || '#4f8ef7'}30` }}>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ fontSize: 13, fontWeight: 700 }}>Abonnement Actif</h4>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: PLAN_COLORS[selectedSchool.plan] || '#4f8ef7' }}>{selectedSchool.plan}</span>
+                <div className={`rounded-3xl p-5 border ${PLAN_COLORS[selectedSchool.plan]?.bg} ${PLAN_COLORS[selectedSchool.plan]?.border}`}>
+                   <div className="flex justify-between items-center mb-1">
+                      <h4 className="text-sm font-black text-zinc-900 dark:text-white">Abonnement Actif</h4>
+                      <span className={`text-xs font-black px-2.5 py-1 rounded-lg border bg-white/50 dark:bg-black/20 ${PLAN_COLORS[selectedSchool.plan]?.text} ${PLAN_COLORS[selectedSchool.plan]?.border}`}>
+                        {selectedSchool.plan}
+                      </span>
                    </div>
-                   <p style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
+                   <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mt-2">
                       {selectedSchool.plan === 'STARTER' && 'Max 250 élèves, Fonctions de base.'}
                       {selectedSchool.plan === 'BUSINESS' && 'Max 750 élèves, Emails, Reçus PDF, Cartes ID.'}
                       {selectedSchool.plan === 'ELITE' && 'Illimité, Module Paie, Multi-Campus.'}
@@ -385,141 +448,165 @@ export default function SchoolsManagementPage() {
                 </div>
 
                 {/* Contact Info */}
-                <div className="card" style={{ padding: '18px 20px' }}>
-                  <h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Informations</h4>
-                  {[
-                    { icon: <MapPin size={13}/>, label: selectedSchool.address ? `${selectedSchool.address}, ${selectedSchool.city}` : selectedSchool.city || 'N/A' },
-                    { icon: <Phone size={13}/>, label: selectedSchool.phoneNumber || 'Non renseigné' },
-                    { icon: <Globe size={13}/>, label: selectedSchool.email || 'Non renseigné' },
-                    { icon: <Activity size={13}/>, label: `Année active: ${detailData.stats.activeYear}` },
-                    { icon: <ShieldCheck size={13}/>, label: `RNE: ${selectedSchool.nationalRNE || 'N/A'}` },
-                  ].map((item, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', fontSize: 13, color: 'var(--text-muted)', borderBottom: i < 4 ? '1px solid var(--border)' : 'none' }}>
-                      <span style={{ color: 'var(--primary)', flexShrink: 0 }}>{item.icon}</span>
-                      <span>{item.label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Recent Students */}
-                {detailData.recentStudents?.length > 0 && (
-                  <div className="card" style={{ padding: '18px 20px' }}>
-                    <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, marginBottom: 14 }}>
-                      <GraduationCap size={15} color="var(--primary)" /> Derniers Élèves Inscrits
-                    </h4>
-                    {detailData.recentStudents.map((s: any) => (
-                      <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
-                        <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text)' }}>{s.firstName} {s.lastName}</div>
-                          <div style={{ color: 'var(--text-dim)', fontSize: 11 }}>{s.campus?.name}</div>
-                        </div>
-                        <code style={{ fontSize: 10, color: 'var(--text-muted)' }}>{s.studentNumber}</code>
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+                  <h4 className="text-sm font-black text-zinc-900 dark:text-white mb-3">Informations Complémentaires</h4>
+                  <div className="flex flex-col gap-1">
+                    {[
+                      { icon: <MapPin size={16}/>, label: selectedSchool.address ? `${selectedSchool.address}, ${selectedSchool.city}` : selectedSchool.city || 'N/A' },
+                      { icon: <Phone size={16}/>, label: selectedSchool.phoneNumber || 'Non renseigné' },
+                      { icon: <Globe size={16}/>, label: selectedSchool.email || 'Non renseigné' },
+                      { icon: <Activity size={16}/>, label: `Année active: ${detailData.stats.activeYear}` },
+                      { icon: <ShieldCheck size={16}/>, label: `RNE: ${selectedSchool.nationalRNE || 'N/A'}` },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
+                        <span className="text-indigo-500 shrink-0">{item.icon}</span>
+                        <span className="truncate">{item.label}</span>
                       </div>
                     ))}
                   </div>
-                )}
-              </>
+                </div>
+              </motion.div>
             ) : null}
-          </div>
+          </motion.div>
         )}
       </div>
 
       {/* Create/Edit Modal */}
-      {showForm && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: 'var(--bg-2)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 580, maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800 }}>{editSchool ? 'Modifier l\'Établissement' : 'Nouvel Établissement'}</h2>
-              <button className="btn-icon" onClick={() => { setShowForm(false); setEditSchool(null); }}><X size={18} /></button>
-            </div>
-            <form onSubmit={handleSave}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="form-label" style={{ color: 'var(--primary)', fontWeight: 800 }}>DÉTAILS DE L'ÉTABLISSEMENT</label>
-                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 8 }} />
-                </div>
-                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="form-label">Nom complet de l'établissement *</label>
-                  <input name="name" required className="form-input" defaultValue={editSchool?.name} placeholder="Ex: Lycée Excellence de Bamako" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Code Unique *</label>
-                  <input name="code" required className="form-input" defaultValue={editSchool?.code} placeholder="Ex: LYC-EXC-BKO" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Type *</label>
-                  <select name="type" required className="form-input" defaultValue={editSchool?.type || 'LYCEE'}>
-                    {SCHOOL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Ville</label>
-                  <input name="city" className="form-input" defaultValue={editSchool?.city || 'Bamako'} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Plan d'abonnement *</label>
-                  <select name="plan" required className="form-input" defaultValue={editSchool?.plan || 'STARTER'}>
-                    <option value="STARTER">Pack STARTER</option>
-                    <option value="BUSINESS">Pack BUSINESS</option>
-                    <option value="ELITE">Pack ELITE</option>
-                  </select>
-                </div>
-
-                {!editSchool && (
-                  <>
-                    <div className="form-group" style={{ gridColumn: '1 / -1', marginTop: 12 }}>
-                      <label className="form-label" style={{ color: 'var(--success)', fontWeight: 800 }}>COMPTE ADMINISTRATEUR PRINCIPAL</label>
-                      <div style={{ height: 1, background: 'var(--border)', marginBottom: 8 }} />
-                      <p style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 8 }}>
-                        Ces identifiants permettront au responsable de l'école de se connecter pour la première fois.
-                      </p>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Prénom Admin *</label>
-                      <input name="adminFirstName" required className="form-input" placeholder="Prénom" />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Nom Admin *</label>
-                      <input name="adminLastName" required className="form-input" placeholder="Nom" />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Email Admin *</label>
-                      <input name="adminEmail" type="email" required className="form-input" placeholder="admin@ecole.com" />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Mot de passe provisoire *</label>
-                      <input name="adminPassword" type="password" required className="form-input" placeholder="••••••••" />
-                    </div>
-                  </>
-                )}
-
-                <div className="form-group" style={{ gridColumn: '1 / -1', marginTop: 12 }}>
-                  <label className="form-label" style={{ color: 'var(--text-muted)', fontWeight: 800 }}>INFORMATIONS DE CONTACT (OPTIONNEL)</label>
-                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 8 }} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Email de l'école</label>
-                  <input name="email" type="email" className="form-input" defaultValue={editSchool?.email} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Téléphone</label>
-                  <input name="phoneNumber" className="form-input" defaultValue={editSchool?.phoneNumber} />
-                </div>
-                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="form-label">Adresse physique</label>
-                  <input name="address" className="form-input" defaultValue={editSchool?.address} />
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 24 }}>
-                <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); setEditSchool(null); }}>Annuler</button>
-                <button type="submit" className="btn-primary" disabled={saving}>
-                  {saving ? <><RefreshCw size={14} className="spin" /> Sauvegarde...</> : <><Save size={14} /> Enregistrer</>}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-zinc-200 dark:border-zinc-800"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                <h2 className="text-xl font-black text-zinc-900 dark:text-white flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                    {editSchool ? <Edit3 size={20} /> : <Plus size={20} />}
+                  </div>
+                  {editSchool ? 'Modifier l\'Établissement' : 'Nouvel Établissement'}
+                </h2>
+                <button 
+                  className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-full transition-colors text-zinc-500" 
+                  onClick={() => { setShowForm(false); setEditSchool(null); }}
+                >
+                  <X size={20} />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+              
+              <div className="p-6 overflow-y-auto">
+                <form id="school-form" onSubmit={handleSave} className="flex flex-col gap-6">
+                  
+                  {/* Section 1 */}
+                  <div>
+                    <h3 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4 border-b border-zinc-100 dark:border-zinc-800 pb-2">Détails de l'établissement</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Nom complet *</label>
+                        <input name="name" required className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all" defaultValue={editSchool?.name} placeholder="Ex: Lycée Excellence de Bamako" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Code Unique *</label>
+                        <input name="code" required className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-mono" defaultValue={editSchool?.code} placeholder="LYC-EXC-BKO" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Type *</label>
+                        <select name="type" required className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all" defaultValue={editSchool?.type || 'LYCEE'}>
+                          {SCHOOL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Ville</label>
+                        <input name="city" className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all" defaultValue={editSchool?.city || 'Bamako'} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Plan d'abonnement *</label>
+                        <select name="plan" required className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold text-indigo-600 dark:text-indigo-400" defaultValue={editSchool?.plan || 'STARTER'}>
+                          <option value="STARTER">Pack STARTER</option>
+                          <option value="BUSINESS">Pack BUSINESS</option>
+                          <option value="ELITE">Pack ELITE</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2 (New School Only) */}
+                  {!editSchool && (
+                    <div className="bg-emerald-50 dark:bg-emerald-500/5 rounded-2xl p-5 border border-emerald-100 dark:border-emerald-500/10">
+                      <h3 className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">Compte Administrateur</h3>
+                      <p className="text-xs text-emerald-700/70 dark:text-emerald-400/70 mb-4 font-medium">Identifiants pour le premier accès du directeur ou responsable.</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-emerald-800 dark:text-emerald-200 mb-1.5">Prénom *</label>
+                          <input name="adminFirstName" required className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="Prénom" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-emerald-800 dark:text-emerald-200 mb-1.5">Nom *</label>
+                          <input name="adminLastName" required className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="Nom" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-emerald-800 dark:text-emerald-200 mb-1.5">Email *</label>
+                          <input name="adminEmail" type="email" required className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="admin@ecole.com" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-emerald-800 dark:text-emerald-200 mb-1.5">Mot de passe provisoire *</label>
+                          <input name="adminPassword" type="password" required className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="••••••••" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Section 3 */}
+                  <div>
+                    <h3 className="text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-4 border-b border-zinc-100 dark:border-zinc-800 pb-2">Contact & Localisation</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Email public</label>
+                        <input name="email" type="email" className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all" defaultValue={editSchool?.email} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Téléphone</label>
+                        <input name="phoneNumber" className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all" defaultValue={editSchool?.phoneNumber} />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Adresse physique détaillée</label>
+                        <input name="address" className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all" defaultValue={editSchool?.address} />
+                      </div>
+                    </div>
+                  </div>
+
+                </form>
+              </div>
+
+              <div className="p-6 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex justify-end gap-3 mt-auto">
+                <button 
+                  type="button" 
+                  className="px-6 py-2.5 rounded-xl font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                  onClick={() => { setShowForm(false); setEditSchool(null); }}
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit" 
+                  form="school-form"
+                  disabled={saving}
+                  className="px-6 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 transition-all shadow-md shadow-indigo-500/20"
+                >
+                  {saving ? <RefreshCw size={18} className="animate-spin" /> : <Save size={18} />}
+                  {saving ? 'Sauvegarde...' : 'Enregistrer'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AppLayout>
   );
 }
