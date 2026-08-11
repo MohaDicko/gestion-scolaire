@@ -205,7 +205,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
       <div className="flex items-center gap-3 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800/60">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
           {branding?.logoUrl ? (
-            <Image src={branding.logoUrl} alt="Logo" width={24} height={24} className="object-contain" />
+            <img src={branding.logoUrl} alt="Logo" className="w-6 h-6 object-contain" />
           ) : (
             <GraduationCap size={22} className="text-white" />
           )}
