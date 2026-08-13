@@ -93,11 +93,11 @@ export async function POST(request: Request) {
               studentNumber: finalStudentNumber,
               gender: gender as any,
               dateOfBirth: parseDate(s.DateNaissance || s.dateOfBirth),
-              nationalId: (s.nationalId || s.CNI || 'N/A').toString(),
-              parentName: s.parentName || s.Parent || 'À préciser',
-              parentPhone: (s.parentPhone || s.Telephone || '00000000').toString(),
-              parentEmail: s.parentEmail || s.EmailParent || '',
-              parentRelationship: parentRelationship as any,
+              nationalId: (s.nationalId || s.CNI || finalStudentNumber).toString(),
+              parentName: s.parentName || s.Parent || `Tuteur de ${firstName} ${lastName}`,
+              parentPhone: (s.parentPhone || s.Telephone || '+223 00000000').toString(),
+              parentEmail: s.parentEmail || s.EmailParent || `parent.${finalStudentNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@cfppas-gao.ml`,
+              parentRelationship: (parentRelationship as any) || 'PARENT',
               isActive: true
             }
           });
