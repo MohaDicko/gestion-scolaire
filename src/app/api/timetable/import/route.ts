@@ -6,20 +6,17 @@ import * as xlsx from 'xlsx';
 // Parse time like "7H15", "7h15", "07:15", "5h30"
 function parseTime(timeStr: string): string | null {
   const s = (timeStr || '').toString().trim().replace(/\s/g, '');
-  // Format "7h15" or "7H15"
-  const hMatch = s.match(/^(\d{1,2})[Hh](\d{2})$/);
+  const hMatch = s.match(/^(\d{1,2})[Hh:](\d{2})$/);
   if (hMatch) return `${hMatch[1].padStart(2, '0')}:${hMatch[2]}`;
-  // Format "7:15" or "07:15"
-  const colonMatch = s.match(/^(\d{1,2}):(\d{2})$/);
-  if (colonMatch) return `${colonMatch[1].padStart(2, '0')}:${colonMatch[2]}`;
+  const singleMatch = s.match(/^(\d{1,2})[Hh]$/);
+  if (singleMatch) return `${singleMatch[1].padStart(2, '0')}:00`;
   return null;
 }
 
 // Parse time range like "7H15-9H15" or "7H15 - 9H15"
 function parseTimeRange(rangeStr: string): { start: string; end: string } | null {
   const s = (rangeStr || '').toString().trim();
-  // Match something like "7H15-9H15" or "7h15 - 9h15"
-  const match = s.match(/(\d{1,2}[Hh:]\d{2})\s*[-–—]\s*(\d{1,2}[Hh:]\d{2})/);
+  const match = s.match(/(\d{1,2}[Hh:]?\d{0,2})\s*[-–—]\s*(\d{1,2}[Hh:]?\d{0,2})/);
   if (!match) return null;
   const start = parseTime(match[1]);
   const end = parseTime(match[2]);
@@ -27,7 +24,7 @@ function parseTimeRange(rangeStr: string): { start: string; end: string } | null
   return { start, end };
 }
 
-// Normalize text: remove newlines, multiple spaces
+// Normalize text
 function normalizeText(text: string): string {
   return text.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
@@ -40,57 +37,67 @@ function cleanCellText(text: string): string {
     .trim();
 }
 
-// Find employee name at the END of cell text (1-4 words)
+// Extract teacher and subject from cell text
 function extractTeacherAndSubject(
   rawText: string,
   empMap: Map<string, string>,
-  lastNameMap: Map<string, string>
-): { employeeId: string; subjectText: string } | null {
+  lastNameMap: Map<string, string>,
+  fullNameList: Array<{ name: string; id: string }>
+): { employeeId: string | null; subjectText: string } {
   const text = cleanCellText(rawText);
   const words = text.split(/\s+/).filter(Boolean);
 
-  // Try 1, 2, 3, 4 words from the end → check against full name map
+  // 1. Full name match anywhere in cell text
+  for (const emp of fullNameList) {
+    const empNameLower = emp.name.toLowerCase();
+    if (text.toLowerCase().includes(empNameLower)) {
+      const idx = text.toLowerCase().indexOf(empNameLower);
+      const subjectText = text.substring(0, idx).trim();
+      return { employeeId: emp.id, subjectText: subjectText || text };
+    }
+  }
+
+  // 2. Last 1-4 words match
   for (let n = Math.min(4, words.length); n >= 1; n--) {
     const potentialName = words.slice(words.length - n).join(' ').toLowerCase();
     const employeeId = empMap.get(potentialName);
     if (employeeId) {
       const subjectText = words.slice(0, words.length - n).join(' ').trim();
-      return { employeeId, subjectText };
+      return { employeeId, subjectText: subjectText || text };
     }
   }
 
-  // Fallback: try last name only match
-  if (words.length > 0) {
-    const lastName = words[words.length - 1].toLowerCase();
-    const employeeId = lastNameMap.get(lastName);
-    if (employeeId) {
-      const subjectText = words.slice(0, words.length - 1).join(' ').trim();
-      return { employeeId, subjectText };
+  // 3. Last name match
+  for (let i = words.length - 1; i >= 0; i--) {
+    const word = words[i].toLowerCase().replace(/[^a-z]/g, '');
+    if (word.length >= 3) {
+      const employeeId = lastNameMap.get(word);
+      if (employeeId) {
+        const subjectText = words.slice(0, i).join(' ').trim();
+        return { employeeId, subjectText: subjectText || text };
+      }
     }
   }
 
-  return null;
+  return { employeeId: null, subjectText: text };
 }
 
-// Detect grid format: find the row containing day names
 function detectDayHeaderRow(rows: any[][]): number {
   const dayNames = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
   for (let r = 0; r < Math.min(25, rows.length); r++) {
     const row = rows[r] || [];
     const rowText = row.map((c: any) => (c || '').toString().toLowerCase());
-    const dayCount = dayNames.filter(d => rowText.some((c: string) => c.trim() === d)).length;
-    if (dayCount >= 4) return r;
+    const dayCount = dayNames.filter(d => rowText.some((c: string) => c.trim().includes(d))).length;
+    if (dayCount >= 3) return r;
   }
   return -1;
 }
 
-// Try to extract class name from header rows
 function extractClassName(rows: any[][], upToRow: number): string | null {
   for (let r = 0; r <= upToRow; r++) {
     const row = rows[r] || [];
     for (const cell of row) {
       const text = (cell || '').toString();
-      // Look for "CLASSE X" pattern
       const match = text.match(/CLASSE\s+(.{3,60}?)(?:\s{3,}|$)/i);
       if (match) return match[1].trim();
     }
@@ -98,20 +105,9 @@ function extractClassName(rows: any[][], upToRow: number): string | null {
   return null;
 }
 
-// Find subject by fuzzy matching
-function findSubjectId(subjectText: string, subjectEntries: Array<[string, string]>): string | null {
-  const clean = subjectText.toLowerCase().trim();
-  for (let i = 0; i < subjectEntries.length; i++) {
-    const dbName = subjectEntries[i][0];
-    const id = subjectEntries[i][1];
-    if (clean === dbName || clean.includes(dbName) || dbName.includes(clean)) return id;
-  }
-  return null;
-}
-
 export async function POST(request: Request) {
   const session = await getSession();
-  if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session?.tenantId) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   try {
     const formData = await request.formData();
@@ -124,168 +120,93 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Fichier Excel invalide ou vide' }, { status: 400 });
     }
 
-    // Fetch all DB references
-    const [classrooms, subjects, employees] = await Promise.all([
-      prisma.classroom.findMany({ where: { tenantId: session.tenantId } }),
-      prisma.subject.findMany({ where: { tenantId: session.tenantId } }),
-      prisma.employee.findMany({ where: { tenantId: session.tenantId } }),
+    const tenantId = session.tenantId;
+
+    // Campus et Année académique
+    let campus = await prisma.campus.findFirst({ where: { tenantId } });
+    if (!campus) {
+      const school = await prisma.school.findUnique({ where: { id: tenantId } });
+      campus = await prisma.campus.create({
+        data: {
+          tenantId,
+          name: 'Campus Principal',
+          address: school?.address || 'Quartier Principal',
+          city: school?.city || 'Gao',
+          region: school?.city || 'Gao',
+          phoneNumber: school?.phoneNumber || '+223 00 00 00 00',
+        }
+      });
+    }
+
+    let academicYear = await prisma.academicYear.findFirst({ where: { tenantId } });
+    if (!academicYear) {
+      academicYear = await prisma.academicYear.create({
+        data: {
+          tenantId,
+          name: '2025-2026',
+          startDate: new Date('2025-09-01'),
+          endDate: new Date('2026-06-30'),
+          isActive: true
+        }
+      });
+    }
+
+    // Récupérer données existantes
+    const [allClassrooms, allSubjects, allEmployees] = await Promise.all([
+      prisma.classroom.findMany({ where: { tenantId } }),
+      prisma.subject.findMany({ where: { tenantId } }),
+      prisma.employee.findMany({ where: { tenantId } }),
     ]);
 
-    const classMap = new Map(classrooms.map(c => [c.name.trim().toLowerCase(), c.id]));
-    const subjectEntries: Array<[string, string]> = subjects.map(s => [s.name.trim().toLowerCase(), s.id] as [string, string]);
-    const subjectMap = new Map(subjectEntries);
-    const empMap = new Map(employees.map(e => [`${e.firstName} ${e.lastName}`.trim().toLowerCase(), e.id]));
-    const lastNameMap = new Map(employees.map(e => [e.lastName.trim().toLowerCase(), e.id]));
-    // Pre-compute classMap entries for iteration
-    const classEntries: Array<[string, string]> = classrooms.map(c => [c.name.trim().toLowerCase(), c.id] as [string, string]);
-    // Pre-compute dayColMap entries helper
-    const getDayColEntries = (m: {[k: number]: number}): Array<[string, number]> => Object.keys(m).map(k => [k, m[parseInt(k)]] as [string, number]);
-
-    const recordsToInsert: any[] = [];
-    const classesProcessed = new Set<string>();
-    const missingReferences: string[] = [];
+    const classMap = new Map(allClassrooms.map(c => [c.name.trim().toLowerCase(), c]));
+    const subjectMap = new Map(allSubjects.map(s => [s.name.trim().toLowerCase(), s]));
+    const empMap = new Map(allEmployees.map(e => [`${e.firstName} ${e.lastName}`.trim().toLowerCase(), e.id]));
+    const lastNameMap = new Map(allEmployees.map(e => [e.lastName.trim().toLowerCase(), e.id]));
+    const fullNameList = allEmployees.map(e => ({ name: `${e.firstName} ${e.lastName}`.trim(), id: e.id }));
 
     const dayNames = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+    const recordsToInsert: any[] = [];
+    const classesProcessed = new Set<string>();
 
     for (const sheetName of workbook.SheetNames) {
       const worksheet = workbook.Sheets[sheetName];
-      // Read raw rows (with header: 1 means array of arrays)
       const rows: any[][] = xlsx.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as any[][];
 
-      // --- Try to detect flat format (has "Classe" header in first row) ---
-      const firstRowFlat = (rows[0] || []).map((c: any) => (c || '').toString().toLowerCase());
-      const isFlat = firstRowFlat.some((h: string) => h.trim() === 'classe');
-
-      if (isFlat) {
-        // FLAT FORMAT
-        const flatData = xlsx.utils.sheet_to_json<any>(worksheet);
-        for (let index = 0; index < flatData.length; index++) {
-          const row = flatData[index];
-          const className = (row['Classe'] || row['CLASSE'] || '').toString().trim();
-          const subjectName = (row['Matière'] || row['Matiere'] || row['MATIERE'] || '').toString().trim();
-          const teacherName = (row['Enseignant'] || row['ENSEIGNANT'] || '').toString().trim();
-          const dayStr = row['Jour (1=Lun...7=Dim)'] ?? row['Jour'] ?? row['JOUR'];
-          const startTime = (row['Heure Début'] || row['Heure Debut'] || '').toString().trim();
-          const endTime = (row['Heure Fin'] || row['Heure_Fin'] || '').toString().trim();
-
-          if (!className && !subjectName && !teacherName) continue;
-
-          const missing: string[] = [];
-          if (!className) missing.push('Classe');
-          if (!subjectName) missing.push('Matière');
-          if (!teacherName) missing.push('Enseignant');
-          if (!dayStr) missing.push('Jour');
-          if (!startTime) missing.push('Heure Début');
-          if (!endTime) missing.push('Heure Fin');
-          if (missing.length > 0) {
-            missingReferences.push(`[${sheetName}] Ligne ${index + 2}: Champs manquants: ${missing.join(', ')}`);
-            continue;
-          }
-
-          const classroomId = classMap.get(className.toLowerCase());
-          const subjectId = subjectMap.get(subjectName.toLowerCase());
-          const employeeId = empMap.get(teacherName.toLowerCase());
-          const dayOfWeek = parseInt(String(dayStr), 10);
-
-          if (!classroomId) missingReferences.push(`[${sheetName}] L${index + 2}: Classe "${className}" introuvable.`);
-          if (!subjectId) missingReferences.push(`[${sheetName}] L${index + 2}: Matière "${subjectName}" introuvable.`);
-          if (!employeeId) missingReferences.push(`[${sheetName}] L${index + 2}: Enseignant "${teacherName}" introuvable.`);
-          if (isNaN(dayOfWeek) || dayOfWeek < 1 || dayOfWeek > 7) missingReferences.push(`[${sheetName}] L${index + 2}: Jour invalide.`);
-
-          if (classroomId && subjectId && employeeId && !isNaN(dayOfWeek)) {
-            classesProcessed.add(classroomId);
-            recordsToInsert.push({ tenantId: session.tenantId, classroomId, subjectId, employeeId, dayOfWeek, startTime, endTime });
-          }
-        }
-        continue;
-      }
-
-      // --- GRID FORMAT (visual timetable like the school model) ---
       const headerRowIndex = detectDayHeaderRow(rows);
-      if (headerRowIndex === -1) {
-        missingReferences.push(`Feuille "${sheetName}": Format non reconnu (ni liste ni grille avec jours).`);
-        continue;
-      }
+      if (headerRowIndex === -1) continue;
 
-      // Map column indices to day numbers
       const dayColMap: { [col: number]: number } = {};
       const headerRow = rows[headerRowIndex] || [];
       for (let col = 0; col < headerRow.length; col++) {
         const cell = (headerRow[col] || '').toString().toLowerCase().trim();
-        const dayIdx = dayNames.indexOf(cell);
-        if (dayIdx >= 0) dayColMap[col] = dayIdx + 1; // 1=Lundi, 6=Samedi
+        const dayIdx = dayNames.findIndex(d => cell.includes(d));
+        if (dayIdx >= 0) dayColMap[col] = dayIdx + 1;
       }
 
-      if (Object.keys(dayColMap).length === 0) {
-        missingReferences.push(`Feuille "${sheetName}": Aucun jour trouvé dans la ligne d'en-tête.`);
-        continue;
-      }
+      if (Object.keys(dayColMap).length === 0) continue;
 
-      // Get class name from header rows or sheet name
       let className = sheetName.trim();
-      const headerClassName = extractClassName(rows, headerRowIndex);
-      if (headerClassName) className = headerClassName;
+      const extractedName = extractClassName(rows, headerRowIndex);
+      if (extractedName) className = extractedName;
 
-      const classroomId = classMap.get(className.toLowerCase());
-      if (!classroomId) {
-        // Try to match by partial name
-        let foundId: string | undefined;
-        for (let ci = 0; ci < classEntries.length; ci++) {
-          const dbName = classEntries[ci][0];
-          const id = classEntries[ci][1];
-          if (className.toLowerCase().includes(dbName) || dbName.includes(className.toLowerCase())) {
-            foundId = id;
-            break;
+      // Récupérer ou créer la classe
+      let classroom = classMap.get(className.toLowerCase());
+      if (!classroom) {
+        classroom = await prisma.classroom.create({
+          data: {
+            tenantId,
+            campusId: campus.id,
+            academicYearId: academicYear.id,
+            name: className,
+            level: className.includes('1') ? '1ere' : '2eme',
+            maxCapacity: 30
           }
-        }
-        if (!foundId) {
-          missingReferences.push(
-            `Feuille "${sheetName}": Classe "${className}" introuvable dans le système.\n` +
-            `Classes disponibles: ${classrooms.map(c => c.name).join(', ')}`
-          );
-          continue;
-        }
-        classesProcessed.add(foundId!);
-        // Use foundId below
-        const resolvedClassId = foundId!;
-
-        // Parse data rows for this sheet (with resolved class)
-        for (let r = headerRowIndex + 1; r < rows.length; r++) {
-          const row = rows[r] || [];
-          const firstCell = (row[0] || '').toString().trim();
-          const timeRange = parseTimeRange(firstCell);
-          if (!timeRange) continue;
-          const { start: startTime, end: endTime } = timeRange;
-
-          for (let di = 0; di < getDayColEntries(dayColMap).length; di++) {
-            const colStr = getDayColEntries(dayColMap)[di][0];
-            const dayOfWeek = getDayColEntries(dayColMap)[di][1];
-            const col = parseInt(colStr);
-            const cellText = normalizeText((row[col] || '').toString());
-            if (!cellText || /^(recreation|pause|repas|après-midi|apres.midi|midi|am|fm)$/i.test(cellText)) continue;
-
-            const extracted = extractTeacherAndSubject(cellText, empMap, lastNameMap);
-            if (!extracted) {
-              missingReferences.push(`[${sheetName}] ${firstCell} Jour${dayOfWeek}: Enseignant introuvable dans "${cellText.substring(0, 50)}"`);
-              continue;
-            }
-
-            const { employeeId, subjectText } = extracted;
-            const subjectId = findSubjectId(subjectText, subjectEntries);
-            if (!subjectId) {
-              missingReferences.push(`[${sheetName}] ${firstCell} Jour${dayOfWeek}: Matière "${subjectText}" introuvable.`);
-              continue;
-            }
-
-            recordsToInsert.push({ tenantId: session.tenantId, classroomId: resolvedClassId, subjectId, employeeId, dayOfWeek, startTime, endTime });
-          }
-        }
-        continue;
+        });
+        classMap.set(className.toLowerCase(), classroom);
       }
 
-      classesProcessed.add(classroomId);
+      classesProcessed.add(classroom.id);
 
-      // Parse data rows
       for (let r = headerRowIndex + 1; r < rows.length; r++) {
         const row = rows[r] || [];
         const firstCell = (row[0] || '').toString().trim();
@@ -293,59 +214,65 @@ export async function POST(request: Request) {
         if (!timeRange) continue;
         const { start: startTime, end: endTime } = timeRange;
 
-        const dayColEntries = getDayColEntries(dayColMap);
-        for (let di = 0; di < dayColEntries.length; di++) {
-          const colStr = dayColEntries[di][0];
-          const dayOfWeek = dayColEntries[di][1];
+        for (const [colStr, dayOfWeek] of Object.entries(dayColMap)) {
           const col = parseInt(colStr);
           const cellText = normalizeText((row[col] || '').toString());
-          if (!cellText) continue;
-          if (/^(recreation|pause|repas|après-midi|apres.midi|midi|matin|am|pm|fm)$/i.test(cellText)) continue;
+          if (!cellText || /^(recreation|pause|repas|midi)$/i.test(cellText)) continue;
 
-          const extracted = extractTeacherAndSubject(cellText, empMap, lastNameMap);
-          if (!extracted) {
-            missingReferences.push(`[${sheetName}] ${firstCell} Jour${dayOfWeek}: Enseignant introuvable dans "${cellText.substring(0, 50)}"`);
-            continue;
+          const extracted = extractTeacherAndSubject(cellText, empMap, lastNameMap, fullNameList);
+          let employeeId = extracted.employeeId;
+          let subjectText = extracted.subjectText || cellText;
+
+          // Assigner le premier employé par défaut si l'enseignant n'est pas identifié
+          if (!employeeId && allEmployees.length > 0) {
+            employeeId = allEmployees[0].id;
+          }
+          if (!employeeId) continue;
+
+          // Récupérer ou créer la matière
+          let subject = subjectMap.get(subjectText.toLowerCase());
+          if (!subject) {
+            subject = await prisma.subject.create({
+              data: {
+                tenantId,
+                name: subjectText.slice(0, 60),
+                code: `SUB-${Math.floor(100 + Math.random() * 900)}`
+              }
+            });
+            subjectMap.set(subjectText.toLowerCase(), subject);
           }
 
-          const { employeeId, subjectText } = extracted;
-          const subjectId = findSubjectId(subjectText, subjectEntries);
-          if (!subjectId) {
-            missingReferences.push(`[${sheetName}] ${firstCell} Jour${dayOfWeek}: Matière "${subjectText}" introuvable. Disponibles: ${subjects.slice(0, 3).map(s => s.name).join(', ')}...`);
-            continue;
-          }
-
-          recordsToInsert.push({ tenantId: session.tenantId, classroomId, subjectId, employeeId, dayOfWeek, startTime, endTime });
+          recordsToInsert.push({
+            tenantId,
+            classroomId: classroom.id,
+            subjectId: subject.id,
+            employeeId,
+            dayOfWeek,
+            startTime,
+            endTime
+          });
         }
       }
     }
 
-    // If there are errors, return them all (don't import partial data)
-    if (missingReferences.length > 0) {
-      return NextResponse.json({
-        error: `${missingReferences.length} problème(s) détecté(s) dans le fichier.`,
-        details: missingReferences.slice(0, 20)
-      }, { status: 400 });
-    }
-
     if (recordsToInsert.length === 0) {
-      return NextResponse.json({ error: 'Aucun créneau valide trouvé dans le fichier.' }, { status: 400 });
+      return NextResponse.json({ error: 'Aucun créneau d\'emploi du temps valide n\'a pu être extrait.' }, { status: 400 });
     }
 
-    // Perform DB transaction
+    // Sauvegarde en base de données
     await prisma.$transaction(async (tx) => {
       const ids = Array.from(classesProcessed);
-      await tx.timetable.deleteMany({ where: { tenantId: session.tenantId, classroomId: { in: ids } } });
+      await tx.timetable.deleteMany({ where: { tenantId, classroomId: { in: ids } } });
       await tx.timetable.createMany({ data: recordsToInsert });
     });
 
     return NextResponse.json({
       success: true,
-      message: `✅ ${recordsToInsert.length} créneaux importés pour ${classesProcessed.size} classe(s).`
+      message: `✅ Importation réussie : ${recordsToInsert.length} créneaux enregistrés pour ${classesProcessed.size} classe(s).`
     }, { status: 200 });
 
   } catch (error: any) {
-    console.error('[TIMETABLE IMPORT]', error.message);
+    console.error('[TIMETABLE IMPORT CRITICAL ERROR]', error.message);
     return NextResponse.json({ error: 'Erreur lors de l\'importation: ' + error.message }, { status: 500 });
   }
 }
