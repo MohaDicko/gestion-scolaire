@@ -28,9 +28,9 @@ const nextConfig = {
       scriptSrc,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com",
-      // Allow images from self, data URIs, blobs (for Excel export) and Supabase storage
-      "img-src 'self' data: blob: https://*.supabase.co",
-      // Allow API calls to self and Supabase
+      // Allow images from self, data URIs, blobs, Supabase and HTTPS sources (logos, icons)
+      "img-src 'self' data: blob: https: http:",
+      // Allow API calls to self, Supabase, Upstash
       "connect-src 'self' https://*.supabase.co https://*.upstash.io",
       // Never allow this page to be embedded in a frame
       "frame-ancestors 'none'",
@@ -56,12 +56,6 @@ const nextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
           // XSS Protection for legacy browsers (modern browsers use CSP)
           { key: 'X-XSS-Protection', value: '1; mode=block' },
-          // Prevent cross-origin attacks via window.opener
-          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-          // Prevent cross-origin resource embedding
-          { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
-          // Prevent cross-origin reads
-          { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
           // Content Security Policy
           { key: 'Content-Security-Policy', value: cspDirectives.join('; ') },
         ],

@@ -201,27 +201,27 @@ export default function EmployeesPage() {
               </div>
 
               <div className="form-grid">
-                <div className="form-group"><label>Prénom *</label><input required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder="Ex: Awa" /></div>
-                <div className="form-group"><label>Nom *</label><input required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder="Ex: Diallo" /></div>
-                <div className="form-group"><label>Email Professionnel *</label><input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="awa.diallo@ecole.ml" /></div>
-                <div className="form-group"><label>Téléphone *</label><input type="tel" required value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+223 ..." /></div>
-                <div className="form-group"><label>Date de Naissance *</label><input type="date" required value={formData.dateOfBirth} onChange={e => setFormData({...formData, dateOfBirth: e.target.value})} /></div>
+                <div className="form-group"><label htmlFor="emp-firstname">Prénom *</label><input id="emp-firstname" name="firstName" required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder="Ex: Awa" /></div>
+                <div className="form-group"><label htmlFor="emp-lastname">Nom *</label><input id="emp-lastname" name="lastName" required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder="Ex: Diallo" /></div>
+                <div className="form-group"><label htmlFor="emp-email">Email Professionnel *</label><input id="emp-email" name="email" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="awa.diallo@ecole.ml" /></div>
+                <div className="form-group"><label htmlFor="emp-phone">Téléphone *</label><input id="emp-phone" name="phoneNumber" type="tel" required value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+223 ..." /></div>
+                <div className="form-group"><label htmlFor="emp-dob">Date de Naissance *</label><input id="emp-dob" name="dateOfBirth" type="date" required value={formData.dateOfBirth} onChange={e => setFormData({...formData, dateOfBirth: e.target.value})} /></div>
                 <div className="form-group">
-                  <label>Genre *</label>
-                  <select required value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
+                  <label htmlFor="emp-gender">Genre *</label>
+                  <select id="emp-gender" name="gender" required value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
                     <option value="MALE">Masculin</option><option value="FEMALE">Féminin</option>
                   </select>
                 </div>
-                <div className="form-group"><label>Date d'embauche *</label><input type="date" required value={formData.hireDate} onChange={e => setFormData({...formData, hireDate: e.target.value})} /></div>
+                <div className="form-group"><label htmlFor="emp-hiredate">Date d'embauche *</label><input id="emp-hiredate" name="hireDate" type="date" required value={formData.hireDate} onChange={e => setFormData({...formData, hireDate: e.target.value})} /></div>
                 <div className="form-group">
-                  <label>Rôle / Fonction *</label>
-                  <select required value={formData.employeeType} onChange={e => setFormData({...formData, employeeType: e.target.value})}>
+                  <label htmlFor="emp-type">Rôle / Fonction *</label>
+                  <select id="emp-type" name="employeeType" required value={formData.employeeType} onChange={e => setFormData({...formData, employeeType: e.target.value})}>
                     {EMPLOYEE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label>Campus d'affectation *</label>
-                  <select required value={formData.campusId} onChange={e => setFormData({...formData, campusId: e.target.value})}>
+                  <label htmlFor="emp-campus">Campus d'affectation *</label>
+                  <select id="emp-campus" name="campusId" required value={formData.campusId} onChange={e => setFormData({...formData, campusId: e.target.value})}>
                     <option value="">-- Assigner à un campus --</option>
                     {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
@@ -253,12 +253,14 @@ export default function EmployeesPage() {
                 {formData.createAccount && (
                   <div style={{ animation: 'fadeIn 0.2s ease', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <div className="form-group">
-                      <label>Identifiant (Email)</label>
-                      <input disabled value={formData.email} className="form-input" style={{ opacity: 0.6 }} />
+                      <label htmlFor="acc-email">Identifiant (Email)</label>
+                      <input id="acc-email" name="accountEmail" disabled value={formData.email} className="form-input" style={{ opacity: 0.6 }} />
                     </div>
                     <div className="form-group">
-                      <label>Mot de passe provisoire *</label>
+                      <label htmlFor="acc-password">Mot de passe provisoire *</label>
                       <input 
+                        id="acc-password"
+                        name="password"
                         type="password" 
                         required 
                         value={formData.password} 
@@ -298,10 +300,12 @@ export default function EmployeesPage() {
           <div className="p-6 space-y-5">
             {/* Campus selector */}
             <div className="space-y-1.5">
-              <label className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <label htmlFor="import-campus" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                 <Building2 size={14} className="text-emerald-600" /> Campus d'affectation <span className="text-red-500">*</span>
               </label>
               <select 
+                id="import-campus"
+                name="campusId"
                 className="w-full h-11 px-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-sm font-medium text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all" 
                 value={importConfig.campusId} 
                 onChange={e => setImportConfig({...importConfig, campusId: e.target.value})}
@@ -395,7 +399,7 @@ export default function EmployeesPage() {
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }} className="table-toolbar">
           <div className="search-box" style={{ maxWidth: '400px' }}>
             <Search size={15} />
-            <input type="text" placeholder="Rechercher un employé, matricule..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+            <input id="emp-search" name="search" type="text" placeholder="Rechercher un employé, matricule..." aria-label="Rechercher un employé, matricule" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
         </div>
         <div className="table-container">
