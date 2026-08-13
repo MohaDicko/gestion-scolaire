@@ -114,6 +114,35 @@ export default function EmployeesPage() {
     reader.readAsArrayBuffer(file);
   };
 
+  const downloadTemplate = () => {
+    const template = [
+      {
+        'Prénom': 'Djibrilla',
+        'Nom': 'Maiga',
+        'Email': 'djibrilla.maiga@cfppas.ml',
+        'Telephone': '+223 70000000',
+        'Poste': 'TEACHER',
+        'Genre': 'MALE',
+        'Matricule': 'EMP-001',
+      },
+      {
+        'Prénom': 'Fatima',
+        'Nom': 'Coulibaly',
+        'Email': 'fatima.coulibaly@cfppas.ml',
+        'Telephone': '+223 60000000',
+        'Poste': 'TEACHER',
+        'Genre': 'FEMALE',
+        'Matricule': 'EMP-002',
+      }
+    ];
+    const ws = XLSX.utils.json_to_sheet(template);
+    ws['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 30 }, { wch: 18 }, { wch: 12 }, { wch: 8 }, { wch: 12 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Personnel');
+    XLSX.writeFile(wb, 'modele_import_personnel.xlsx');
+    toast.success('Modèle téléchargé !');
+  };
+
   const executeImport = async () => {
     if (importData.length === 0) return;
     setIsSubmitting(true);
@@ -125,7 +154,12 @@ export default function EmployeesPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      toast.success(data.message);
+      if (data.report?.errors?.length > 0) {
+        toast.error(`${data.report.errors.length} ligne(s) en erreur. ${data.report.success} importé(s).`);
+        data.report.errors.slice(0, 5).forEach((e: string) => toast.error(e));
+      } else {
+        toast.success(data.message);
+      }
       setShowImport(false);
       setImportData([]);
       fetchEmployees();
@@ -259,6 +293,15 @@ export default function EmployeesPage() {
                 <option value="">-- Sélectionner le campus de destination --</option>
                 {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
+            </div>
+
+            <div style={{ background: 'var(--bg-3)', borderRadius: '10px', padding: '12px 16px', marginBottom: '4px' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                📋 Colonnes requises: <strong>Prénom, Nom, Email</strong> — Optionnelles: Telephone, Poste (TEACHER/ADMINISTRATIVE...), Genre (MALE/FEMALE), Matricule
+              </p>
+              <button type="button" className="btn-outline" style={{ fontSize: '12px', padding: '6px 12px' }} onClick={downloadTemplate}>
+                ⬇ Télécharger le modèle Excel
+              </button>
             </div>
 
             <div className="border-2 border-dashed border-border rounded-xl p-8 text-center bg-bg-3 hover:border-primary/40 transition-colors">

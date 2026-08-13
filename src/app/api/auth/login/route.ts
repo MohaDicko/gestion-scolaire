@@ -101,6 +101,12 @@ async function handleLogin(user: any) {
   // refreshToken long-lived (7d) stored in httpOnly cookie only
   const refreshToken = await encrypt(sessionPayload, '7d'); // includes full payload for getSession()
 
+  let schoolName = undefined;
+  if (user.tenantId) {
+    const school = await prisma.school.findUnique({ where: { id: user.tenantId }, select: { name: true } });
+    if (school) schoolName = school.name;
+  }
+
   const response = NextResponse.json({
     accessToken,
     user: {
@@ -110,6 +116,7 @@ async function handleLogin(user: any) {
       lastName: user.lastName,
       role: user.role,
       tenantId: user.tenantId,
+      schoolName: schoolName,
     }
   });
 

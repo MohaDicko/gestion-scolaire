@@ -130,7 +130,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ firstName?: string; lastName?: string; role?: string; email?: string; schoolName?: string } | null>(null);
-  const [branding, setBranding] = useState<{ primaryColor?: string; secondaryColor?: string; logoUrl?: string } | null>(null);
+  const [branding, setBranding] = useState<{ primaryColor?: string; secondaryColor?: string; logoUrl?: string; name?: string } | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -179,7 +179,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
       const stored = localStorage.getItem('auth_user');
       if (stored) setUser(JSON.parse(stored));
       fetch('/api/school/config').then(r => r.json()).then(data => {
-          if (data && data.primaryColor) setBranding(data);
+          if (data && (data.primaryColor || data.name)) setBranding(data);
       }).catch(() => {});
     } catch {}
   }, []);
@@ -212,7 +212,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
         </div>
         <div className="min-w-0">
           <h2 className="font-bold text-lg tracking-tight truncate leading-tight">SchoolERP<span className="text-indigo-600 dark:text-indigo-400">.pro</span></h2>
-          <p className="text-[10px] uppercase font-bold text-zinc-500 truncate mt-0.5">{user?.schoolName || 'Mali Educational System'}</p>
+          <p className="text-[10px] uppercase font-bold text-zinc-500 truncate mt-0.5">{user?.schoolName || branding?.name || 'Mali Educational System'}</p>
         </div>
       </div>
 
