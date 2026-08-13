@@ -54,7 +54,12 @@ export default function TimetablePage() {
             const subs = await subRes.json();
             const emps = await empRes.json();
             
-            if (Array.isArray(classes)) setClassrooms(classes);
+            if (Array.isArray(classes)) {
+                setClassrooms(classes);
+                if (classes.length > 0) {
+                    setSelectedClassroom(prev => prev || classes[0].id);
+                }
+            }
             if (Array.isArray(subs)) setSubjects(subs);
             if (Array.isArray(emps)) setEmployees(emps);
         } catch (error) {
@@ -127,11 +132,10 @@ export default function TimetablePage() {
             
             if (!res.ok) {
                 if (data.details && data.details.length > 0) {
-                    // Show each error as a toast
                     toast.error(`❌ ${data.error}`);
                     data.details.forEach((detail: string) => {
                         console.warn('[IMPORT]', detail);
-                        toast.error(detail, );
+                        toast.error(detail);
                     });
                 } else {
                     toast.error(data.error || 'Erreur lors de l\'import');
@@ -140,12 +144,13 @@ export default function TimetablePage() {
             }
             
             toast.success(data.message || 'Importation réussie');
+            fetchDropdownData();
             fetchSchedule();
         } catch (err) {
             toast.error('Erreur de connexion lors de l\'import');
         } finally {
             setIsImporting(false);
-            e.target.value = ''; // reset file input
+            e.target.value = '';
         }
     };
 
@@ -163,7 +168,7 @@ export default function TimetablePage() {
             doc.setFontSize(16); doc.setFont('helvetica', 'bold');
             doc.text(`EMPLOI DU TEMPS : ${classroomName.toUpperCase()}`, 148.5, 12, { align: 'center' });
             doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-            doc.text(`Établissement Scolaire — Année Académique 2023-2024`, 148.5, 19, { align: 'center' });
+            doc.text(`CFP-PAS de Gao — Année Académique 2025-2026`, 148.5, 19, { align: 'center' });
 
             const timeSlots = Array.from(new Set(schedule.map(s => `${s.startTime} - ${s.endTime}`))).sort();
             const tableData: string[][] = [];
@@ -172,7 +177,7 @@ export default function TimetablePage() {
                 const row = [time];
                 DAYS.forEach(day => {
                     const slot = schedule.find(s => s.dayOfWeek === day.id && `${s.startTime} - ${s.endTime}` === time);
-                    row.push(slot ? `${slot.subject?.name}\n(${slot.teacher?.lastName})` : '-');
+                    row.push(slot ? `${slot.subject?.name}\n(${slot.teacher?.lastName || ''})` : '-');
                 });
                 tableData.push(row);
             });
@@ -189,12 +194,12 @@ export default function TimetablePage() {
             });
 
             doc.setFontSize(7); doc.setTextColor(150);
-            doc.text(`Document généré le ${new Date().toLocaleDateString('fr-FR')} — Système de Gestion Scolaire Excellence`, 148.5, 200, { align: 'center' });
+            doc.text(`Document généré le ${new Date().toLocaleDateString('fr-FR')} — CFP-PAS de Gao`, 148.5, 200, { align: 'center' });
 
             doc.save(`Emploi_du_Temps_${classroomName.replace(/\s+/g, '_')}.pdf`);
-            toast.success('Emploi du temps exporté avec succès');
+            toast.success('Emploi du temps exporté en PDF');
         } catch (e) {
-            toast.error('Erreur lors de l\'exportation PDF');
+            toast.error('Erreur lors de la génération PDF');
         } finally {
             setIsGenerating(false);
         }
@@ -261,18 +266,32 @@ export default function TimetablePage() {
                 </div>
             }
         >
-            <div className="card shadow-sm" style={{ padding: '24px', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', flexWrap: 'wrap' }}>
-                    <div className="form-group" style={{ flex: '1', minWidth: '200px', maxWidth: '400px', marginBottom: 0 }}>
-                        <label>Sélectionner une Classe</label>
-                        <select value={selectedClassroom} onChange={(e) => setSelectedClassroom(e.target.value)} className="form-input">
-                            <option value="">-- Choisissez une classe --</option>
+            <div className="card shadow-sm" style={{ padding: '20px 24px', marginBottom: '16px' }}>
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    
+                    {/* Class Selector Tabs */}
+                    <div className="space-y-1.5 flex-1">
+                        <label className="text-xs font-bold uppercase tracking-wider text-zinc-500">Sélectionner une Classe</label>
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1">
                             {classrooms.map(c => (
-                                <option key={c.id} value={c.id}>{c.name} {c.stream ? `(${c.stream})` : ''}</option>
+                                <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => setSelectedClassroom(c.id)}
+                                    className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${
+                                        selectedClassroom === c.id 
+                                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 scale-[1.02]' 
+                                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                                    }`}
+                                >
+                                    {c.name}
+                                </button>
                             ))}
-                        </select>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', paddingBottom: '2px' }}>
+
+                    {/* Action buttons */}
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', paddingTop: '16px' }}>
                         <button
                             className="btn-outline"
                             onClick={exportExcel}
