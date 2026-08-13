@@ -304,9 +304,9 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
     <div style={{ display: 'flex', height: '100vh', width: '100%', background: 'var(--bg)', overflow: 'hidden' }}>
 
       {/* ── Desktop Sidebar ── */}
-      <aside style={{ width: 260, height: '100%', flexShrink: 0, padding: '12px 0 12px 12px' }} className="hidden lg:block">
+      <aside style={{ width: 260, height: '100%', flexShrink: 0, padding: '10px 0 10px 10px' }} className="hidden lg:block">
         <div style={{
-          width: '100%', height: '100%', borderRadius: 20,
+          width: '100%', height: '100%', borderRadius: 18,
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
           boxShadow: 'var(--shadow-sm)',
           border: '1px solid var(--border)',
@@ -338,10 +338,10 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
       </AnimatePresence>
 
       {/* ── Main Area ── */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', padding: '12px 12px 12px 6px', overflow: 'hidden', minWidth: 0 }} className="lg:block">
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', padding: 'clamp(6px, 1.5vw, 12px)', paddingLeft: 'clamp(4px, 1vw, 6px)', overflow: 'hidden', minWidth: 0 }}>
         <div style={{
           flex: 1, height: '100%', display: 'flex', flexDirection: 'column',
-          background: 'var(--bg-2)', borderRadius: 20,
+          background: 'var(--bg-2)', borderRadius: 'clamp(12px, 2vw, 18px)',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-sm)',
           overflow: 'hidden',
@@ -351,13 +351,14 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           {/* ── TOP HEADER ── */}
           <header style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '0 20px', height: 58,
+            padding: '0 clamp(12px, 2.5vw, 20px)', height: 'clamp(52px, 6vh, 58px)',
             background: 'var(--bg-glass)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             borderBottom: '1px solid var(--border)',
             flexShrink: 0, zIndex: 30,
             position: 'sticky', top: 0,
+            gap: 8,
           }}>
             <div className="flex items-center gap-3">
               {/* Mobile menu button */}
@@ -540,7 +541,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             {/* Page title block */}
             {(title || subtitle) && (
               <div style={{
-                padding: '24px 28px 0',
+                padding: 'clamp(16px, 2.5vw, 24px) clamp(16px, 3vw, 28px) 0',
                 borderBottom: '1px solid var(--border)',
                 background: 'var(--bg-2)',
                 position: 'relative',
@@ -571,16 +572,17 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                   </div>
                 )}
                 
-                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, paddingBottom: 18, flexWrap: 'wrap', position: 'relative' }}>
-                  <div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, paddingBottom: 'clamp(12px, 2vw, 18px)', flexWrap: 'wrap', position: 'relative' }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
                     <h1 style={{
-                      fontSize: 22, fontWeight: 900, color: 'var(--text)',
-                      fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.6px', lineHeight: 1.2,
+                      fontSize: 'clamp(17px, 2.5vw, 22px)', fontWeight: 900, color: 'var(--text)',
+                      fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.5px', lineHeight: 1.2,
+                      overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>
                       {title}
                     </h1>
                     {subtitle && (
-                      <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4, fontWeight: 500 }}>
+                      <p style={{ fontSize: 'clamp(11px, 1.5vw, 13px)', color: 'var(--text-muted)', marginTop: 4, fontWeight: 500 }}>
                         {subtitle}
                       </p>
                     )}
@@ -592,7 +594,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                     }} />
                   </div>
                   {actions && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
                       {actions}
                     </div>
                   )}
@@ -601,7 +603,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             )}
 
             {/* Children */}
-            <div style={{ padding: '24px 28px', minHeight: 'calc(100% - 200px)' }}>
+            <div style={{ padding: 'clamp(16px, 2.5vw, 24px) clamp(16px, 3vw, 28px)', minHeight: 'calc(100% - 200px)' }}>
               <motion.div
                 key={pathname}
                 initial={{ opacity: 0, y: 8 }}

@@ -145,7 +145,7 @@ export default function DashboardPage() {
 
         {/* ── KPI GRID ── */}
         <motion.section variants={fadeUp}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
             {kpis.map((kpi, i) => (
               <motion.div
                 key={i}
@@ -155,8 +155,8 @@ export default function DashboardPage() {
                 transition={{ delay: i * 0.06, duration: 0.4 }}
                 style={{
                   background: kpi.gradient,
-                  borderRadius: 18,
-                  padding: '20px 22px',
+                  borderRadius: 'clamp(12px, 2vw, 18px)',
+                  padding: 'clamp(14px, 2vw, 22px)',
                   cursor: 'pointer',
                   boxShadow: `0 8px 24px ${kpi.glow}`,
                   color: '#fff',
@@ -165,29 +165,21 @@ export default function DashboardPage() {
                   transition: 'transform 0.2s, box-shadow 0.2s',
                 }}
                 whileHover={{ y: -3, scale: 1.01 }}
+                whileTap={{ scale: 0.97 }}
               >
-                {/* Background circle decoration */}
-                <div style={{
-                  position: 'absolute', top: -20, right: -20,
-                  width: 90, height: 90, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.08)',
-                }} />
-                <div style={{
-                  position: 'absolute', bottom: -30, right: -10,
-                  width: 70, height: 70, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.05)',
-                }} />
+                <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+                <div style={{ position: 'absolute', bottom: -25, right: -8, width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14, position: 'relative' }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.75 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'clamp(8px, 1.5vw, 14px)', position: 'relative' }}>
+                  <span style={{ fontSize: 'clamp(9px, 1.2vw, 10px)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.75 }}>
                     {kpi.label}
                   </span>
-                  <div style={{ opacity: 0.25 }}>{kpi.icon}</div>
+                  <div style={{ opacity: 0.2 }} className="hidden sm:block">{kpi.icon}</div>
                 </div>
-                <div style={{ fontSize: 36, fontWeight: 900, fontFamily: 'Outfit, sans-serif', letterSpacing: '-2px', lineHeight: 1, position: 'relative' }}>
+                <div style={{ fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 900, fontFamily: 'Outfit, sans-serif', letterSpacing: '-2px', lineHeight: 1, position: 'relative' }}>
                   {kpi.value}
                 </div>
-                <div style={{ fontSize: 11, opacity: 0.65, marginTop: 8, fontWeight: 600, position: 'relative' }}>
+                <div style={{ fontSize: 'clamp(9px, 1.2vw, 11px)', opacity: 0.65, marginTop: 'clamp(4px, 1vw, 8px)', fontWeight: 600, position: 'relative' }}>
                   {kpi.sub}
                 </div>
               </motion.div>
@@ -203,7 +195,7 @@ export default function DashboardPage() {
               Actions Rapides
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
             {quickActions.map((a, i) => (
               <motion.div
                 key={i}
@@ -215,8 +207,8 @@ export default function DashboardPage() {
                 style={{
                   background: 'var(--bg-3)',
                   border: '1.5px solid var(--border)',
-                  borderRadius: 16,
-                  padding: '18px 16px',
+                  borderRadius: 'clamp(10px, 2vw, 16px)',
+                  padding: 'clamp(14px, 2vw, 18px) clamp(12px, 1.5vw, 16px)',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   position: 'relative',
@@ -254,7 +246,7 @@ export default function DashboardPage() {
         </motion.section>
 
         {/* ── BOTTOM ROW ── */}
-        <motion.div variants={fadeUp} style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }} className="grid-cols-1 lg:grid-cols-[1fr_340px]">
+        <motion.div variants={fadeUp} className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4 xl:gap-5">
 
           {/* Tasks Panel */}
           <div>
