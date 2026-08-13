@@ -113,7 +113,7 @@ export default function DashboardPage() {
     { label: 'Nouvelle Inscription', icon: Plus, color: '#1e3a8a', bg: 'rgba(30,58,138,0.08)', href: '/students/enroll', desc: 'Ajouter un apprenant' },
     { label: 'Encaisser un Paiement', icon: Wallet, color: '#059669', bg: 'rgba(5,150,105,0.08)', href: '/finance/payments', desc: 'Frais de scolarité' },
     { label: 'Saisir un Cours', icon: BookOpen, color: '#7c3aed', bg: 'rgba(124,58,237,0.08)', href: '/lessons', desc: 'Émargement & Journal' },
-    { label: 'Faire l'Appel', icon: UserCheck, color: '#d97706', bg: 'rgba(217,119,6,0.08)', href: '/attendance', desc: 'Présences du jour' },
+    { label: "Faire l'Appel", icon: UserCheck, color: '#d97706', bg: 'rgba(217,119,6,0.08)', href: '/attendance', desc: 'Présences du jour' },
     { label: 'Saisir les Notes', icon: FileText, color: '#0891b2', bg: 'rgba(8,145,178,0.08)', href: '/grades', desc: 'Évaluations & résultats' },
     { label: 'Voir les Bulletins', icon: Award, color: '#dc2626', bg: 'rgba(220,38,38,0.08)', href: '/reports/bulletins', desc: '1er trimestre' },
   ];
