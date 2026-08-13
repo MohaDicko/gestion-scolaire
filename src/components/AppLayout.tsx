@@ -164,7 +164,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   const displayName = user ? `${user.firstName||''} ${user.lastName||''}`.trim() : 'Utilisateur';
   const roleLabel = user?.role ? (ROLE_LABELS[user.role] || user.role) : '';
 
-  const navSections = user?.role === 'STUDENT' ? STUDENT_NAV : user?.role === 'PARENT' ? PARENT_NAV : [
+  const navSections: NavSection[] = user?.role === 'STUDENT' ? STUDENT_NAV : user?.role === 'PARENT' ? PARENT_NAV : [
     ...NAV_SECTIONS,
     ...(user?.role === 'SUPER_ADMIN' ? [{ title: '⚡ Super Admin', items: [
       { label: 'Gestion Écoles',  href: '/admin/schools',       icon: <Landmark size={16}/> },
