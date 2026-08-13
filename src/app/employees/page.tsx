@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Briefcase, Plus, Search, Loader2, X, Users, Mail, Phone, FileDown, Upload } from 'lucide-react';
+import { Briefcase, Plus, Search, Loader2, X, Users, Mail, Phone, FileDown, Upload, FileSpreadsheet, Building2, Info, Download, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
@@ -281,51 +281,109 @@ export default function EmployeesPage() {
       )}
       {/* Import Modal */}
       <Dialog open={showImport} onOpenChange={setShowImport}>
-        <DialogContent className="max-w-md bg-bg-2 border-border-light shadow-2xl rounded-2xl p-0 overflow-hidden">
-          <DialogHeader className="p-6 border-b border-border bg-bg-2/50">
-            <DialogTitle>Importation RH</DialogTitle>
-            <DialogDescription>Importez votre liste d&apos;enseignants et staff.</DialogDescription>
-          </DialogHeader>
-          <div className="p-6 space-y-6">
-            <div className="form-group">
-              <label className="text-xs font-bold text-text-muted">Campus d'affectation *</label>
-              <select className="form-input" style={{ width: '100%' }} value={importConfig.campusId} onChange={e => setImportConfig({...importConfig, campusId: e.target.value})}>
-                <option value="">-- Sélectionner le campus de destination --</option>
+        <DialogContent className="max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-3xl p-0 overflow-hidden">
+          {/* Header */}
+          <div className="p-6 pb-4 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-indigo-500/10 border-b border-zinc-100 dark:border-zinc-800 flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+              <FileSpreadsheet size={24} />
+            </div>
+            <div className="flex-1">
+              <DialogTitle className="text-xl font-black text-zinc-900 dark:text-zinc-100">Importation du Personnel</DialogTitle>
+              <DialogDescription className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                Ajoutez plusieurs enseignants et agents RH simultanément via un fichier Excel.
+              </DialogDescription>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-5">
+            {/* Campus selector */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                <Building2 size={14} className="text-emerald-600" /> Campus d'affectation <span className="text-red-500">*</span>
+              </label>
+              <select 
+                className="w-full h-11 px-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-sm font-medium text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all" 
+                value={importConfig.campusId} 
+                onChange={e => setImportConfig({...importConfig, campusId: e.target.value})}
+              >
+                <option value="">-- Choisir un campus destination --</option>
                 {campuses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
 
-            <div style={{ background: 'var(--bg-3)', borderRadius: '10px', padding: '12px 16px', marginBottom: '4px' }}>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                📋 Colonnes requises: <strong>Prénom, Nom, Email</strong> — Optionnelles: Telephone, Poste (TEACHER/ADMINISTRATIVE...), Genre (MALE/FEMALE), Matricule
+            {/* Excel guidelines & Download template */}
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs space-y-2.5">
+              <div className="flex items-center gap-2 font-bold text-amber-700 dark:text-amber-400">
+                <Info size={16} />
+                <span>Format attendu du fichier Excel</span>
+              </div>
+              <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 leading-relaxed">
+                Colonnes obligatoires : <strong>Prénom, Nom, Email</strong>. <br />
+                Colonnes optionnelles : <em>Telephone, Poste (TEACHER, ADMIN...), Genre (MALE, FEMALE), Matricule</em>.
               </p>
-              <button type="button" className="btn-outline" style={{ fontSize: '12px', padding: '6px 12px' }} onClick={downloadTemplate}>
-                ⬇ Télécharger le modèle Excel
+              <button 
+                type="button" 
+                onClick={downloadTemplate}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-colors shadow-sm"
+              >
+                <Download size={14} /> Télécharger le modèle Excel pré-rempli
               </button>
             </div>
 
-            <div className="border-2 border-dashed border-border rounded-xl p-8 text-center bg-bg-3 hover:border-primary/40 transition-colors">
+            {/* Drag and drop upload zone */}
+            <div className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+              importData.length > 0 
+                ? 'border-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10' 
+                : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50 hover:border-emerald-500/50'
+            }`}>
               <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="hidden" id="staff-upload" />
-              <label htmlFor="staff-upload" className="cursor-pointer flex flex-col items-center gap-3">
-                <Upload size={32} className="text-primary/60" />
-                <p className="font-semibold text-sm">
-                  {importData.length > 0 ? `✅ ${importData.length} lignes détectées` : 'Choisir le fichier Excel (Personnel)'}
-                </p>
+              <label htmlFor="staff-upload" className="cursor-pointer flex flex-col items-center gap-2.5">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                  importData.length > 0 ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
+                }`}>
+                  {importData.length > 0 ? <CheckCircle2 size={24} /> : <Upload size={24} />}
+                </div>
+                <div>
+                  <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+                    {importData.length > 0 ? `${importData.length} lignes prêtes à l'import` : 'Cliquez ou glissez le fichier Excel ici'}
+                  </p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Formats acceptés : .xlsx, .xls</p>
+                </div>
               </label>
             </div>
 
+            {/* Portal accounts checkbox option */}
             {importData.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="cAcc" checked={importConfig.createAccounts} onChange={e => setImportConfig({...importConfig, createAccounts: e.target.checked})} />
-                  <label htmlFor="cAcc" className="text-xs">Créer des comptes accès portail (mdp par défaut: staff123)</label>
-                </div>
+              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center gap-3">
+                <input 
+                  type="checkbox" 
+                  id="cAcc" 
+                  checked={importConfig.createAccounts} 
+                  onChange={e => setImportConfig({...importConfig, createAccounts: e.target.checked})}
+                  className="w-4 h-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" 
+                />
+                <label htmlFor="cAcc" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
+                  Générer automatiquement un compte accès au portail <br />
+                  <span className="text-[10px] font-normal text-zinc-400">(Mot de passe initial : <code className="font-mono text-emerald-600">staff123</code>)</span>
+                </label>
               </div>
             )}
-            <div className="flex justify-end gap-3 pt-4 border-t border-border">
-              <Button variant="ghost" onClick={() => setShowImport(false)}>Annuler</Button>
-              <Button disabled={importData.length === 0 || isSubmitting} onClick={executeImport} className="bg-primary text-white">
-                {isSubmitting ? 'En cours...' : 'Lancer l\'Import'}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+              <Button variant="ghost" onClick={() => setShowImport(false)} className="rounded-xl h-11 px-5 font-bold text-zinc-500">
+                Annuler
+              </Button>
+              <Button 
+                disabled={importData.length === 0 || isSubmitting} 
+                onClick={executeImport} 
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-11 px-6 font-bold shadow-lg shadow-emerald-500/20"
+              >
+                {isSubmitting ? (
+                  <><Loader2 size={16} className="animate-spin mr-2" /> Importation...</>
+                ) : (
+                  <><Upload size={16} className="mr-2" /> Importer le personnel</>
+                )}
               </Button>
             </div>
           </div>
