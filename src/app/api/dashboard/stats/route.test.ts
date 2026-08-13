@@ -8,6 +8,9 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     student: { count: vi.fn() },
     employee: { count: vi.fn() },
+    classroom: { count: vi.fn() },
+    subject: { count: vi.fn() },
+    timetable: { count: vi.fn() },
     invoice: { aggregate: vi.fn() },
   }
 }));
@@ -44,6 +47,9 @@ describe('GET /api/dashboard/stats', () => {
     
     vi.mocked(prisma.student.count).mockResolvedValueOnce(150);
     vi.mocked(prisma.employee.count).mockResolvedValueOnce(15);
+    vi.mocked(prisma.classroom.count).mockResolvedValueOnce(3);
+    vi.mocked(prisma.subject.count).mockResolvedValueOnce(116);
+    vi.mocked(prisma.timetable.count).mockResolvedValueOnce(81);
     
     // Mock the first aggregate call (total invoices)
     vi.mocked(prisma.invoice.aggregate).mockResolvedValueOnce({
@@ -62,6 +68,9 @@ describe('GET /api/dashboard/stats', () => {
     expect(data).toEqual({
       studentsCount: 150,
       employeesCount: 15,
+      classroomsCount: 3,
+      subjectsCount: 116,
+      timetableCount: 81,
       invoicesTotal: 50000,
       invoicesPaid: 25000
     });
