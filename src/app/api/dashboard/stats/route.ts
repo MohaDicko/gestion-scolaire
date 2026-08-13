@@ -9,23 +9,28 @@ export async function GET() {
   }
 
   try {
-    const [studentsCount, employeesCount, invoiceStats] = await Promise.all([
+    const [studentsCount, employeesCount, classroomsCount, subjectsCount, timetableCount, invoiceStats, paidStats] = await Promise.all([
       prisma.student.count({ where: { tenantId: session.tenantId } }),
       prisma.employee.count({ where: { tenantId: session.tenantId } }),
+      prisma.classroom.count({ where: { tenantId: session.tenantId } }),
+      prisma.subject.count({ where: { tenantId: session.tenantId } }),
+      prisma.timetable.count({ where: { tenantId: session.tenantId } }),
       prisma.invoice.aggregate({
         where: { tenantId: session.tenantId },
         _sum: { amount: true },
       }),
+      prisma.invoice.aggregate({
+        where: { tenantId: session.tenantId, status: 'PAID' },
+        _sum: { amount: true },
+      })
     ]);
-
-    const paidStats = await prisma.invoice.aggregate({
-      where: { tenantId: session.tenantId, status: 'PAID' },
-      _sum: { amount: true },
-    });
 
     return NextResponse.json({
       studentsCount,
       employeesCount,
+      classroomsCount,
+      subjectsCount,
+      timetableCount,
       invoicesTotal: invoiceStats._sum.amount || 0,
       invoicesPaid: paidStats._sum.amount || 0
     });

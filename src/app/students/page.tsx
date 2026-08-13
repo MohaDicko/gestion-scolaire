@@ -442,14 +442,16 @@ export default function StudentsPage() {
                 <TableRow className="hover:bg-transparent border-border/40">
                   <TableHead className="w-[130px]">Matricule</TableHead>
                   <TableHead>Nom Complet</TableHead>
-                  <TableHead>Date Naissance</TableHead>
+                  <TableHead>Classe / Filière</TableHead>
                   <TableHead>Genre</TableHead>
                   <TableHead>Parent / Tuteur</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.items.map((s: any) => (
+                {result.items.map((s: any) => {
+                  const assignedClass = s.enrollments?.[0]?.classroom?.name || 'Non-inscrit';
+                  return (
                   <TableRow key={s.id} className="hover:bg-primary-surface transition-colors border-border/40">
                     <TableCell>
                       <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-mono text-[11px]">
@@ -462,15 +464,17 @@ export default function StudentsPage() {
                         <span className="text-[11px] text-text-dim">{s.nationalId || 'Sans CNI'}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-text-soft text-sm">
-                      {new Date(s.dateOfBirth).toLocaleDateString('fr-FR')}
+                    <TableCell>
+                      <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
+                        🎓 {assignedClass}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
                         className={s.gender === 'FEMALE'
-                          ? 'bg-purple-500/10 text-purple-400 border-none'
-                          : 'bg-blue-500/10 text-blue-400 border-none'}
+                          ? 'bg-purple-500/10 text-purple-400 border-none font-medium'
+                          : 'bg-blue-500/10 text-blue-400 border-none font-medium'}
                       >
                         {GENDER_LABELS[s.gender] || s.gender}
                       </Badge>
@@ -492,7 +496,7 @@ export default function StudentsPage() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                ); })}
               </TableBody>
             </Table>
           ) : (

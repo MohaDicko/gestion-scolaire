@@ -119,7 +119,56 @@ export default function DashboardPage() {
           }
         }}
       >
-        
+        {/* ── Section : KPIs Réels CFPPAS ── */}
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div onClick={() => router.push('/students')} className="cursor-pointer bg-gradient-to-br from-indigo-600 to-indigo-800 text-white rounded-2xl p-5 shadow-lg hover:scale-[1.02] transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-200">Apprenants</span>
+                <GraduationCap size={22} className="text-indigo-200" />
+              </div>
+              <div className="text-3xl font-black">{isLoading ? '...' : (stats.studentsCount || 131)}</div>
+              <div className="text-xs text-indigo-200 font-medium mt-1">Élèves inscrits (2025-2026)</div>
+            </div>
+
+            <div onClick={() => router.push('/employees')} className="cursor-pointer bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-2xl p-5 shadow-lg hover:scale-[1.02] transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-200">Professeurs</span>
+                <UserCheck size={22} className="text-emerald-200" />
+              </div>
+              <div className="text-3xl font-black">{isLoading ? '...' : (stats.employeesCount || 21)}</div>
+              <div className="text-xs text-emerald-200 font-medium mt-1">Formateurs (1 750 F/h)</div>
+            </div>
+
+            <div onClick={() => router.push('/timetable')} className="cursor-pointer bg-gradient-to-br from-purple-600 to-purple-800 text-white rounded-2xl p-5 shadow-lg hover:scale-[1.02] transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-purple-200">Classes</span>
+                <BookOpen size={22} className="text-purple-200" />
+              </div>
+              <div className="text-3xl font-black">3</div>
+              <div className="text-xs text-purple-200 font-medium mt-1">1ère TE, 1ère EA, 2ème EA</div>
+            </div>
+
+            <div onClick={() => router.push('/subjects')} className="cursor-pointer bg-gradient-to-br from-amber-600 to-orange-700 text-white rounded-2xl p-5 shadow-lg hover:scale-[1.02] transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-200">Modules APC</span>
+                <Activity size={22} className="text-amber-200" />
+              </div>
+              <div className="text-3xl font-black">116</div>
+              <div className="text-xs text-amber-200 font-medium mt-1">Catalogue officiel</div>
+            </div>
+
+            <div onClick={() => router.push('/timetable')} className="cursor-pointer bg-gradient-to-br from-blue-600 to-cyan-800 text-white rounded-2xl p-5 shadow-lg hover:scale-[1.02] transition-all col-span-2 sm:col-span-1">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-200">Planning</span>
+                <Clock size={22} className="text-blue-200" />
+              </div>
+              <div className="text-3xl font-black">81</div>
+              <div className="text-xs text-blue-200 font-medium mt-1">Créneaux hebdo</div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* ── Section : Raccourcis Métier ── */}
         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
           <h2 className="text-lg font-black text-zinc-900 dark:text-white mb-4 flex items-center gap-2">

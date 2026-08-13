@@ -31,6 +31,13 @@ export async function GET(request: Request) {
     const [items, totalCount] = await Promise.all([
       prisma.student.findMany({
         where: whereClause,
+        include: {
+          enrollments: {
+            include: {
+              classroom: true
+            }
+          }
+        },
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
