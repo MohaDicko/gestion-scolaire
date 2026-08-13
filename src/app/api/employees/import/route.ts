@@ -115,13 +115,19 @@ export async function POST(request: Request) {
           continue;
         }
 
-        // Si des données existent mais que des champs obligatoires manquent
-        if (!firstName || !lastName || !rawEmail) {
-          report.errors.push(`Ligne ${lineNum} ignorée : Nom, Prénom ou Email manquant.`);
+        // Si le nom et prénom manquent
+        if (!firstName || !lastName) {
+          report.errors.push(`Ligne ${lineNum} ignorée : Nom ou Prénom manquant.`);
           continue;
         }
 
-        const email = String(rawEmail).trim().toLowerCase();
+        // Auto-générer l'email s'il n'est pas fourni dans le fichier Excel (ex: liste officielle DREN)
+        const cleanFn = firstName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+        const cleanLn = lastName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+        const email = rawEmail 
+          ? String(rawEmail).trim().toLowerCase() 
+          : `${cleanFn}.${cleanLn}@cfppas-gao.ml`;
+
         const rawPoste = extractField(e, ['poste', 'fonction', 'role', 'rôle', 'job', 'position', 'statut']);
         const rawGender = extractField(e, ['genre', 'sexe', 'gender']);
         const rawPhone = extractField(e, ['telephone', 'téléphone', 'phone', 'tel', 'mobile', 'contact']);

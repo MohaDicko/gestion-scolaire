@@ -107,9 +107,40 @@ export default function EmployeesPage() {
       try {
         const data = new Uint8Array(event.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
-        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-        setImportData(json);
-      } catch (err) { toast.error('Erreur de lecture'); }
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        
+        const rawRows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        
+        // Smart header detection (find row containing 'nom', 'prenom', 'prof', 'contact', etc.)
+        let headerRowIndex = rawRows.findIndex(row => 
+          Array.isArray(row) && row.some(cell => {
+            const str = String(cell || '').toLowerCase();
+            return str.includes('nom') || str.includes('prenom') || str.includes('prénom') || str.includes('prof') || str.includes('contact') || str.includes('email');
+          })
+        );
+        if (headerRowIndex === -1) headerRowIndex = 0;
+        
+        const headers = (rawRows[headerRowIndex] || []).map(h => String(h || '').trim());
+        const dataRows = rawRows.slice(headerRowIndex + 1);
+        
+        const parsedData = dataRows.map(row => {
+          const obj: Record<string, any> = {};
+          headers.forEach((h, i) => {
+            if (h && row[i] !== undefined && row[i] !== null && String(row[i]).trim() !== '') {
+              obj[h] = row[i];
+            }
+          });
+          return obj;
+        }).filter(obj => Object.keys(obj).length > 0);
+        
+        setImportData(parsedData);
+        if (parsedData.length === 0) {
+          toast.error('Aucune ligne d\'enseignant/personnel détectée.');
+        } else {
+          toast.success(`${parsedData.length} lignes détectées avec succès.`);
+        }
+      } catch (err) { toast.error('Erreur de lecture du fichier Excel'); }
     };
     reader.readAsArrayBuffer(file);
   };
