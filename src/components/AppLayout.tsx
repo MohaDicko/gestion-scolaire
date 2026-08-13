@@ -3,15 +3,15 @@
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import React, { ReactNode, useEffect, useState, useRef, useCallback } from 'react';
+import React, { ReactNode, useEffect, useState, useCallback } from 'react';
 import {
   LayoutDashboard, Users, School, BookOpen, CalendarCheck,
   Briefcase, FileText, Receipt, Clock, Settings, LogOut,
   ChevronRight, GraduationCap, BadgeDollarSign, BarChart3,
   UserCog, Menu, X, Bell, Award, ClipboardCheck, Landmark,
-  Zap, Activity, ShieldAlert, Plus, Package, Loader2, MessageSquare, Moon, Sun, Search
+  Zap, Activity, ShieldAlert, Plus, Package, Loader2, MessageSquare,
+  Moon, Sun, Search, Home, BookMarked, Coins, LibraryBig, ChevronDown, Hash
 } from 'lucide-react';
 
 import PushNotificationManager from './PushNotificationManager';
@@ -19,100 +19,72 @@ import { CommandPalette } from './ui/CommandPalette';
 import { TourGuide } from './ui/TourGuide';
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-interface NavItem {
-  label: string;
-  href: string;
-  icon: ReactNode;
-}
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
+interface NavItem { label: string; href: string; icon: ReactNode; badge?: string; }
+interface NavSection { title: string; items: NavItem[]; }
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    title: 'Mon Espace',
-    items: [
-      { label: 'Tableau de Bord',   href: '/dashboard',       icon: <LayoutDashboard size={18}/> },
-    ]
-  },
-  {
-    title: 'Scolarité & Vie Scolaire',
-    items: [
-      { label: 'Inscriptions',        href: '/students/enroll', icon: <Plus size={18}/> },
-      { label: 'Gestion des Élèves', href: '/students',       icon: <Users size={18}/> },
-      { label: 'Emploi du Temps',    href: '/timetable',      icon: <Clock size={18}/> },
-      { label: 'Appel & Présences',  href: '/attendance',     icon: <CalendarCheck size={18}/> },
-    ]
-  },
-  {
-    title: 'Pédagogie & Évaluations',
-    items: [
-      { label: 'Cahier de Texte',    href: '/lessons',        icon: <BookOpen size={18}/> },
-      { label: 'Saisie des Notes',   href: '/grades',         icon: <FileText size={18}/> },
-      { label: 'Bulletins',          href: '/reports/bulletins', icon: <Award size={18}/> },
-    ]
-  },
-  {
-    title: 'Comptabilité',
-    items: [
-      { label: 'Facturation & Caisse', href: '/invoices',       icon: <Receipt size={18}/> },
-      { label: 'Journal des Dépenses', href: '/expenses',       icon: <BadgeDollarSign size={18}/> },
-      { label: 'Bilan Financier',      href: '/finance',        icon: <Landmark size={18}/> },
-    ]
-  },
-  {
-    title: 'Configuration',
-    items: [
-      { label: 'Personnel (RH)',     href: '/employees',      icon: <Briefcase size={18}/> },
-      { label: 'Classes & Matières', href: '/classrooms',     icon: <School size={18}/> },
-      { label: 'Paramètres',         href: '/settings',       icon: <Settings size={18}/> },
-    ]
-  }
-];
-
-const STUDENT_NAV_SECTIONS: NavSection[] = [
-  {
     title: 'Vue Générale',
     items: [
-      { label: 'Mon Espace',        href: '/dashboard',       icon: <LayoutDashboard size={18}/> },
+      { label: 'Tableau de Bord', href: '/dashboard', icon: <LayoutDashboard size={16}/> },
     ]
   },
   {
     title: 'Scolarité',
     items: [
-      { label: 'Emploi du Temps',   href: '/timetable',       icon: <Clock size={18}/> },
-      { label: 'Mes Notes',         href: '/reports/bulletins', icon: <Award size={18}/> },
-      { label: 'Factures & Frais',  href: '/invoices',        icon: <Receipt size={18}/> },
+      { label: 'Inscriptions',       href: '/students/enroll', icon: <Plus size={16}/> },
+      { label: 'Apprenants',         href: '/students',        icon: <Users size={16}/> },
+      { label: 'Emploi du Temps',    href: '/timetable',       icon: <Clock size={16}/> },
+      { label: 'Présences',          href: '/attendance',      icon: <CalendarCheck size={16}/> },
+    ]
+  },
+  {
+    title: 'Pédagogie',
+    items: [
+      { label: 'Cahier de Texte',    href: '/lessons',            icon: <BookOpen size={16}/> },
+      { label: 'Saisie des Notes',   href: '/grades',             icon: <FileText size={16}/> },
+      { label: 'Bulletins',          href: '/reports/bulletins',  icon: <Award size={16}/> },
+      { label: 'Bibliothèque',       href: '/library',            icon: <LibraryBig size={16}/> },
+    ]
+  },
+  {
+    title: 'Finances',
+    items: [
+      { label: 'Facturation',        href: '/invoices',    icon: <Receipt size={16}/> },
+      { label: 'Dépenses',           href: '/expenses',    icon: <Coins size={16}/> },
+      { label: 'Bilan Financier',    href: '/finance',     icon: <Landmark size={16}/> },
+    ]
+  },
+  {
+    title: 'Administration',
+    items: [
+      { label: 'Personnel (RH)',     href: '/employees',   icon: <Briefcase size={16}/> },
+      { label: 'Classes & Modules',  href: '/classrooms',  icon: <School size={16}/> },
+      { label: 'Inventaire',         href: '/inventory',   icon: <Package size={16}/> },
+      { label: 'Paramètres',         href: '/settings',    icon: <Settings size={16}/> },
     ]
   }
 ];
 
-const PARENT_NAV_SECTIONS: NavSection[] = [
-  {
-    title: 'Espace Famille',
-    items: [
-      { label: 'Mes Enfants',       href: '/parent',          icon: <Users size={18}/> },
-      { label: 'Scolarité & Notes', href: '/parent/grades',   icon: <Award size={18}/> },
-      { label: 'Factures & Paiement', href: '/parent/invoices', icon: <Receipt size={18}/> },
-    ]
-  },
-  {
-    title: 'Communication',
-    items: [
-      { label: 'Messagerie',        href: '/chat',            icon: <MessageSquare size={18}/> },
-    ]
-  }
+const STUDENT_NAV: NavSection[] = [
+  { title: 'Mon Espace', items: [
+    { label: 'Accueil',         href: '/dashboard',         icon: <Home size={16}/> },
+    { label: 'Emploi du Temps', href: '/timetable',         icon: <Clock size={16}/> },
+    { label: 'Mes Notes',       href: '/reports/bulletins', icon: <Award size={16}/> },
+    { label: 'Factures',        href: '/invoices',          icon: <Receipt size={16}/> },
+  ]}
+];
+
+const PARENT_NAV: NavSection[] = [
+  { title: 'Espace Famille', items: [
+    { label: 'Mes Enfants',          href: '/parent',          icon: <Users size={16}/> },
+    { label: 'Factures & Paiements', href: '/parent/invoices', icon: <Receipt size={16}/> },
+  ]}
 ];
 
 interface AppLayoutProps {
@@ -122,70 +94,62 @@ interface AppLayoutProps {
   actions?: ReactNode;
   breadcrumbs?: { label: string; href?: string }[];
 }
+interface Notification { id: string; type: string; priority: 'high'|'medium'|'low'; title: string; message: string; href: string; }
 
-interface Notification { id: string; type: string; priority: 'high' | 'medium' | 'low'; title: string; message: string; href: string; }
+const ROLE_LABELS: Record<string, string> = {
+  SCHOOL_ADMIN: 'Administrateur',
+  SUPER_ADMIN: 'Super Admin',
+  TEACHER: 'Formateur',
+  STUDENT: 'Apprenant',
+  PARENT: 'Parent',
+};
+
+const typeIcon: Record<string, string> = { finance: '💰', hr: '👤', attendance: '📋', system: '⚙️' };
 
 export default function AppLayout({ children, title, subtitle, actions, breadcrumbs }: AppLayoutProps) {
-  const router = useRouter();
+  const router   = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [user, setUser] = useState<{ firstName?: string; lastName?: string; role?: string; email?: string; schoolName?: string } | null>(null);
-  const [branding, setBranding] = useState<{ primaryColor?: string; secondaryColor?: string; logoUrl?: string; name?: string } | null>(null);
-  const [notifOpen, setNotifOpen] = useState(false);
+  const [user, setUser] = useState<{firstName?:string;lastName?:string;role?:string;email?:string;schoolName?:string}|null>(null);
+  const [branding, setBranding] = useState<{primaryColor?:string;logoUrl?:string;name?:string}|null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [notifLoading, setNotifLoading] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [notifLoading, setNotifLoading]   = useState(false);
+  const [isDark, setIsDark]               = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
-    setIsDark(document.documentElement.classList.contains('dark'));
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsCommandPaletteOpen(true);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    const savedTheme = localStorage.getItem('theme');
+    const dark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    setIsDark(dark);
+    if (dark) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+    const hk = (e: KeyboardEvent) => { if ((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); setIsCommandPaletteOpen(true); } };
+    window.addEventListener('keydown', hk);
+    return () => window.removeEventListener('keydown', hk);
   }, []);
 
   const toggleTheme = () => {
     const root = document.documentElement;
-    if (isDark) {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      setIsDark(false);
-    } else {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-      setIsDark(true);
-    }
+    if (isDark) { root.classList.remove('dark'); localStorage.setItem('theme','light'); setIsDark(false); }
+    else { root.classList.add('dark'); localStorage.setItem('theme','dark'); setIsDark(true); }
   };
-
-  const loadNotifications = useCallback(async () => {
-    setNotifLoading(true);
-    try {
-      const r = await fetch('/api/notifications');
-      if (r.ok) { const d = await r.json(); setNotifications(d.notifications || []); }
-    } catch {}
-    finally { setNotifLoading(false); }
-  }, []);
-
-  const priorityColor: Record<string, string> = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
-  const typeIcon: Record<string, string> = { finance: '💰', hr: '👤', attendance: '📋', system: '⚙️' };
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem('auth_user');
       if (stored) setUser(JSON.parse(stored));
-      fetch('/api/school/config').then(r => r.json()).then(data => {
-          if (data && (data.primaryColor || data.name)) setBranding(data);
-      }).catch(() => {});
+      fetch('/api/school/config').then(r=>r.json()).then(d=>{if(d&&(d.primaryColor||d.name))setBranding(d);}).catch(()=>{});
     } catch {}
   }, []);
 
+  const loadNotifications = useCallback(async () => {
+    setNotifLoading(true);
+    try { const r=await fetch('/api/notifications'); if(r.ok){const d=await r.json();setNotifications(d.notifications||[]);} } catch {}
+    finally { setNotifLoading(false); }
+  }, []);
+
   const handleLogout = async () => {
-    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
+    try { await fetch('/api/auth/logout',{method:'POST'}); } catch {}
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
     router.push('/login');
@@ -196,86 +160,140 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
     return pathname.startsWith(href);
   };
 
-  const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : 'A';
-  const displayName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Utilisateur';
+  const initials = user ? `${user.firstName?.[0]||''}${user.lastName?.[0]||''}`.toUpperCase() : 'A';
+  const displayName = user ? `${user.firstName||''} ${user.lastName||''}`.trim() : 'Utilisateur';
+  const roleLabel = user?.role ? (ROLE_LABELS[user.role] || user.role) : '';
 
+  const navSections = user?.role === 'STUDENT' ? STUDENT_NAV : user?.role === 'PARENT' ? PARENT_NAV : [
+    ...NAV_SECTIONS,
+    ...(user?.role === 'SUPER_ADMIN' ? [{ title: '⚡ Super Admin', items: [
+      { label: 'Gestion Écoles',  href: '/admin/schools',       icon: <Landmark size={16}/> },
+      { label: 'Santé Système',   href: '/admin/system-health', icon: <Activity size={16}/> },
+      { label: 'Stress Test',     href: '/admin/stress-test',   icon: <Zap size={16}/> },
+    ]}] : [])
+  ];
+
+  /* ── SIDEBAR CONTENT ── */
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-      {/* Logo Header */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800/60">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
-          {branding?.logoUrl ? (
-            <img src={branding.logoUrl} alt="Logo" className="w-6 h-6 object-contain" />
-          ) : (
-            <GraduationCap size={22} className="text-white" />
-          )}
-        </div>
-        <div className="min-w-0">
-          <h2 className="font-bold text-lg tracking-tight truncate leading-tight">SchoolERP<span className="text-indigo-600 dark:text-indigo-400">.pro</span></h2>
-          <p className="text-[10px] uppercase font-bold text-zinc-500 truncate mt-0.5">{user?.schoolName || branding?.name || 'Mali Educational System'}</p>
+    <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>
+      
+      {/* Logo Area */}
+      <div style={{
+        padding: '18px 18px 14px',
+        borderBottom: '1px solid var(--border)',
+        position: 'relative',
+      }}>
+        {/* Mali flag top bar */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
+          background: 'linear-gradient(90deg, #14A44D 33%, #FCD116 33% 66%, #CE1126 66%)',
+        }} />
+        
+        <div className="flex items-center gap-3 mt-1">
+          <div style={{
+            width: 40, height: 40, borderRadius: 12,
+            background: 'var(--primary-grad)',
+            display: 'grid', placeItems: 'center',
+            boxShadow: 'var(--shadow-glow)',
+            flexShrink: 0, overflow: 'hidden', position: 'relative',
+          }}>
+            <GraduationCap size={20} color="white" />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%)' }} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 900, fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.5px', lineHeight: 1.2, color: 'var(--text)' }}>
+              SahelEdu<span style={{ color: 'var(--primary)' }}>.pro</span>
+            </div>
+            <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 2 }}>
+              {branding?.name || user?.schoolName || 'Plateforme Éducative Mali'}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800">
-        {(
-          user?.role === 'STUDENT' ? STUDENT_NAV_SECTIONS : 
-          user?.role === 'PARENT' ? PARENT_NAV_SECTIONS :
-          [
-            ...NAV_SECTIONS,
-            ...(user?.role === 'SUPER_ADMIN' ? [{
-              title: 'Super Admin Lab',
-              items: [
-                { label: 'Gestion Écoles',    href: '/admin/schools',       icon: <Landmark size={18}/> },
-                { label: 'Santé Système',     href: '/admin/system-health', icon: <Activity size={18}/> },
-                { label: 'Stress Test',       href: '/admin/stress-test',   icon: <Zap size={18}/> },
-              ]
-            }] : [])
-          ]
-        ).map(section => (
-          <div key={section.title}>
-            <div className="px-3 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+      <nav style={{ flex: 1, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {navSections.map(section => (
+          <div key={section.title} style={{ marginBottom: 6 }}>
+            <div style={{
+              fontSize: 9, fontWeight: 800, color: 'var(--text-dim)',
+              textTransform: 'uppercase', letterSpacing: '0.14em',
+              padding: '12px 10px 4px',
+            }}>
               {section.title}
             </div>
-            <div className="space-y-1">
-              {section.items.map(item => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                      active 
-                        ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-bold shadow-sm border border-indigo-100 dark:border-indigo-500/20' 
-                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-200 font-medium'
-                    }`}
-                  >
-                    <span className={`transition-colors duration-200 ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300'}`}>
-                      {item.icon}
-                    </span>
-                    <span className="flex-1 text-[13px]">{item.label}</span>
-                    {active && <ChevronRight size={14} className="text-indigo-400 dark:text-indigo-500 opacity-60" />}
-                  </Link>
-                )
-              })}
-            </div>
+            {section.items.map(item => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 10px', borderRadius: 10, marginBottom: 1,
+                    fontSize: 13, fontWeight: active ? 700 : 500,
+                    color: active ? 'var(--primary)' : 'var(--text-muted)',
+                    background: active ? 'var(--primary-dim)' : 'transparent',
+                    transition: 'all 0.18s var(--ease)',
+                    position: 'relative',
+                    textDecoration: 'none',
+                  }}
+                  className="group nav-link-item"
+                >
+                  <span style={{ color: active ? 'var(--primary)' : 'var(--text-dim)', flexShrink: 0, transition: 'color 0.18s' }}>
+                    {item.icon}
+                  </span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  {item.badge && (
+                    <span style={{
+                      background: 'var(--primary)', color: '#fff', borderRadius: 99,
+                      fontSize: 9, fontWeight: 800, padding: '1px 6px',
+                    }}>{item.badge}</span>
+                  )}
+                  {active && (
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)', flexShrink: 0 }} />
+                  )}
+                </Link>
+              );
+            })}
           </div>
         ))}
       </nav>
 
       {/* User Footer */}
-      <div className="p-4 border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-zinc-900/20">
+      <div style={{
+        padding: '12px 12px',
+        borderTop: '1px solid var(--border)',
+        background: 'var(--bg-4)',
+      }}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-bold text-sm shrink-0 border border-indigo-200 dark:border-indigo-800">
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: 'var(--primary-grad)',
+            display: 'grid', placeItems: 'center',
+            color: '#fff', fontSize: 13, fontWeight: 800,
+            boxShadow: '0 2px 8px var(--primary-glow)',
+            flexShrink: 0, letterSpacing: '-0.5px',
+          }}>
             {initials}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">{displayName}</p>
-            <p className="text-[11px] font-semibold text-zinc-500 truncate">{user?.role}</p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {displayName}
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              {roleLabel}
+            </div>
           </div>
-          <button onClick={handleLogout} className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors">
-            <LogOut size={18} />
+          <button onClick={handleLogout} style={{
+            width: 32, height: 32, borderRadius: 8, display: 'grid', placeItems: 'center',
+            color: 'var(--text-dim)', transition: 'all 0.15s', background: 'none', border: 'none', cursor: 'pointer',
+          }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--danger-dim)'; (e.currentTarget as HTMLElement).style.color = 'var(--danger)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'var(--text-dim)'; }}
+          >
+            <LogOut size={16} />
           </button>
         </div>
       </div>
@@ -283,31 +301,34 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   );
 
   return (
-    <div className="flex h-screen w-full bg-zinc-100 dark:bg-zinc-950 font-sans overflow-hidden">
-      
+    <div style={{ display: 'flex', height: '100vh', width: '100%', background: 'var(--bg)', overflow: 'hidden' }}>
+
       {/* ── Desktop Sidebar ── */}
-      <aside className="hidden lg:flex w-72 h-full p-3 pr-0">
-        <div className="w-full h-full bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-200/60 dark:border-zinc-800 overflow-hidden flex flex-col relative z-20">
-           <SidebarContent />
+      <aside style={{ width: 260, height: '100%', flexShrink: 0, padding: '12px 0 12px 12px' }} className="hidden lg:block">
+        <div style={{
+          width: '100%', height: '100%', borderRadius: 20,
+          overflow: 'hidden', display: 'flex', flexDirection: 'column',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--border)',
+          position: 'relative',
+        }}>
+          <SidebarContent />
         </div>
       </aside>
 
-      {/* ── Mobile Sidebar ── */}
+      {/* ── Mobile Overlay ── */}
       <AnimatePresence>
         {sidebarOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-zinc-900/60 backdrop-blur-sm lg:hidden flex"
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(8,12,24,0.7)', backdropFilter: 'blur(8px)' }}
+            className="lg:hidden"
             onClick={() => setSidebarOpen(false)}
           >
-            <motion.div 
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="w-4/5 max-w-sm h-full bg-white dark:bg-zinc-950 shadow-2xl"
+            <motion.div
+              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
+              style={{ width: '80%', maxWidth: 300, height: '100%', background: 'var(--bg-2)', boxShadow: 'var(--shadow-xl)' }}
               onClick={e => e.stopPropagation()}
             >
               <SidebarContent />
@@ -316,98 +337,152 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
         )}
       </AnimatePresence>
 
-      {/* ── Main Content Area ── */}
-      <main className="flex-1 flex flex-col h-full lg:p-3 overflow-hidden relative">
-        <div className="flex-1 w-full h-full bg-white dark:bg-zinc-950 lg:rounded-2xl shadow-sm border-x lg:border border-zinc-200/60 dark:border-zinc-800 flex flex-col overflow-hidden relative z-10">
-          
-          {/* Top Header */}
-          <header className="flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-100 dark:border-zinc-800/60 z-30 shrink-0">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 -ml-2 text-zinc-600 hover:bg-zinc-100 rounded-xl">
-                <Menu size={24} />
+      {/* ── Main Area ── */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', padding: '12px 12px 12px 6px', overflow: 'hidden', minWidth: 0 }} className="lg:block">
+        <div style={{
+          flex: 1, height: '100%', display: 'flex', flexDirection: 'column',
+          background: 'var(--bg-2)', borderRadius: 20,
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-sm)',
+          overflow: 'hidden',
+          position: 'relative',
+        }}>
+
+          {/* ── TOP HEADER ── */}
+          <header style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '0 20px', height: 58,
+            background: 'var(--bg-glass)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderBottom: '1px solid var(--border)',
+            flexShrink: 0, zIndex: 30,
+            position: 'sticky', top: 0,
+          }}>
+            <div className="flex items-center gap-3">
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden"
+                style={{ padding: 6, borderRadius: 9, color: 'var(--text-muted)', transition: 'all 0.15s', background: 'none', border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
+              >
+                <Menu size={22} />
               </button>
-              
-              {/* Breadcrumbs / Title */}
+
+              {/* Page Title / Breadcrumbs */}
               <div className="hidden sm:block">
                 {breadcrumbs && breadcrumbs.length > 0 ? (
-                  <div className="flex items-center gap-2 text-sm">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {breadcrumbs.map((b, i) => (
                       <React.Fragment key={i}>
-                        {i > 0 && <ChevronRight size={14} className="text-zinc-400" />}
+                        {i > 0 && <ChevronRight size={13} style={{ color: 'var(--text-dim)' }} />}
                         {b.href ? (
-                          <Link href={b.href} className="font-semibold text-zinc-500 hover:text-indigo-600 transition-colors">
+                          <Link href={b.href} style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}
+                            className="hover:text-primary transition-colors">
                             {b.label}
                           </Link>
                         ) : (
-                          <span className="font-bold text-zinc-900 dark:text-white">{b.label}</span>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>{b.label}</span>
                         )}
                       </React.Fragment>
                     ))}
                   </div>
                 ) : title ? (
-                  <h1 className="text-lg font-bold text-zinc-900 dark:text-white">{title}</h1>
+                  <h1 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.3px' }}>
+                    {title}
+                  </h1>
                 ) : null}
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Search Bar */}
-              <button 
+            {/* RIGHT ACTIONS */}
+            <div className="flex items-center gap-2">
+              {/* Search */}
+              <button
                 onClick={() => setIsCommandPaletteOpen(true)}
-                className="hidden md:flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-500 transition-colors w-[220px]"
+                className="hidden md:flex items-center gap-2"
+                style={{
+                  padding: '7px 12px', borderRadius: 10, fontSize: 13, fontWeight: 500,
+                  color: 'var(--text-muted)', background: 'var(--bg-4)',
+                  border: '1.5px solid var(--border)',
+                  cursor: 'pointer', transition: 'all 0.18s', width: 200,
+                  gap: 8, display: 'flex', alignItems: 'center',
+                }}
               >
-                <Search size={16} />
-                <span className="text-sm font-medium mr-auto">Rechercher...</span>
-                <kbd className="hidden lg:inline-flex items-center gap-1 font-mono text-[10px] font-bold opacity-60">
-                  <span className="text-[11px]">⌘</span>K
-                </kbd>
+                <Search size={14} />
+                <span style={{ flex: 1, textAlign: 'left' }}>Rechercher...</span>
+                <kbd style={{ fontSize: 10, fontWeight: 700, opacity: 0.5, fontFamily: 'monospace' }}>⌘K</kbd>
               </button>
 
-              <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block"></div>
-
               {user?.role === 'SUPER_ADMIN' && user.schoolName && (
-                 <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg">
-                    <ShieldAlert size={14} className="text-blue-600 dark:text-blue-400" />
-                    <span className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Impersonnalisation</span>
-                 </div>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '5px 10px', borderRadius: 8,
+                  background: 'rgba(59,130,246,0.08)',
+                  border: '1px solid rgba(59,130,246,0.2)',
+                }} className="hidden lg:flex">
+                  <ShieldAlert size={12} style={{ color: '#3b82f6' }} />
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Impersonation</span>
+                </div>
               )}
 
               {actions}
 
-              <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-10 w-10 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400">
-                {isDark ? <Sun size={20} /> : <Moon size={20} />}
-              </Button>
+              {/* Theme Toggle */}
+              <button onClick={toggleTheme} style={{
+                width: 36, height: 36, borderRadius: 9,
+                display: 'grid', placeItems: 'center',
+                color: 'var(--text-muted)', background: 'none',
+                border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+              }}>
+                {isDark ? <Sun size={17} /> : <Moon size={17} />}
+              </button>
 
               {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400">
-                    <Bell size={20} />
+                  <button style={{
+                    width: 36, height: 36, borderRadius: 9, position: 'relative',
+                    display: 'grid', placeItems: 'center', color: 'var(--text-muted)',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                  }}
+                    onClick={loadNotifications}
+                  >
+                    <Bell size={17} />
                     {notifications.filter(n => n.priority === 'high').length > 0 && (
-                      <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white dark:border-zinc-950" />
+                      <span style={{
+                        position: 'absolute', top: 7, right: 7,
+                        width: 8, height: 8, borderRadius: '50%',
+                        background: '#ef4444', border: '2px solid var(--bg-3)',
+                      }} />
                     )}
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80 p-0 rounded-2xl shadow-2xl border-zinc-200 dark:border-zinc-800 overflow-hidden">
-                  <div className="p-4 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
-                    <h3 className="font-bold">Notifications</h3>
-                    <Badge variant="secondary" className="bg-indigo-100 text-indigo-700">{notifications.length}</Badge>
+                <DropdownMenuContent align="end" style={{ width: 320, padding: 0, borderRadius: 16, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-md)', overflow: 'hidden' }}>
+                  <div style={{ padding: '14px 16px', background: 'var(--bg-4)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 800, fontSize: 14, fontFamily: 'Outfit, sans-serif' }}>Notifications</span>
+                    <span style={{ background: 'var(--primary-dim)', color: 'var(--primary)', borderRadius: 99, fontSize: 10, fontWeight: 800, padding: '2px 8px' }}>{notifications.length}</span>
                   </div>
-                  <div className="max-h-[300px] overflow-y-auto">
+                  <div style={{ maxHeight: 320, overflowY: 'auto' }}>
                     {notifLoading ? (
-                      <div className="p-8 text-center"><Loader2 size={24} className="animate-spin mx-auto text-indigo-400" /></div>
+                      <div style={{ padding: 40, textAlign: 'center' }}>
+                        <Loader2 size={22} className="animate-spin" style={{ margin: '0 auto', color: 'var(--primary)' }} />
+                      </div>
                     ) : notifications.length === 0 ? (
-                      <div className="p-8 text-center text-zinc-400 text-sm font-medium">
-                        <Bell size={32} className="mx-auto mb-3 opacity-20" />
+                      <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
+                        <Bell size={28} style={{ margin: '0 auto 10px', opacity: 0.2 }} />
                         Aucune notification
                       </div>
                     ) : notifications.map(n => (
-                      <div key={n.id} onClick={() => router.push(n.href)} className="p-4 border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 cursor-pointer transition-colors flex gap-3">
-                         <span className="text-xl">{typeIcon[n.type] || '🔔'}</span>
-                         <div>
-                           <p className="text-sm font-bold">{n.title}</p>
-                           <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{n.message}</p>
-                         </div>
+                      <div key={n.id} onClick={() => router.push(n.href)}
+                        style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'flex-start', transition: 'background 0.15s' }}
+                        className="hover:bg-primary-surface"
+                      >
+                        <span style={{ fontSize: 18 }}>{typeIcon[n.type] || '🔔'}</span>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{n.title}</p>
+                          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{n.message}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -417,63 +492,140 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="p-1 h-auto flex items-center gap-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl border border-transparent">
-                    <div className="h-9 w-9 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-bold border border-indigo-200 dark:border-indigo-800">
-                      {initials}
-                    </div>
-                  </Button>
+                  <button style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '4px 10px 4px 4px', borderRadius: 11,
+                    background: 'var(--bg-4)', border: '1.5px solid var(--border)',
+                    cursor: 'pointer', transition: 'all 0.18s',
+                  }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 8,
+                      background: 'var(--primary-grad)',
+                      display: 'grid', placeItems: 'center',
+                      color: '#fff', fontSize: 11, fontWeight: 800,
+                    }}>{initials}</div>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                      className="hidden md:block"
+                    >{user?.firstName || 'Admin'}</span>
+                    <ChevronDown size={13} style={{ color: 'var(--text-dim)' }} className="hidden md:block" />
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 rounded-2xl shadow-2xl border-zinc-200 dark:border-zinc-800">
-                  <div className="p-3">
-                    <p className="text-sm font-bold truncate">{displayName}</p>
-                    <p className="text-xs text-zinc-500 truncate">{user?.email}</p>
+                <DropdownMenuContent align="end" style={{ width: 220, borderRadius: 16, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-md)', overflow: 'hidden', padding: 0 }}>
+                  <div style={{ padding: '14px 16px', background: 'var(--bg-4)', borderBottom: '1px solid var(--border)' }}>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>{displayName}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 1 }}>{user?.email}</p>
+                    <span style={{ display: 'inline-block', marginTop: 6, fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em', background: 'var(--primary-dim)', color: 'var(--primary)', padding: '2px 8px', borderRadius: 99 }}>
+                      {roleLabel}
+                    </span>
                   </div>
-                  <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
-                  <DropdownMenuItem onClick={() => router.push('/profile')} className="rounded-xl m-1 cursor-pointer">
-                    <Users size={16} className="mr-2 text-indigo-600" /> Mon Profil
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/settings')} className="rounded-xl m-1 cursor-pointer">
-                    <Settings size={16} className="mr-2 text-zinc-500" /> Paramètres
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
-                  <DropdownMenuItem onClick={handleLogout} className="rounded-xl m-1 cursor-pointer text-red-600 hover:text-red-700 focus:bg-red-50 dark:focus:bg-red-500/10">
-                    <LogOut size={16} className="mr-2" /> Déconnexion
-                  </DropdownMenuItem>
+                  <div style={{ padding: 6 }}>
+                    <DropdownMenuItem onClick={() => router.push('/profile')} style={{ borderRadius: 10, padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600 }}>
+                      <Users size={14} style={{ color: 'var(--primary)' }} /> Mon Profil
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/settings')} style={{ borderRadius: 10, padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600 }}>
+                      <Settings size={14} style={{ color: 'var(--text-muted)' }} /> Paramètres
+                    </DropdownMenuItem>
+                    <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+                    <DropdownMenuItem onClick={handleLogout} style={{ borderRadius: 10, padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: 'var(--danger)' }}>
+                      <LogOut size={14} /> Déconnexion
+                    </DropdownMenuItem>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-
             </div>
           </header>
 
-          {/* Page Content Scrollable Area */}
-          <div className="flex-1 overflow-y-auto bg-zinc-50/50 dark:bg-zinc-950/50">
-            {title && (!breadcrumbs || breadcrumbs.length === 0) && (
-              <div className="px-8 pt-8 pb-4">
-                <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-white">{title}</h1>
-                {subtitle && <p className="text-zinc-500 text-sm mt-1 font-medium">{subtitle}</p>}
+          {/* ── PAGE CONTENT ── */}
+          <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg)' }}>
+            {/* Page title block */}
+            {(title || subtitle) && (
+              <div style={{
+                padding: '24px 28px 0',
+                borderBottom: '1px solid var(--border)',
+                background: 'var(--bg-2)',
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                {/* Subtle gradient accent */}
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  background: 'linear-gradient(135deg, rgba(30,58,138,0.03) 0%, transparent 60%)',
+                  pointerEvents: 'none',
+                }} />
+                
+                {/* Breadcrumbs inside page */}
+                {breadcrumbs && breadcrumbs.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, position: 'relative' }}>
+                    {breadcrumbs.map((b, i) => (
+                      <React.Fragment key={i}>
+                        {i > 0 && <ChevronRight size={12} style={{ color: 'var(--text-dim)' }} />}
+                        {b.href ? (
+                          <Link href={b.href} style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-dim)', transition: 'color 0.15s' }}>
+                            {b.label}
+                          </Link>
+                        ) : (
+                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>{b.label}</span>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+                
+                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, paddingBottom: 18, flexWrap: 'wrap', position: 'relative' }}>
+                  <div>
+                    <h1 style={{
+                      fontSize: 22, fontWeight: 900, color: 'var(--text)',
+                      fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.6px', lineHeight: 1.2,
+                    }}>
+                      {title}
+                    </h1>
+                    {subtitle && (
+                      <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4, fontWeight: 500 }}>
+                        {subtitle}
+                      </p>
+                    )}
+                    {/* Mali underline accent */}
+                    <div style={{
+                      display: 'block', width: 36, height: 3, borderRadius: 99,
+                      background: 'linear-gradient(90deg, #14A44D 33%, #FCD116 33% 66%, #CE1126 66%)',
+                      marginTop: 8,
+                    }} />
+                  </div>
+                  {actions && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      {actions}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-            
-            <div className="p-6 md:p-8 min-h-full flex flex-col">
+
+            {/* Children */}
+            <div style={{ padding: '24px 28px', minHeight: 'calc(100% - 200px)' }}>
               <motion.div
                 key={pathname}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="flex-1"
+                transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
                 {children}
               </motion.div>
-              
-              <footer className="mt-12 pt-6 border-t border-zinc-200/60 dark:border-zinc-800 text-center">
-                <p className="text-xs font-medium text-zinc-400 flex items-center justify-center gap-1.5 flex-wrap">
-                  © {new Date().getFullYear()} SchoolERP Pro — Conçu avec excellence par 
-                  <a href="https://sahelmultiservices.com" className="font-bold text-indigo-500 hover:text-indigo-600 transition-colors ml-1">
-                    SAHEL MULTISERVICES
-                  </a>
-                </p>
-              </footer>
             </div>
+
+            {/* Footer */}
+            <footer style={{
+              padding: '16px 28px',
+              borderTop: '1px solid var(--border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              flexWrap: 'wrap', gap: 8,
+            }}>
+              <p style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600 }}>
+                © {new Date().getFullYear()} SahelEdu.pro — Plateforme Nationale de Gestion Scolaire du Mali
+              </p>
+              <a href="https://sahelmultiservices.com" style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)' }}>
+                SAHEL MULTISERVICES
+              </a>
+            </footer>
           </div>
         </div>
       </main>
