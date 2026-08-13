@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { CalendarDays, Plus, Clock, Trash2, Loader2, X, AlertCircle, Printer, Download, Upload } from 'lucide-react';
+import { CalendarDays, Plus, Clock, Trash2, Edit2, Loader2, X, AlertCircle, Printer, Download, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
@@ -33,6 +33,7 @@ export default function TimetablePage() {
     const [isImporting, setIsImporting] = useState(false);
 
     const [showModal, setShowModal] = useState(false);
+    const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         dayOfWeek: '1',
@@ -205,22 +206,53 @@ export default function TimetablePage() {
         }
     };
 
-    const handleAddSlot = async (e: React.FormEvent) => {
+    const handleOpenNewModal = () => {
+        setEditingSlotId(null);
+        setFormData({
+            dayOfWeek: '1',
+            startTime: '08:00',
+            endTime: '10:00',
+            subjectId: subjects[0]?.id || '',
+            employeeId: employees[0]?.id || ''
+        });
+        setShowModal(true);
+    };
+
+    const handleEditSlot = (slot: any) => {
+        setEditingSlotId(slot.id);
+        setFormData({
+            dayOfWeek: slot.dayOfWeek.toString(),
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            subjectId: slot.subjectId || slot.subject?.id || '',
+            employeeId: slot.employeeId || slot.teacher?.id || ''
+        });
+        setShowModal(true);
+    };
+
+    const handleSaveSlot = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedClassroom) return;
         setIsSubmitting(true);
         try {
-            const res = await fetch('/api/timetable', {
-                method: 'POST',
+            const url = '/api/timetable';
+            const method = editingSlotId ? 'PUT' : 'POST';
+            const payload = editingSlotId 
+                ? { ...formData, id: editingSlotId, classroomId: selectedClassroom }
+                : { ...formData, classroomId: selectedClassroom };
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, classroomId: selectedClassroom })
+                body: JSON.stringify(payload)
             });
             if (!res.ok) {
                 const data = await res.json();
                 throw new Error(data.error || 'Erreur lors de l’enregistrement');
             }
-            toast.success('Créneau ajouté avec succès');
+            toast.success(editingSlotId ? 'Créneau modifié avec succès' : 'Créneau ajouté avec succès');
             setShowModal(false);
+            setEditingSlotId(null);
             fetchSchedule();
         } catch (e: any) {
             toast.error(e.message);
@@ -258,7 +290,7 @@ export default function TimetablePage() {
                     </button>
                     <button 
                         className="btn-primary" 
-                        onClick={() => setShowModal(true)}
+                        onClick={handleOpenNewModal}
                         disabled={!selectedClassroom}
                     >
                         <Plus size={15} /> Nouveau Créneau
@@ -362,23 +394,38 @@ export default function TimetablePage() {
                                                     <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '2px' }}>{slot.subject?.name}</div>
                                                     <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{slot.teacher?.firstName} {slot.teacher?.lastName}</div>
                                                     
-                                                    <button 
-                                                      onClick={() => handleDelete(slot.id)} 
-                                                      style={{ 
-                                                          position: 'absolute', 
-                                                          top: 10, 
-                                                          right: 10, 
-                                                          color: 'var(--danger)', 
-                                                          background: 'none', 
-                                                          border: 'none', 
-                                                          cursor: 'pointer', 
-                                                          opacity: 0.4,
-                                                          padding: '4px'
-                                                      }}
-                                                      className="hover-opacity-1"
-                                                    >
-                                                        <Trash2 size={13}/>
-                                                    </button>
+                                                    <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '4px' }}>
+                                                        <button 
+                                                          onClick={() => handleEditSlot(slot)} 
+                                                          title="Modifier ce créneau"
+                                                          style={{ 
+                                                              color: 'var(--primary)', 
+                                                              background: 'none', 
+                                                              border: 'none', 
+                                                              cursor: 'pointer', 
+                                                              opacity: 0.6,
+                                                              padding: '4px'
+                                                          }}
+                                                          className="hover-opacity-1"
+                                                        >
+                                                            <Edit2 size={13}/>
+                                                        </button>
+                                                        <button 
+                                                          onClick={() => handleDelete(slot.id)} 
+                                                          title="Supprimer ce créneau"
+                                                          style={{ 
+                                                              color: 'var(--danger)', 
+                                                              background: 'none', 
+                                                              border: 'none', 
+                                                              cursor: 'pointer', 
+                                                              opacity: 0.6,
+                                                              padding: '4px'
+                                                          }}
+                                                          className="hover-opacity-1"
+                                                        >
+                                                            <Trash2 size={13}/>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ))}
                                             {daySlots.length === 0 && (
@@ -413,10 +460,12 @@ export default function TimetablePage() {
                         animation: 'fadeUp 0.3s var(--ease) both' 
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--border)' }}>
-                            <h2 style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '18px' }}>Nouveau Créneau</h2>
-                            <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
+                            <h2 style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '18px' }}>
+                                {editingSlotId ? 'Modifier le Créneau' : 'Nouveau Créneau'}
+                            </h2>
+                            <button className="btn-icon" onClick={() => { setShowModal(false); setEditingSlotId(null); }}><X size={18} /></button>
                         </div>
-                        <form onSubmit={handleAddSlot} style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <form onSubmit={handleSaveSlot} style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div className="form-group">
                                 <label>Jour de la semaine *</label>
                                 <select className="form-input" value={formData.dayOfWeek} onChange={e => setFormData({...formData, dayOfWeek: e.target.value})} required>
@@ -454,9 +503,9 @@ export default function TimetablePage() {
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
-                                <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
+                                <button type="button" className="btn-ghost" onClick={() => { setShowModal(false); setEditingSlotId(null); }}>Annuler</button>
                                 <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                                    {isSubmitting ? <><Loader2 size={16} className="spin" /> Enregistrement...</> : 'Ajouter au Planning'}
+                                    {isSubmitting ? <><Loader2 size={16} className="spin" /> Enregistrement...</> : (editingSlotId ? 'Mettre à Jour' : 'Ajouter au Planning')}
                                 </button>
                             </div>
                         </form>

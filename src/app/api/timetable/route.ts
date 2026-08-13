@@ -97,3 +97,36 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }
+
+export async function PUT(request: Request) {
+  const session = await getSession();
+  if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  try {
+    const { id, classroomId, subjectId, employeeId, dayOfWeek, startTime, endTime } = await request.json();
+
+    if (!id || !classroomId || !subjectId || !employeeId || dayOfWeek === undefined || !startTime || !endTime) {
+      return NextResponse.json({ error: 'Tous les champs sont requis' }, { status: 400 });
+    }
+
+    const entry = await prisma.timetable.findFirst({ where: { id, tenantId: session.tenantId } });
+    if (!entry) return NextResponse.json({ error: 'Créneau introuvable ou accès non autorisé' }, { status: 403 });
+
+    const updated = await prisma.timetable.update({
+      where: { id },
+      data: {
+        classroomId,
+        subjectId,
+        employeeId,
+        dayOfWeek: parseInt(dayOfWeek, 10),
+        startTime,
+        endTime
+      }
+    });
+
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    console.error('[TIMETABLE PUT]', error.message);
+    return NextResponse.json({ error: 'Erreur lors de la modification' }, { status: 400 });
+  }
+}
