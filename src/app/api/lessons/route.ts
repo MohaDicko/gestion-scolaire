@@ -42,15 +42,15 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { classroomId, subjectId, title, content, homework, date, status } = body;
+    const { classroomId, subjectId, title, content, homework, date, status, hoursCount, employeeId: bodyEmployeeId } = body;
 
     if (!classroomId || !subjectId || !title || !content) {
       return NextResponse.json({ error: 'Champs obligatoires manquants' }, { status: 400 });
     }
 
     // Identify the employee record for this user if they are a TEACHER
-    let employeeId = body.employeeId;
-    if (session.role === 'TEACHER' && !employeeId) {
+    let employeeId = bodyEmployeeId;
+    if (!employeeId) {
       const employee = await prisma.employee.findFirst({
         where: { email: session.email, tenantId: session.tenantId }
       });
@@ -72,6 +72,7 @@ export async function POST(request: Request) {
         homework,
         date: date ? new Date(date) : new Date(),
         status: status || 'COMPLETED',
+        ...(hoursCount ? { hoursCount: parseFloat(hoursCount) } : {})
       }
     });
 
