@@ -10,9 +10,10 @@ import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { exportToExcel } from '@/lib/excelExport';
 
-const emptyForm = {
-  studentId: '', title: '', amount: '', dueDate: new Date().toISOString().split('T')[0], type: 'TUITION', paymentMethod: 'ESPECES'
-};
+// La méthode de paiement par défaut sera chargée depuis /api/school/settings
+const buildEmptyForm = (paymentMethod = 'ESPECES') => ({
+  studentId: '', title: '', amount: '', dueDate: new Date().toISOString().split('T')[0], type: 'TUITION', paymentMethod
+});
 
 export default function InvoicesPage() {
   const router = useRouter();
@@ -25,7 +26,8 @@ export default function InvoicesPage() {
   const [showModal, setShowModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
-  const [formData, setFormData] = useState({ ...emptyForm });
+  const [schoolSettings, setSchoolSettings] = useState<{ defaultPaymentMethod: string }>({ defaultPaymentMethod: 'ESPECES' });
+  const [formData, setFormData] = useState(buildEmptyForm());
   const [paymentForm, setPaymentForm] = useState({ amount: '', method: 'ESPECES', reference: '', notes: '' });
   const [search, setSearch] = useState('');
 
@@ -46,6 +48,17 @@ export default function InvoicesPage() {
 
   useEffect(() => {
     fetchInvoices();
+    // Charger les settings de l'école (defaultPaymentMethod selon le tenant)
+    fetch('/api/school/settings')
+      .then(r => r.json())
+      .then(s => {
+        if (s?.defaultPaymentMethod) {
+          setSchoolSettings({ defaultPaymentMethod: s.defaultPaymentMethod });
+          setFormData(buildEmptyForm(s.defaultPaymentMethod));
+          setPaymentForm(prev => ({ ...prev, method: s.defaultPaymentMethod }));
+        }
+      })
+      .catch(() => {});
     fetch('/api/students?pageNumber=1&pageSize=1000')
       .then(r => r.json())
       .then(d => { if (Array.isArray(d.items)) setStudents(d.items); })
@@ -288,10 +301,11 @@ export default function InvoicesPage() {
                 <div className="form-group">
                   <label>Mode de paiement par défaut *</label>
                   <select value={formData.paymentMethod} onChange={e => setFormData({...formData, paymentMethod: e.target.value})}>
+                    <option value="VIREMENT">🏦 Virement Bancaire (Défaut CFPPAS)</option>
+                    <option value="CHEQUE">Chèque</option>
                     <option value="ESPECES">Espèces (Cash)</option>
                     <option value="ORANGE_MONEY">Orange Money</option>
                     <option value="MOOV_MONEY">Moov Money</option>
-                    <option value="VIREMENT">Virement / Chèque</option>
                   </select>
                 </div>
               </div>
@@ -336,22 +350,31 @@ export default function InvoicesPage() {
 
               <div className="form-group">
                 <label>Mode de règlement *</label>
+                {/* Note informative : uniquement si l'école est configurée en virement (ex: CFPPAS) */}
+                {schoolSettings.defaultPaymentMethod === 'VIREMENT' && (
+                  <div style={{ marginBottom: '8px', padding: '8px 12px', background: 'rgba(22,163,74,0.08)', borderRadius: '8px', fontSize: '12px', color: '#16a34a', fontWeight: 600, display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <span>🏦</span>
+                    <span>Paiement par virement bancaire — orientés par l'État</span>
+                  </div>
+                )}
                 <select required value={paymentForm.method} onChange={e => setPaymentForm({...paymentForm, method: e.target.value})}>
+                  <option value="VIREMENT">🏦 Virement Bancaire</option>
+                  <option value="CHEQUE">Chèque</option>
                   <option value="ESPECES">Espèces (Cash)</option>
                   <option value="ORANGE_MONEY">Orange Money</option>
                   <option value="MOOV_MONEY">Moov Money</option>
-                  <option value="VIREMENT">Virement Bancaire</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label>Référence (facultatif)</label>
+                <label>Référence {schoolSettings.defaultPaymentMethod === 'VIREMENT' ? 'du virement' : '(facultatif)'}</label>
                 <input 
-                  placeholder="ID transaction, n° chèque..." 
+                  placeholder={schoolSettings.defaultPaymentMethod === 'VIREMENT' ? "N° de virement, référence bancaire..." : "ID transaction, n° chèque..."} 
                   value={paymentForm.reference} 
                   onChange={e => setPaymentForm({...paymentForm, reference: e.target.value})} 
                 />
               </div>
+
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
                 <button type="button" className="btn-ghost" onClick={() => setShowPaymentModal(false)}>Annuler</button>

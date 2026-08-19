@@ -39,21 +39,24 @@ export async function GET(request: Request) {
 
   if (!student) return NextResponse.json({ error: 'Élève non trouvé' }, { status: 404 });
 
-  // Calcul moyennes pondérées par coefficient
+  // CFPPAS ou autre école : utiliser le barème configuré dans la DB
+  const scale = school?.gradingScale ?? 20;
+
+  // Calcul moyennes pondérées par coefficient, ramenées sur l'échelle de l'école
   const subjectResults = grades.map(g => {
-    const avg = (g.score / g.maxScore) * 20;
+    const avg = (g.score / g.maxScore) * scale;
     let mention = '';
-    if (avg >= 16) mention = 'Très Bien';
-    else if (avg >= 14) mention = 'Bien';
-    else if (avg >= 12) mention = 'Assez Bien';
-    else if (avg >= 10) mention = 'Passable';
+    if (avg >= scale * 0.80) mention = 'Très Bien';
+    else if (avg >= scale * 0.70) mention = 'Bien';
+    else if (avg >= scale * 0.60) mention = 'Assez Bien';
+    else if (avg >= scale * 0.50) mention = 'Passable';
     else mention = 'Insuffisant';
     return {
       subjectName: g.subject.name,
       subjectCode: g.subject.code,
       coefficient: g.subject.coefficient,
       score: g.score,
-      maxScore: g.maxScore,
+      maxScore: scale,
       average: Math.round(avg * 100) / 100,
       weighted: Math.round(avg * g.subject.coefficient * 100) / 100,
       mention,
@@ -93,7 +96,8 @@ export async function GET(request: Request) {
     const classmateAverages = classmates.map(c => {
       const sGrades = classmateGrades.filter(g => g.studentId === c.studentId);
       const sResults = sGrades.map(g => {
-        const avg = (g.score / g.maxScore) * 20;
+        // Utiliser le barème de l'école (multi-tenant)
+        const avg = (g.score / g.maxScore) * scale;
         return { average: avg, coeff: g.subject.coefficient };
       });
       const sTotalCoeff = sResults.reduce((s, r) => s + r.coeff, 0);
@@ -113,11 +117,12 @@ export async function GET(request: Request) {
   }
   // ---------------------------
 
+  // Mentions selon le barème de l'école
   let generalMention = '';
-  if (generalAverage >= 16) generalMention = 'Très Bien';
-  else if (generalAverage >= 14) generalMention = 'Bien';
-  else if (generalAverage >= 12) generalMention = 'Assez Bien';
-  else if (generalAverage >= 10) generalMention = 'Passable';
+  if (generalAverage >= scale * 0.80) generalMention = 'Très Bien';
+  else if (generalAverage >= scale * 0.70) generalMention = 'Bien';
+  else if (generalAverage >= scale * 0.60) generalMention = 'Assez Bien';
+  else if (generalAverage >= scale * 0.50) generalMention = 'Passable';
   else generalMention = 'Insuffisant';
 
   return NextResponse.json({

@@ -1,8 +1,12 @@
 /**
  * ================================================================
- * MOTEUR DE CALCUL DES BULLETINS - MODÈLE LYCÉE MALIEN (EX: NIAMANA)
+ * MOTEUR DE CALCUL DES BULLETINS — Multi-tenant
  * ================================================================
+ * Les notes sont ramenées sur l'échelle configurée par l'école
+ * (gradingScale : 20 par défaut pour le Mali, 100 pour le CFPPAS).
  */
+
+export const DEFAULT_GRADING_SCALE = 20;
 
 export type GradeType = 'CONTINUOUS' | 'MIDTERM' | 'FINAL';
 
@@ -43,13 +47,19 @@ export interface StudentBulletin {
   mention: string;
 }
 
-export function getMaliMention(average: number): string {
-  if (average >= 16) return 'Très Bien';
-  if (average >= 14) return 'Bien';
-  if (average >= 12) return 'Assez Bien';
-  if (average >= 10) return 'Passable';
-  if (average >= 8)  return 'Faible';
-  if (average >= 5)  return 'Médiocre';
+/**
+ * Mentions adaptées à l'échelle de l'école.
+ * @param average — Moyenne de l'élève
+ * @param scale   — Barème de l'école (20 ou 100)
+ */
+export function getMaliMention(average: number, scale: number = DEFAULT_GRADING_SCALE): string {
+  const p = average / scale; // proportion 0-1
+  if (p >= 0.80) return 'Très Bien';
+  if (p >= 0.70) return 'Bien';
+  if (p >= 0.60) return 'Assez Bien';
+  if (p >= 0.50) return 'Passable';
+  if (p >= 0.40) return 'Faible';
+  if (p >= 0.25) return 'Médiocre';
   return 'Très Faible';
 }
 
@@ -57,7 +67,7 @@ export function getMaliMention(average: number): string {
  * Calcul selon le modèle Lycée Malien :
  * Moyenne Matière = (Moyenne_Classe + 2 * Moyenne_Composition) / 3
  */
-export function calculateClassBulletins(grades: GradeInput[]): StudentBulletin[] {
+export function calculateClassBulletins(grades: GradeInput[], scale: number = DEFAULT_GRADING_SCALE): StudentBulletin[] {
   const studentsMap = new Map<string, { 
     name: string; 
     number: string; 
@@ -90,7 +100,8 @@ export function calculateClassBulletins(grades: GradeInput[]): StudentBulletin[]
     }
 
     const sub = student.subjects.get(g.subjectId)!;
-    const normalizedScore = (g.score / g.maxScore) * 20;
+    // Ramener la note sur l'échelle de l'école (gradingScale)
+    const normalizedScore = (g.score / g.maxScore) * scale;
 
     if (g.examType === 'CONTINUOUS') {
       sub.classScores.push(normalizedScore);
@@ -128,7 +139,7 @@ export function calculateClassBulletins(grades: GradeInput[]): StudentBulletin[]
         moyenneComposition: Number(moyComp.toFixed(2)),
         average: Number(average.toFixed(2)),
         weightedAverage: Number(weightedAverage.toFixed(2)),
-        mention: getMaliMention(average)
+        mention: getMaliMention(average, scale)
       });
 
       totalPoints += weightedAverage;
@@ -147,7 +158,7 @@ export function calculateClassBulletins(grades: GradeInput[]): StudentBulletin[]
       generalAverage: Number(generalAverage.toFixed(2)),
       rank: 0,
       classSize: studentsMap.size,
-      mention: getMaliMention(generalAverage)
+      mention: getMaliMention(generalAverage, scale)
     };
   });
 

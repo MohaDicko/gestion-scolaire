@@ -92,7 +92,7 @@ async function main() {
       let totalPaid = 0;
 
       for (const student of students) {
-        const invoiceAmount = 250000; // 250,000 F CFA
+        const invoiceAmount = 200000; // 200 000 F CFA — Frais de scolarité officiel CFPPAS
         const invoice = await prisma.invoice.create({
           data: {
             tenantId: school.id,
@@ -118,7 +118,7 @@ async function main() {
               tenantId: school.id,
               invoiceId: invoice.id,
               amount: paymentAmount,
-              method: rand > 0.7 ? 'ORANGE_MONEY' : 'ESPECES',
+              method: 'VIREMENT', // CFPPAS : paiement étatique par virement bancaire
               reference: `TXN-${Math.floor(Math.random() * 1000000)}`
             }
           });

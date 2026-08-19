@@ -31,6 +31,10 @@ model School {
   subdomain       String?        @unique
   primaryColor    String?        @default("#4f8ef7")
   secondaryColor  String?        @default("#0f172a")
+  // ── Configuration pédagogique & financière (par école) ──────────────────
+  gradingScale           Int     @default(20)       // Barème: 20 (défaut Mali) ou 100 (ex: CFPPAS)
+  defaultPaymentMethod   String  @default("ESPECES") // ESPECES | VIREMENT | ORANGE_MONEY | MOOV_MONEY
+  defaultTuition         Int     @default(0)         // Frais de scolarité annuels par défaut (XOF)
   academicYears   AcademicYear[]
   campuses        Campus[]
 }

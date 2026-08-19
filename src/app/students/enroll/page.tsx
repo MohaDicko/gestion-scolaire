@@ -23,6 +23,9 @@ export default function EnrollmentWizardPage() {
   // Form State
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [studentSearch, setStudentSearch] = useState('');
+  // Frais de scolarité : sera chargé depuis /api/school/settings (multi-tenant)
+  const [DEFAULT_TUITION, setDefaultTuition] = useState(0);
+
   const [enrollmentData, setEnrollmentData] = useState({
     classroomId: '',
     academicYearId: '',
@@ -30,6 +33,16 @@ export default function EnrollmentWizardPage() {
   });
 
   useEffect(() => {
+    // Charger les settings de l'école (defaultTuition, etc.)
+    fetch('/api/school/settings')
+      .then(r => r.json())
+      .then(s => {
+        if (s?.defaultTuition !== undefined) {
+          setDefaultTuition(s.defaultTuition);
+          setEnrollmentData(prev => ({ ...prev, tuitionAmount: String(s.defaultTuition) }));
+        }
+      })
+      .catch(() => {});
     // Load prerequisites
     fetch('/api/academic-years').then(r => r.json()).then(d => {
       setAcademicYears(Array.isArray(d) ? d : []);
@@ -264,6 +277,13 @@ export default function EnrollmentWizardPage() {
                   />
                   <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: 'var(--text-dim)' }}>XOF</span>
                 </div>
+                {/* Tarif configuré pour cette école (multi-tenant) */}
+                {DEFAULT_TUITION > 0 && parseFloat(enrollmentData.tuitionAmount) === DEFAULT_TUITION && (
+                  <div style={{ marginTop: '8px', padding: '10px 14px', background: 'var(--primary-dim)', borderRadius: '10px', fontSize: '12px', color: 'var(--primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>📋</span>
+                    <span>Tarif configuré — {DEFAULT_TUITION.toLocaleString()} FCFA/an ≈ <strong>{Math.round(DEFAULT_TUITION / 3).toLocaleString()} FCFA × 3 trimestres</strong></span>
+                  </div>
+                )}
               </div>
 
               <div style={{ marginTop: '32px', padding: '24px', border: '1px solid var(--border-md)', borderRadius: '16px', background: 'var(--bg-2)' }}>
@@ -316,7 +336,7 @@ export default function EnrollmentWizardPage() {
                   setStep(1);
                   setSelectedStudent(null);
                   setStudentSearch('');
-                  setEnrollmentData(prev => ({ ...prev, tuitionAmount: '0' }));
+                  setEnrollmentData(prev => ({ ...prev, tuitionAmount: String(DEFAULT_TUITION) }));
                 }}>
                   Nouvelle Inscription
                 </button>

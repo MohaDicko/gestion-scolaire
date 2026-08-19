@@ -19,13 +19,25 @@ export default function FinancePaymentsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     
-    // Form for new payment
+    // Méthode de paiement : sera mise à jour depuis /api/school/settings
     const [paymentForm, setPaymentForm] = useState({
         invoiceId: '',
         amount: 0,
         method: 'ESPECES',
         notes: ''
     });
+
+    useEffect(() => {
+        // Charger le mode de paiement par défaut selon l'école (multi-tenant)
+        fetch('/api/school/settings')
+          .then(r => r.json())
+          .then(s => {
+            if (s?.defaultPaymentMethod) {
+              setPaymentForm(prev => ({ ...prev, method: s.defaultPaymentMethod }));
+            }
+          })
+          .catch(() => {});
+    }, []);
 
     useEffect(() => {
         if (searchTerm.length < 2) {
@@ -424,11 +436,11 @@ export default function FinancePaymentsPage() {
                                             value={paymentForm.method}
                                             onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value })}
                                         >
+                                            <option value="VIREMENT">🏦 Virement Bancaire (Défaut CFPPAS)</option>
+                                            <option value="CHEQUE">Chèque</option>
                                             <option value="ESPECES">Espèces</option>
                                             <option value="ORANGE_MONEY">Orange Money</option>
                                             <option value="MOOV_MONEY">Moov Money</option>
-                                            <option value="VIREMENT">Virement Bancaire</option>
-                                            <option value="CHEQUE">Chèque</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">

@@ -44,6 +44,9 @@ export async function GET(request: Request) {
     t1Max: number; t2Max: number; t3Max: number;
   }> = {};
 
+  // Barème de notation propre à l'école (multi-tenant)
+  const scale = school?.gradingScale ?? 20;
+
   allGrades.forEach(g => {
     const key = g.subjectId;
     if (!subjectMap[key]) {
@@ -51,25 +54,27 @@ export async function GET(request: Request) {
         subjectName: g.subject.name,
         subjectCode: g.subject.code,
         coefficient: g.subject.coefficient,
-        t1Max: 20, t2Max: 20, t3Max: 20,
+        t1Max: scale, t2Max: scale, t3Max: scale,
       };
     }
-    const avg20 = (g.score / g.maxScore) * 20;
-    if (g.trimestre === 1) { subjectMap[key].t1 = Math.round(avg20 * 100) / 100; subjectMap[key].t1Max = g.maxScore; }
-    if (g.trimestre === 2) { subjectMap[key].t2 = Math.round(avg20 * 100) / 100; subjectMap[key].t2Max = g.maxScore; }
-    if (g.trimestre === 3) { subjectMap[key].t3 = Math.round(avg20 * 100) / 100; subjectMap[key].t3Max = g.maxScore; }
+    // Ramener sur l'échelle de l'école
+    const scoreOnScale = (g.score / g.maxScore) * scale;
+    if (g.trimestre === 1) { subjectMap[key].t1 = Math.round(scoreOnScale * 100) / 100; subjectMap[key].t1Max = scale; }
+    if (g.trimestre === 2) { subjectMap[key].t2 = Math.round(scoreOnScale * 100) / 100; subjectMap[key].t2Max = scale; }
+    if (g.trimestre === 3) { subjectMap[key].t3 = Math.round(scoreOnScale * 100) / 100; subjectMap[key].t3Max = scale; }
   });
 
   const subjectResults = Object.values(subjectMap).map(s => {
     const scores = [s.t1, s.t2, s.t3].filter(v => v !== undefined) as number[];
     const annualAvg = scores.length > 0 ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100 : null;
     const weighted = annualAvg !== null ? Math.round(annualAvg * s.coefficient * 100) / 100 : null;
+    // Mentions proportionnelles à l'échelle de l'école
     let mention = '';
     if (annualAvg !== null) {
-      if (annualAvg >= 16) mention = 'Très Bien';
-      else if (annualAvg >= 14) mention = 'Bien';
-      else if (annualAvg >= 12) mention = 'Assez Bien';
-      else if (annualAvg >= 10) mention = 'Passable';
+      if (annualAvg >= scale * 0.80) mention = 'Très Bien';
+      else if (annualAvg >= scale * 0.70) mention = 'Bien';
+      else if (annualAvg >= scale * 0.60) mention = 'Assez Bien';
+      else if (annualAvg >= scale * 0.50) mention = 'Passable';
       else mention = 'Insuffisant';
     }
     return { ...s, annualAvg, weighted, mention };
@@ -80,12 +85,13 @@ export async function GET(request: Request) {
   const totalWeighted = validResults.reduce((s, r) => s + (r.weighted ?? 0), 0);
   const generalAverage = totalCoeff > 0 ? Math.round((totalWeighted / totalCoeff) * 100) / 100 : null;
 
+  // Mentions proportionnelles à l'échelle de l'école
   let generalMention = '';
   if (generalAverage !== null) {
-    if (generalAverage >= 16) generalMention = 'Très Bien';
-    else if (generalAverage >= 14) generalMention = 'Bien';
-    else if (generalAverage >= 12) generalMention = 'Assez Bien';
-    else if (generalAverage >= 10) generalMention = 'Passable';
+    if (generalAverage >= scale * 0.80) generalMention = 'Très Bien';
+    else if (generalAverage >= scale * 0.70) generalMention = 'Bien';
+    else if (generalAverage >= scale * 0.60) generalMention = 'Assez Bien';
+    else if (generalAverage >= scale * 0.50) generalMention = 'Passable';
     else generalMention = 'Insuffisant';
   }
 

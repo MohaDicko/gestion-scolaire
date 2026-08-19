@@ -29,13 +29,18 @@ export default function GradesPage() {
   useEffect(() => {
     Promise.all([
       fetch('/api/classrooms').then(r => r.json()),
-      fetch('/api/academic-years').then(r => r.json())
-    ]).then(([cData, yData]) => {
+      fetch('/api/academic-years').then(r => r.json()),
+      fetch('/api/school/settings').then(r => r.json()),
+    ]).then(([cData, yData, settings]) => {
       if (Array.isArray(cData)) setClassrooms(cData);
       if (Array.isArray(yData)) {
         setYears(yData);
-        const active = yData.find(y => y.isActive);
+        const active = yData.find((y: any) => y.isActive);
         if (active) setForm(f => ({ ...f, academicYearId: active.id }));
+      }
+      // Adapter le barème de notation selon l'école (multi-tenant)
+      if (settings?.gradingScale) {
+        setForm(f => ({ ...f, maxScore: String(settings.gradingScale) }));
       }
     }).catch(() => toast.error('Erreur lors du chargement des modules.'));
   }, [toast]);
