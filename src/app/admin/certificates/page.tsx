@@ -137,7 +137,7 @@ export default function CertificatesPage() {
                           }`}
                         >
                           <span className="font-bold text-sm text-slate-800 dark:text-slate-100">
-                            {s.lastName.toUpperCase()} {s.firstName}
+                            {(s.lastName || s.fullName || '').toUpperCase()} {s.firstName || ''}
                           </span>
                           <span className="text-xs text-slate-500 font-mono mt-1">
                             {s.studentNumber}

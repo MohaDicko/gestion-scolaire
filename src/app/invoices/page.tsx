@@ -81,7 +81,7 @@ export default function InvoicesPage() {
       if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'émission');
       toast.success('Facture émise avec succès.');
       setShowModal(false);
-      setFormData({ ...emptyForm });
+      setFormData(buildEmptyForm());
       fetchInvoices();
     } catch (err: any) {
       toast.error(err.message);
