@@ -3,17 +3,25 @@
 import React from 'react';
 import { DIRECTOR_STAMP_URL } from '@/lib/directorStampData';
 
+export interface CertificateData {
+  id?: string;
+  studentNumber: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  dateOfBirth?: string;
+  placeOfBirth?: string;
+  classroom: string;
+  academicYear?: string;
+  schoolName?: string;
+  schoolLogo?: string | null;
+  schoolAddress?: string;
+  schoolCity?: string;
+  schoolPhone?: string;
+}
+
 export interface StudentCertificateProps {
-  student: {
-    fullName: string;
-    dateOfBirth?: string;
-    placeOfBirth?: string;
-    studentNumber: string;
-    classroom: string;
-    schoolName?: string;
-    schoolLogo?: string;
-    schoolCity?: string;
-  };
+  student: CertificateData;
   issueDate?: string;
 }
 
@@ -80,7 +88,7 @@ export const CertificateTemplate: React.FC<StudentCertificateProps> = ({
         
         <div className="bg-slate-50 p-6 rounded-lg border border-slate-200 space-y-2">
           <p className="text-xl">
-            L'élève : <strong className="text-indigo-950 font-bold uppercase">{student.fullName}</strong>
+            L'élève : <strong className="text-indigo-950 font-bold uppercase">{student.fullName || `${student.firstName || ''} ${student.lastName || ''}`}</strong>
           </p>
           {student.dateOfBirth && (
             <p className="text-md text-slate-700">
