@@ -7,6 +7,7 @@ import {
     Printer, History, User, Landmark, FileText
 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 
@@ -175,6 +176,12 @@ export default function FinancePaymentsPage() {
 
         // --- Signatures ---
         y += 25;
+        try {
+          doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', width - margin - 45, y - 10, 45, 20);
+        } catch (e) {
+          console.warn('Tampon non ajouté', e);
+        }
+
         doc.setDrawColor(203, 213, 225);
         doc.line(margin, y + 10, margin + 40, y + 10);
         doc.line(width - margin - 40, y + 10, width - margin, y + 10);
@@ -182,7 +189,7 @@ export default function FinancePaymentsPage() {
         doc.setTextColor(15, 23, 42);
         doc.setFontSize(8);
         doc.text('Le Payeur', margin + 20, y + 15, { align: 'center' });
-        doc.text('Le Caissier', width - margin - 20, y + 15, { align: 'center' });
+        doc.text('Le Caissier / La Direction', width - margin - 20, y + 15, { align: 'center' });
 
         // --- Footer ---
         doc.setFontSize(6.5);

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { FileText, Download, Search, Loader2, Award } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
 import autoTable from 'jspdf-autotable';
 import { useToast } from '@/components/Toast';
 
@@ -169,6 +170,13 @@ export default function TranscriptsPage() {
       doc.text('Décision du Conseil :', margin, sigY);
       doc.setFont('helvetica', 'bold');
       doc.text(avg !== null && avg >= 10 ? 'Admis(e) en classe supérieure.' : 'Passage en conseil de classe.', margin + 35, sigY);
+
+      // Tampon et Signature officielle du Directeur Général
+      try {
+        doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', margin, sigY + 2, 45, 20);
+      } catch (e) {
+        console.warn('Tampon directeur non ajouté', e);
+      }
 
       [['Le Directeur', margin + 10], ['Le Censeur', pageW / 2 - 15], ['Signature Parent', pageW - margin - 50]].forEach(([label, x]) => {
         doc.setDrawColor(200, 210, 220); doc.setLineWidth(0.3);

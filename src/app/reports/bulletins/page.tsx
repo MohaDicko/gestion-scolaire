@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { FileText, Search, Printer, Loader2, Award, BookOpen, AlertCircle, TrendingUp, CheckCircle2 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
 
 interface BulletinData {
   school: { name: string; motto: string; logoUrl?: string };
@@ -257,6 +258,13 @@ export default function BulletinsPage() {
       const sigCols = [margin, pageW / 2 - 20, pageW - margin - 48];
       const sigLabels = ['Le Titulaire', 'Le Directeur', 'Les Parents'];
       
+      // Tampon et Signature officielle du Directeur Général
+      try {
+        doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', pageW / 2 - 22, y - 10, 52, 24);
+      } catch (e) {
+        console.warn('Tampon directeur non ajouté', e);
+      }
+
       sigLabels.forEach((label, i) => {
         doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.3); // slate-300
         doc.line(sigCols[i], y + 15, sigCols[i] + 48, y + 15); // Ligne pour signer

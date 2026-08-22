@@ -1,93 +1,95 @@
 'use client';
 
 import React from 'react';
+import { DIRECTOR_STAMP_URL } from '@/lib/directorStampData';
 
-export interface CertificateData {
-  id: string;
-  studentNumber: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  classroom: string;
-  academicYear: string;
-  schoolName: string;
-  schoolLogo: string | null;
-  schoolAddress?: string;
-  schoolCity?: string;
-  schoolPhone?: string;
+export interface StudentCertificateProps {
+  student: {
+    fullName: string;
+    dateOfBirth?: string;
+    placeOfBirth?: string;
+    studentNumber: string;
+    classroom: string;
+    schoolName?: string;
+    schoolLogo?: string;
+    schoolCity?: string;
+  };
+  issueDate?: string;
 }
 
-interface CertificateTemplateProps {
-  student: CertificateData;
-}
-
-export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({ student }) => {
-  const currentDate = new Date().toLocaleDateString('fr-FR', {
+export const CertificateTemplate: React.FC<StudentCertificateProps> = ({
+  student,
+  issueDate,
+}) => {
+  const currentDate = issueDate || new Date().toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
   });
 
   return (
-    <div className="w-[210mm] min-h-[297mm] bg-white text-black p-[25mm] shadow-lg border border-slate-200 relative print:shadow-none print:border-none print:m-0 print:p-[20mm]">
-      {/* En-tête */}
-      <div className="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-12">
-        <div className="flex items-center gap-4">
+    <div className="w-full max-w-4xl mx-auto p-12 bg-white text-slate-900 shadow-2xl border-8 border-indigo-950 font-serif relative">
+      {/* Filigrane discret */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+        <span className="text-9xl font-bold uppercase tracking-widest text-indigo-900">
+          OFFICIEL
+        </span>
+      </div>
+
+      {/* En-tête de l'établissement */}
+      <div className="flex justify-between items-center border-b-2 border-slate-900 pb-6 mb-8">
+        <div className="flex items-center space-x-4">
           {student.schoolLogo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={student.schoolLogo} alt="Logo" className="w-24 h-24 object-contain" />
+            <img 
+              src={student.schoolLogo} 
+              alt="Logo École" 
+              className="w-20 h-20 object-contain" 
+            />
           ) : (
-            <div className="w-24 h-24 bg-slate-100 flex items-center justify-center font-bold text-slate-400 border border-slate-300">
-              LOGO
+            <div className="w-20 h-20 bg-indigo-900 text-white flex items-center justify-center font-bold text-2xl rounded-full">
+              {student.schoolName ? student.schoolName.charAt(0) : 'E'}
             </div>
           )}
           <div>
-            <h1 className="text-2xl font-black uppercase tracking-wider text-slate-900">
-              {student.schoolName}
-            </h1>
-            <p className="text-sm text-slate-600 mt-1 font-medium">
-              {student.schoolAddress || 'Adresse de l\'établissement'}
-            </p>
-            <p className="text-sm text-slate-600 font-medium">
-              {student.schoolCity || 'Ville, Pays'}
-            </p>
-            <p className="text-sm text-slate-600 font-medium">
-              Tél: {student.schoolPhone || '+000 00 00 00 00'}
+            <h2 className="text-2xl font-bold uppercase tracking-wide">
+              {student.schoolName || 'Établissement Scolaire'}
+            </h2>
+            <p className="text-sm text-slate-600 italic">
+              République du Mali — Un Peuple - Un But - Une Foi
             </p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-sm font-semibold text-slate-500">Année Scolaire</p>
-          <p className="text-lg font-black text-slate-800">{student.academicYear}</p>
+        <div className="text-right text-sm">
+          <p className="font-semibold text-slate-700">CERTIFICAT DE SCOLARITÉ</p>
+          <p className="text-xs text-slate-500">Année Scolaire 2025 - 2026</p>
         </div>
       </div>
 
-      {/* Titre */}
-      <div className="text-center mb-16">
-        <h2 className="text-3xl font-black uppercase tracking-[0.2em] underline decoration-4 underline-offset-8">
-          Certificat de Scolarité
-        </h2>
+      {/* Titre du document */}
+      <div className="text-center my-12">
+        <h1 className="text-4xl font-extrabold tracking-widest uppercase text-indigo-950 underline decoration-2 underline-offset-8">
+          ATTESTATION DE SCOLARITÉ
+        </h1>
       </div>
 
-      {/* Corps du texte */}
-      <div className="text-lg leading-loose text-justify text-slate-800 mb-20 font-serif">
+      {/* Corps du certificat */}
+      <div className="text-lg leading-relaxed space-y-6 text-justify px-8 my-8">
         <p>
-          Je soussigné(e), Directeur de <strong>{student.schoolName}</strong>, certifie par la présente que l'élève :
+          Le Directeur de l'établissement soussigné, atteste par la présente que :
         </p>
         
-        <div className="bg-slate-50 p-6 my-8 border border-slate-200 rounded-lg">
-          <div className="grid grid-cols-3 gap-4 mb-2">
-            <div className="text-sm font-bold text-slate-500 uppercase">Nom et Prénom(s) :</div>
-            <div className="col-span-2 font-black text-xl">{student.lastName.toUpperCase()} {student.firstName}</div>
-          </div>
-          <div className="grid grid-cols-3 gap-4 mb-2">
-            <div className="text-sm font-bold text-slate-500 uppercase">Né(e) le :</div>
-            <div className="col-span-2 font-bold text-lg">{student.dateOfBirth}</div>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-sm font-bold text-slate-500 uppercase">Matricule :</div>
-            <div className="col-span-2 font-mono font-bold text-lg">{student.studentNumber}</div>
-          </div>
+        <div className="bg-slate-50 p-6 rounded-lg border border-slate-200 space-y-2">
+          <p className="text-xl">
+            L'élève : <strong className="text-indigo-950 font-bold uppercase">{student.fullName}</strong>
+          </p>
+          {student.dateOfBirth && (
+            <p className="text-md text-slate-700">
+              Né(e) le : <strong>{student.dateOfBirth}</strong> {student.placeOfBirth ? `à ${student.placeOfBirth}` : ''}
+            </p>
+          )}
+          <p className="text-md text-slate-700">
+            Matricule : <strong className="font-mono text-indigo-900">{student.studentNumber}</strong>
+          </p>
         </div>
 
         <p>
@@ -101,17 +103,24 @@ export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({ studen
       </div>
 
       {/* Bas de page / Signatures */}
-      <div className="flex justify-between items-end mt-20">
+      <div className="flex justify-between items-end mt-12">
         <div>
-          {/* Un emplacement pour QR Code d'authenticité pourrait aller ici */}
+          {/* Un emplacement pour QR Code d'authenticité */}
         </div>
         <div className="text-center">
-          <p className="text-md mb-8">
-            Fait à {student.schoolCity || '________'}, le <strong>{currentDate}</strong>
+          <p className="text-md mb-4">
+            Fait à {student.schoolCity || 'Gao'}, le <strong>{currentDate}</strong>
           </p>
-          <p className="font-bold text-lg mb-24 uppercase">La Direction</p>
+          <p className="font-bold text-lg mb-2 uppercase">La Direction Général</p>
+          <div className="flex justify-center my-1">
+            <img 
+              src={DIRECTOR_STAMP_URL} 
+              alt="Cachet et Signature du Directeur Général" 
+              className="h-28 object-contain mix-blend-multiply"
+            />
+          </div>
           <div className="w-64 border-t-2 border-dotted border-slate-400 pt-2">
-            <p className="text-xs text-slate-400 italic">Signature et Cachet de l'établissement</p>
+            <p className="text-xs text-slate-500 italic">Signature et Cachet de l'établissement</p>
           </div>
         </div>
       </div>
