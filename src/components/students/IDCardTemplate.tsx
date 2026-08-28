@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import Image from 'next/image';
+import { DIRECTOR_STAMP_URL } from '@/lib/directorStampData';
 
 export interface StudentCardData {
   id: string;
@@ -167,8 +168,15 @@ export const IDCardTemplate: React.FC<IDCardTemplateProps> = ({ student }) => {
             <p className="text-[6px] text-slate-400 mt-1">Scan pour vérifier</p>
           </div>
           
-          <div className="text-center border-t border-slate-400 pt-1 w-24">
-            <p className="text-[8px] font-bold text-slate-700">Le Directeur</p>
+          <div className="flex flex-col items-center">
+            {/* Cachet et Signature Officielle du Directeur Général */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={DIRECTOR_STAMP_URL}
+              alt="Cachet du Directeur Général"
+              className="h-12 object-contain mix-blend-multiply"
+            />
+            <p className="text-[6px] font-bold text-slate-600 text-center leading-tight mt-0.5">LE DIRECTEUR GÉNÉRAL</p>
           </div>
         </div>
       </div>

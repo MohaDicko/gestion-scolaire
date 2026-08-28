@@ -1,3 +1,5 @@
+import { DIRECTOR_STAMP_BASE64 } from './directorStampData';
+
 export interface StudentCardData {
   id: string;
   studentNumber: string;
@@ -61,8 +63,8 @@ export const generateSVGCard = (student: StudentCardData, qrDataUrl: string): st
       <image href="${qrDataUrl}" x="235" y="385" width="60" height="60" />
 
       <!-- Cachet et Signature du Directeur Général -->
-      <image href="/stamps/cfppas_stamp_signature.jpg" x="135" y="435" width="90" height="40" opacity="0.9" />
-      <text x="180" y="482" fill="#94a3b8" font-family="sans-serif" font-size="7" font-weight="bold" text-anchor="middle">LE DIRECTEUR GÉNÉRAL</text>
+      <image href="${DIRECTOR_STAMP_BASE64}" x="110" y="430" width="120" height="55" opacity="0.9" />
+      <text x="170" y="490" fill="#94a3b8" font-family="sans-serif" font-size="7" font-weight="bold" text-anchor="middle">LE DIRECTEUR GÉNÉRAL</text>
 
       <!-- Footer -->
       <rect x="0" y="500" width="340" height="40" fill="#0f172a" />
