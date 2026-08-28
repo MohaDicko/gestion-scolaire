@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { BadgeDollarSign, Plus, Loader2, X, Download, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { BadgeDollarSign, Plus, Loader2, X, Download, ChevronDown, ChevronUp, AlertCircle, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { calculateMaliPayroll, formatXOF, MALI_RATES } from '@/lib/maliPayroll';
 import { exportToExcel } from '@/lib/exportUtils';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
 
 const emptyForm = {
   employeeId: '',
@@ -147,6 +150,72 @@ export default function PayslipsPage() {
     toast.success('Fichier DIPE généré pour déclaration.');
   };
 
+  const downloadPDF = (p: any) => {
+    const doc = new (jsPDF as any)();
+    
+    // En-tête
+    doc.setFontSize(20);
+    doc.setTextColor(0, 51, 102);
+    doc.text('BULLETIN DE PAIE', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('CFP-PAS de Gao', 14, 30);
+    doc.text("Code de l'établissement : CFPPAS", 14, 35);
+    
+    // Infos employé
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Employé : ${p.employee?.firstName || ''} ${p.employee?.lastName || ''}`, 14, 50);
+    doc.text(`Matricule : ${p.employee?.employeeNumber || 'N/A'}`, 14, 56);
+    doc.text(`Période : ${new Date(p.periodStart).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`, 14, 62);
+    
+    // Tableau des éléments
+    const tableData = [
+      ['Salaire de Base', (p.baseSalary || 0).toLocaleString() + ' XOF'],
+    ];
+    if (p.taxableBonuses > 0) tableData.push(['Primes imposables', p.taxableBonuses.toLocaleString() + ' XOF']);
+    if (p.nonTaxableBonuses > 0) tableData.push(['Indemnités non imp.', p.nonTaxableBonuses.toLocaleString() + ' XOF']);
+    
+    tableData.push(['Salaire Brut Imposable', (p.grossSalary || 0).toLocaleString() + ' XOF']);
+    tableData.push(['INPS Salarié (3,06%)', `-${(p.inpsEmployee || 0).toLocaleString()} XOF`]);
+    tableData.push(['AMO / CANAM (1,50%)', `-${(p.amoEmployee || 0).toLocaleString()} XOF`]);
+    tableData.push([`ITS (Base: ${(p.fiscalBase || 0).toLocaleString()} XOF)`, `-${(p.its || 0).toLocaleString()} XOF`]);
+    
+    (doc as any).autoTable({
+      startY: 70,
+      head: [['Éléments', 'Montant']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 100 }, 1: { cellWidth: 50, halign: 'right' } }
+    });
+    
+    const finalY = (doc as any).lastAutoTable.finalY || 70;
+    
+    // Net à Payer
+    doc.setFontSize(14);
+    doc.setTextColor(0, 128, 0);
+    doc.text(`NET À PAYER : ${(p.netSalary || 0).toLocaleString()} XOF`, 14, finalY + 15);
+    
+    // Charges patronales info
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Coût employeur total : ${((p.grossSalary || 0) + (p.nonTaxableBonuses || 0) + (p.totalEmployerCharges || 0)).toLocaleString()} XOF`, 14, finalY + 25);
+    doc.text(`INPS Patronal (7%): ${(p.inpsEmployer || 0).toLocaleString()} XOF | AMO Patronale (4.5%): ${(p.amoEmployer || 0).toLocaleString()} XOF`, 14, finalY + 30);
+    
+    // Signature / Tampon
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text('LE DIRECTEUR GÉNÉRAL', 140, finalY + 45);
+    if (DIRECTOR_STAMP_BASE64) {
+      doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', 135, finalY + 48, 50, 50);
+    }
+    
+    doc.save(`Bulletin_${p.employee?.lastName || 'Employe'}_${new Date(p.periodStart).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}.pdf`);
+    toast.success('Bulletin PDF généré');
+  };
+
   return (
     <AppLayout
       title="Gestion de la Paie"
@@ -222,6 +291,14 @@ export default function PayslipsPage() {
                         </span>
                       </td>
                       <td>
+                        <button
+                          className="btn-icon"
+                          title="Télécharger PDF"
+                          onClick={() => downloadPDF(p)}
+                          style={{ marginRight: '8px', color: 'var(--primary)' }}
+                        >
+                          <FileText size={16}/>
+                        </button>
                         <button
                           className="btn-icon"
                           title="Voir détail cotisations"

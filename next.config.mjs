@@ -8,7 +8,7 @@ const withSerwist = withSerwistInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone',
+  // output: 'standalone', // Désactivé temporairement pour test local
   images: {
     domains: [],
   },
