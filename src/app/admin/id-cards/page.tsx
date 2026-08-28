@@ -5,10 +5,11 @@ import AppLayout from '@/components/AppLayout';
 import { IDCardTemplate, StudentCardData } from '@/components/students/IDCardTemplate';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Printer, Users, Loader2, Download } from 'lucide-react';
+import { Printer, Users, Loader2, Download, FileArchive } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import { generateSVGCard } from '@/lib/cardGenerator';
 import QRCode from 'qrcode';
+import JSZip from 'jszip';
 
 interface Classroom {
   id: string;
@@ -23,6 +24,7 @@ export default function IDCardsPage() {
   
   const [isLoadingClasses, setIsLoadingClasses] = useState(true);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
+  const [isExportingZip, setIsExportingZip] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -84,48 +86,80 @@ export default function IDCardsPage() {
     window.print();
   };
 
-  const handleDownloadSVG = async () => {
+  const generateStudentSVG = async (student: StudentCardData) => {
+    const qrPayload = JSON.stringify({
+      id: student.studentNumber,
+      name: `${student.firstName} ${student.lastName}`,
+      valid: student.academicYear
+    });
+    const qrDataUrl = await QRCode.toDataURL(qrPayload, { width: 150, margin: 1 });
+    
+    const cardData = {
+      id: student.id,
+      studentNumber: student.studentNumber,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      dateOfBirth: student.dateOfBirth,
+      gender: '',
+      classroom: student.classroom ? { name: student.classroom } : undefined,
+    };
+    
+    return generateSVGCard(cardData, qrDataUrl);
+  };
+
+  const handleDownloadSingleSVG = async (student: StudentCardData) => {
+    try {
+      const svgContent = await generateStudentSVG(student);
+      const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `carte_${student.studentNumber}_${student.lastName}.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(`Carte SVG de ${student.firstName} ${student.lastName} téléchargée !`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Erreur lors du téléchargement SVG');
+    }
+  };
+
+  const handleDownloadAllSVG = async () => {
     if (students.length === 0) {
       toast.error('Aucun élève sélectionné');
       return;
     }
+    
+    setIsExportingZip(true);
     try {
+      const zip = new JSZip();
+      const currentClass = classrooms.find(c => c.id === selectedClassroomId);
+      const className = currentClass ? currentClass.name.replace(/[^a-zA-Z0-9_-]/g, '_') : 'classe';
+      
       for (const student of students) {
-        const qrPayload = JSON.stringify({
-          id: student.studentNumber,
-          name: `${student.firstName} ${student.lastName}`,
-          valid: student.academicYear
-        });
-        const qrDataUrl = await QRCode.toDataURL(qrPayload, { width: 150, margin: 1 });
-        
-        // Map IDCardTemplate data to cardGenerator format
-        const cardData = {
-          id: student.id,
-          studentNumber: student.studentNumber,
-          firstName: student.firstName,
-          lastName: student.lastName,
-          dateOfBirth: student.dateOfBirth,
-          gender: '',
-          classroom: student.classroom ? { name: student.classroom } : undefined,
-        };
-        
-        const svgContent = generateSVGCard(cardData, qrDataUrl);
-        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `carte_${student.studentNumber}_${student.lastName}.svg`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        // Small delay between downloads
-        await new Promise(r => setTimeout(r, 200));
+        const svgContent = await generateStudentSVG(student);
+        const fileName = `carte_${student.studentNumber}_${student.lastName.toUpperCase()}_${student.firstName}.svg`;
+        zip.file(fileName, svgContent);
       }
-      toast.success(`${students.length} carte(s) SVG téléchargée(s) !`);
+      
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cartes_scolaires_${className}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success(`Archive ZIP avec ${students.length} cartes SVG téléchargée !`);
     } catch (err) {
       console.error(err);
-      toast.error('Erreur lors du téléchargement SVG');
+      toast.error('Erreur lors de la création du fichier ZIP');
+    } finally {
+      setIsExportingZip(false);
     }
   };
 
@@ -172,17 +206,26 @@ export default function IDCardsPage() {
               </div>
               
               <Button 
-                onClick={handleDownloadSVG} 
-                disabled={students.length === 0 || isLoadingStudents}
+                onClick={handleDownloadAllSVG} 
+                disabled={students.length === 0 || isLoadingStudents || isExportingZip}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-lg"
               >
-                <Download size={18} />
-                Télécharger SVG
+                {isExportingZip ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Création ZIP...
+                  </>
+                ) : (
+                  <>
+                    <FileArchive size={18} />
+                    Télécharger Lot SVG (ZIP)
+                  </>
+                )}
               </Button>
 
               <Button 
                 onClick={handlePrint} 
-                disabled={students.length === 0 || isLoadingStudents}
+                disabled={students.length === 0 || isLoadingStudents || isExportingZip}
                 className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg"
               >
                 <Printer size={18} />
@@ -206,8 +249,19 @@ export default function IDCardsPage() {
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 bg-slate-100 dark:bg-slate-900/50 p-8 rounded-xl overflow-auto border border-slate-200 dark:border-slate-800">
                   {students.map(student => (
-                    <div key={student.id} className="flex justify-center">
+                    <div key={student.id} className="flex flex-col items-center gap-3 bg-white dark:bg-slate-800/80 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 hover:shadow-md transition-shadow">
                       <IDCardTemplate student={student} />
+                      <div className="w-full pt-2 border-t border-slate-100 dark:border-slate-700/50 flex justify-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDownloadSingleSVG(student)}
+                          className="w-full text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700/50 gap-1.5 shadow-sm"
+                        >
+                          <Download size={14} />
+                          Télécharger cette carte (SVG)
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
