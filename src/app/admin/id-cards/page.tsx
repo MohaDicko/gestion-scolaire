@@ -101,7 +101,12 @@ export default function IDCardsPage() {
       lastName: student.lastName,
       dateOfBirth: student.dateOfBirth,
       gender: '',
+      photoUrl: student.photoUrl,
       classroom: student.classroom ? { name: student.classroom } : undefined,
+      schoolName: student.schoolName,
+      schoolLogo: student.schoolLogo,
+      primaryColor: student.primaryColor,
+      academicYear: student.academicYear,
     };
     
     return generateSVGCard(cardData, qrDataUrl);
