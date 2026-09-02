@@ -294,7 +294,7 @@ export default function LessonLogsPage() {
                 {(Object.values(teacherStats) as any[])
                   .sort((a: any, b: any) => b.totalHours - a.totalHours)
                   .map((teacher: any, idx: number) => {
-                    const salary = teacher.totalHours * HOURLY_RATE;
+                    const salary = teacher.totalPay;
                     return (
                       <motion.div
                         key={idx}
@@ -344,7 +344,7 @@ export default function LessonLogsPage() {
 
                         <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
                           <div className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
-                            <Award size={10} /> Tarif : {HOURLY_RATE.toLocaleString('fr-FR')} FCFA/h
+                            <Award size={10} /> Estim. mensuelle : {salary.toLocaleString('fr-FR')} FCFA
                           </div>
                           <div className="text-[10px] text-zinc-400 font-bold">
                             {teacher.subjects.size} module{teacher.subjects.size > 1 ? 's' : ''}
