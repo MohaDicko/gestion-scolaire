@@ -117,6 +117,7 @@ export default function LessonLogsPage() {
 
   const totalHoursAll = logs.reduce((sum, l) => sum + (l.hoursCount || 1), 0);
   const totalSessionsAll = logs.length;
+  const totalPayAll = Object.values(teacherStats).reduce((sum: any, t: any) => sum + t.totalPay, 0);
 
   return (
     <AppLayout
@@ -143,7 +144,7 @@ export default function LessonLogsPage() {
           </div>
           <div className="bg-gradient-to-br from-amber-600 to-orange-700 text-white rounded-2xl p-4 shadow-lg">
             <div className="text-xs font-bold uppercase tracking-wider text-amber-200 mb-1">Coût estimé</div>
-            <div className="text-2xl font-black">{(totalHoursAll * HOURLY_RATE).toLocaleString('fr-FR')}</div>
+            <div className="text-2xl font-black">{totalPayAll.toLocaleString('fr-FR')}</div>
             <div className="text-xs text-amber-200">FCFA</div>
           </div>
           <div className="bg-gradient-to-br from-purple-600 to-purple-800 text-white rounded-2xl p-4 shadow-lg">
