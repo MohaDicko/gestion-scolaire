@@ -35,6 +35,8 @@ export default function TimetablePage() {
     const [showModal, setShowModal] = useState(false);
     const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [schoolType, setSchoolType] = useState<string | null>(null);
+    const isAgroOrTech = schoolType === 'AGRO' || schoolType === 'TECHNIQUE';
     const [formData, setFormData] = useState({
         dayOfWeek: '1',
         startTime: '08:00',
@@ -45,15 +47,21 @@ export default function TimetablePage() {
 
     const fetchDropdownData = useCallback(async () => {
         try {
-            const [classRes, subRes, empRes] = await Promise.all([
+            const [classRes, subRes, empRes, configRes] = await Promise.all([
                 fetch('/api/classrooms'),
                 fetch('/api/subjects'),
-                fetch('/api/employees')
+                fetch('/api/employees'),
+                fetch('/api/school/config')
             ]);
             
             const classes = await classRes.json();
             const subs = await subRes.json();
             const emps = await empRes.json();
+            const config = await configRes.json();
+            
+            if (config?.type) {
+                setSchoolType(config.type);
+            }
             
             if (Array.isArray(classes)) {
                 setClassrooms(classes);
@@ -484,11 +492,16 @@ export default function TimetablePage() {
                                 </div>
                             </div>
 
-                            <div className="form-group">
-                                <label>Matière *</label>
-                                <select className="form-input" value={formData.subjectId} onChange={e => setFormData({...formData, subjectId: e.target.value})} required>
-                                    <option value="">-- Sélectionnez une matière --</option>
-                                    {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
+                            <div className="form-group" style={{ marginBottom: '15px' }}>
+                                <label>{isAgroOrTech ? 'Module *' : 'Matière *'}</label>
+                                <select 
+                                    className="form-input" 
+                                    value={formData.subjectId} 
+                                    onChange={e => setFormData({...formData, subjectId: e.target.value})}
+                                    required
+                                >
+                                    <option value="">{isAgroOrTech ? '-- Sélectionnez un module --' : '-- Sélectionnez une matière --'}</option>
+                                    {subjects.map(s => (<option key={s.id} value={s.id}>{s.name} ({s.code})</option>))}
                                 </select>
                             </div>
 

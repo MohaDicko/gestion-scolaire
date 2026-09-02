@@ -24,6 +24,8 @@ export default function LessonLogsPage() {
   const [subjects, setSubjects]     = useState<any[]>([]);
   const [employees, setEmployees]   = useState<any[]>([]);
   const [isLoading, setIsLoading]   = useState(true);
+  const [schoolType, setSchoolType] = useState<string | null>(null);
+  const isAgroOrTech = schoolType === 'AGRO' || schoolType === 'TECHNIQUE';
   const [showModal, setShowModal]   = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab]   = useState<'journal'|'synthese'>('journal');
@@ -58,10 +60,12 @@ export default function LessonLogsPage() {
       fetch('/api/classrooms').then(r => r.json()),
       fetch('/api/subjects').then(r => r.json()),
       fetch('/api/employees').then(r => r.json()),
-    ]).then(([cData, sData, eData]) => {
+      fetch('/api/school/config').then(r => r.json()),
+    ]).then(([cData, sData, eData, config]) => {
       if (Array.isArray(cData)) setClassrooms(cData);
       if (Array.isArray(sData)) setSubjects(sData);
       if (eData?.items) setEmployees(eData.items);
+      if (config?.type) setSchoolType(config.type);
     }).catch(() => {});
   }, []);
 
@@ -175,7 +179,7 @@ export default function LessonLogsPage() {
               {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <select className="form-input" style={{ width: '200px' }} value={filters.subjectId} onChange={(e) => setFilters({ ...filters, subjectId: e.target.value })}>
-              <option value="">Tous les modules</option>
+              <option value="">{isAgroOrTech ? 'Tous les modules' : 'Toutes les matières'}</option>
               {subjects.slice(0, 30).map(s => <option key={s.id} value={s.id}>{s.name.slice(0, 40)}</option>)}
             </select>
           </div>
@@ -378,10 +382,11 @@ export default function LessonLogsPage() {
                       {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
-                  <div className="form-group">
-                    <label>Module / Matière *</label>
-                    <select required value={formData.subjectId} onChange={e => setFormData({...formData, subjectId: e.target.value})} className="form-input">
-                      <option value="">-- Sélectionner --</option>
+                  {/* Module / Matière */}
+                  <div className="form-group" style={{ flex: '1 1 200px' }}>
+                    <label>{isAgroOrTech ? 'Module *' : 'Matière *'}</label>
+                    <select className="form-input" value={formData.subjectId} onChange={e => setFormData({ ...formData, subjectId: e.target.value })} required>
+                      <option value="">-- Sélectionnez --</option>
                       {subjects.slice(0, 50).map(s => <option key={s.id} value={s.id}>{s.name.slice(0, 50)}</option>)}
                     </select>
                   </div>

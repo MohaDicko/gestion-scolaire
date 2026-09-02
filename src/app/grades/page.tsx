@@ -26,12 +26,17 @@ export default function GradesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving]   = useState(false);
 
+  // Détection du type d'école
+  const [schoolType, setSchoolType] = useState<string | null>(null);
+  const isAgroOrTech = schoolType === 'AGRO' || schoolType === 'TECHNIQUE';
+
   useEffect(() => {
     Promise.all([
       fetch('/api/classrooms').then(r => r.json()),
       fetch('/api/academic-years').then(r => r.json()),
       fetch('/api/school/settings').then(r => r.json()),
-    ]).then(([cData, yData, settings]) => {
+      fetch('/api/school/config').then(r => r.json()),
+    ]).then(([cData, yData, settings, config]) => {
       if (Array.isArray(cData)) setClassrooms(cData);
       if (Array.isArray(yData)) {
         setYears(yData);
@@ -42,7 +47,10 @@ export default function GradesPage() {
       if (settings?.gradingScale) {
         setForm(f => ({ ...f, maxScore: String(settings.gradingScale) }));
       }
-    }).catch(() => toast.error('Erreur lors du chargement des modules.'));
+      if (config?.type) {
+        setSchoolType(config.type);
+      }
+    }).catch(() => toast.error('Erreur lors du chargement des paramètres.'));
   }, [toast]);
 
   // Chargement dynamique des matières selon la classe
@@ -100,7 +108,9 @@ export default function GradesPage() {
   };
 
   const handleSave = async () => {
-    if (!form.subjectId) { toast.warning('Veuillez sélectionner une matière.'); return; }
+    if (!form.classroomId) { toast.warning('Veuillez sélectionner une classe.'); return; }
+    if (!form.subjectId) { toast.warning(`Veuillez sélectionner un ${isAgroOrTech ? 'module' : 'matière'}.`); return; }
+    if (!form.academicYearId) { toast.warning('Veuillez sélectionner une année académique.'); return; }
     
     const payloadGrades = Object.entries(grades)
       .filter(([_, g]) => g.score !== '')
@@ -207,9 +217,9 @@ export default function GradesPage() {
             </select>
           </div>
           <div className="form-group">
-            <label>Matière</label>
+            <label>{isAgroOrTech ? 'Module' : 'Matière'}</label>
             <select value={form.subjectId} onChange={e => setForm({...form, subjectId: e.target.value})} className="form-input">
-              <option value="">-- Matière --</option>
+              <option value="">{isAgroOrTech ? '-- Sélectionnez un module --' : '-- Matière --'}</option>
               {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
             </select>
           </div>
