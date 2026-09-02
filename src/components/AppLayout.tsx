@@ -49,6 +49,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Cahier de Texte',    href: '/lessons',            icon: <BookOpen size={16}/> },
       { label: 'Saisie des Notes',   href: '/grades',             icon: <FileText size={16}/> },
       { label: 'Bulletins',          href: '/reports/bulletins',  icon: <Award size={16}/> },
+      // NB: 'Relevé Compétences' est injecté dynamiquement selon le schoolType (AGRO/TECHNIQUE uniquement)
       { label: 'Bibliothèque',       href: '/library',            icon: <LibraryBig size={16}/> },
     ]
   },
@@ -116,6 +117,11 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   const [notifLoading, setNotifLoading]   = useState(false);
   const [isDark, setIsDark]               = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  // Type d'école — conditionne l'affichage de certains modules (ex: Relevé de Compétences)
+  const [schoolType, setSchoolType] = useState<string | null>(null);
+
+  // Types d'écoles ayant accès au Relevé de Compétences (formation pro agricole/technique)
+  const RELEVE_COMPETENCES_SCHOOL_TYPES = ['AGRO', 'TECHNIQUE'];
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -138,7 +144,10 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
     try {
       const stored = localStorage.getItem('auth_user');
       if (stored) setUser(JSON.parse(stored));
-      fetch('/api/school/config').then(r=>r.json()).then(d=>{if(d&&(d.primaryColor||d.name))setBranding(d);}).catch(()=>{});
+      fetch('/api/school/config').then(r=>r.json()).then(d=>{
+        if(d&&(d.primaryColor||d.name)) setBranding(d);
+        if(d?.type) setSchoolType(d.type);
+      }).catch(()=>{});
     } catch {}
   }, []);
 
@@ -164,8 +173,27 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   const displayName = user ? `${user.firstName||''} ${user.lastName||''}`.trim() : 'Utilisateur';
   const roleLabel = user?.role ? (ROLE_LABELS[user.role] || user.role) : '';
 
+  // Injecter le lien "Relevé Compétences" uniquement pour les écoles AGRO/TECHNIQUE
+  const isReleveCompetencesVisible = schoolType !== null && RELEVE_COMPETENCES_SCHOOL_TYPES.includes(schoolType);
+
+  const navSectionsWithSchoolType: NavSection[] = NAV_SECTIONS.map(section => {
+    if (section.title === 'Pédagogie') {
+      const items = [...section.items];
+      const bulletinsIdx = items.findIndex(i => i.href === '/reports/bulletins');
+      if (isReleveCompetencesVisible && !items.find(i => i.href === '/reports/releve-competences')) {
+        items.splice(bulletinsIdx + 1, 0, {
+          label: 'Relevé Compétences',
+          href: '/reports/releve-competences',
+          icon: <FileText size={16}/>,
+        });
+      }
+      return { ...section, items };
+    }
+    return section;
+  });
+
   const navSections: NavSection[] = user?.role === 'STUDENT' ? STUDENT_NAV : user?.role === 'PARENT' ? PARENT_NAV : [
-    ...NAV_SECTIONS,
+    ...navSectionsWithSchoolType,
     ...(user?.role === 'SUPER_ADMIN' ? [{ title: '⚡ Super Admin', items: [
       { label: 'Gestion Écoles',  href: '/admin/schools',       icon: <Landmark size={16}/> },
       { label: 'Santé Système',   href: '/admin/system-health', icon: <Activity size={16}/> },
