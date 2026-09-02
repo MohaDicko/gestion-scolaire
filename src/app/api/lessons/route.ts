@@ -20,7 +20,13 @@ export async function GET(request: Request) {
       include: {
         classroom: { select: { name: true } },
         subject: { select: { name: true, code: true } },
-        teacher: { select: { firstName: true, lastName: true } },
+        teacher: { 
+          select: { 
+            firstName: true, 
+            lastName: true,
+            contracts: { where: { status: 'ACTIVE' }, select: { hourlyRate: true }, take: 1 }
+          } 
+        },
       },
       orderBy: { date: 'desc' },
     });

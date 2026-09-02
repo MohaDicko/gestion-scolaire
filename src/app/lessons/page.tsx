@@ -7,9 +7,7 @@ import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const HOURLY_RATE = 1750; // FCFA — Tarif vacataire CFPPAS de Gao
-
-const CLASS_COLORS: Record<string, string> = {
+import { motion, AnimatePresence } from 'framer-motion';const CLASS_COLORS: Record<string, string> = {
   '1ère TE': 'from-emerald-500 to-teal-600',
   '1ère EA': 'from-blue-500 to-indigo-600',
   '2ème EA': 'from-purple-500 to-violet-600',
@@ -102,12 +100,15 @@ export default function LessonLogsPage() {
       acc[key] = {
         name: `${log.teacher.firstName} ${log.teacher.lastName}`,
         totalHours: 0,
+        totalPay: 0,
         sessions: 0,
         classes: new Set<string>(),
         subjects: new Set<string>(),
       };
     }
+    const rate = log.teacher?.contracts?.[0]?.hourlyRate || 0;
     acc[key].totalHours += (log.hoursCount || 1);
+    acc[key].totalPay += ((log.hoursCount || 1) * rate);
     acc[key].sessions += 1;
     if (log.classroom?.name) acc[key].classes.add(log.classroom.name);
     if (log.subject?.name) acc[key].subjects.add(log.subject.name);
@@ -225,9 +226,15 @@ export default function LessonLogsPage() {
                               <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold px-2 py-0.5 rounded-full">
                                 <School size={9} /> {className}
                               </span>
-                              <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold px-2 py-0.5 rounded-full">
-                                <Timer size={9} /> {hours}h × {HOURLY_RATE.toLocaleString('fr-FR')} = {(hours * HOURLY_RATE).toLocaleString('fr-FR')} FCFA
-                              </span>
+                              {(() => {
+                                const rate = log.teacher?.contracts?.[0]?.hourlyRate;
+                                if (!rate) return null;
+                                return (
+                                  <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold px-2 py-0.5 rounded-full">
+                                    <Timer size={9} /> {hours}h × {rate.toLocaleString('fr-FR')} = {(hours * rate).toLocaleString('fr-FR')} FCFA
+                                  </span>
+                                );
+                              })()}
                             </div>
                           </div>
                           <div className="text-right shrink-0 ml-4">
@@ -421,7 +428,7 @@ export default function LessonLogsPage() {
                     />
                     {formData.hoursCount > 0 && (
                       <p className="text-xs text-emerald-600 font-bold mt-1">
-                        💰 Rémunération : {(formData.hoursCount * HOURLY_RATE).toLocaleString('fr-FR')} FCFA
+                        💰 Rémunération calculée automatiquement lors de la paie.
                       </p>
                     )}
                   </div>

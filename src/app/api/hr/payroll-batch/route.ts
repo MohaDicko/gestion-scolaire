@@ -33,8 +33,25 @@ export async function POST(request: Request) {
 
     const payslips = await Promise.all(employees.map(async (emp) => {
       const activeContract = emp.contracts[0];
-      const baseSalary = activeContract ? activeContract.baseSalary : 0;
+      let baseSalary = activeContract ? activeContract.baseSalary : 0;
 
+      if (activeContract?.hourlyRate && activeContract.hourlyRate > 0) {
+        // Agréger toutes les heures enseignées dans la période
+        const logs = await prisma.lessonLog.aggregate({
+          where: {
+            employeeId: emp.id,
+            tenantId: session.tenantId,
+            date: {
+              gte: new Date(periodStart),
+              lte: new Date(periodEnd)
+            }
+          },
+          _sum: { hoursCount: true }
+        });
+        const totalHours = logs._sum.hoursCount || 0;
+        // On ajoute la paie horaire au salaire de base (ou remplace si base=0)
+        baseSalary += (totalHours * activeContract.hourlyRate);
+      }
       // Calcul de la paie via le moteur malien
       const payroll = calculateMaliPayroll({
         baseSalary: baseSalary,
