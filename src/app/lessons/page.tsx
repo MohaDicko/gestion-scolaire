@@ -7,7 +7,7 @@ import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { motion, AnimatePresence } from 'framer-motion';const CLASS_COLORS: Record<string, string> = {
+const CLASS_COLORS: Record<string, string> = {
   '1ère TE': 'from-emerald-500 to-teal-600',
   '1ère EA': 'from-blue-500 to-indigo-600',
   '2ème EA': 'from-purple-500 to-violet-600',
