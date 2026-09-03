@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
@@ -43,8 +43,9 @@ export async function GET(request: Request) {
     const noteSur100 = noteMax !== 100 ? Math.round((noteRaw / noteMax) * 100 * 10) / 10 : noteRaw;
     const reussi = noteSur100 >= seuil;
 
-    // Duree stockee dans le code du subject (ex: "135" ou "FRA-135")
-    const dureeMatch = g.subject.code?.match(/(\d+)/);
+    // Duree stockee dans le code du subject (ex: "MOD-01-15H" ou "ANGL-01-90H")
+    // On capture le nombre juste avant le suffixe H en fin de code
+    const dureeMatch = g.subject.code?.match(/(\d+)H$/i);
     const duree = dureeMatch ? parseInt(dureeMatch[1]) : null;
 
     return {
