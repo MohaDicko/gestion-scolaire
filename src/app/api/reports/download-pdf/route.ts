@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Disposition': `inline; filename="${filename}"`,
       },
     });
   } catch (error) {

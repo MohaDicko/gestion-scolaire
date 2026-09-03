@@ -299,6 +299,7 @@ export default function ReleveCompetencesPage() {
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = '/api/reports/download-pdf';
+      form.target = '_blank';
       
       const inputBase64 = document.createElement('input');
       inputBase64.type = 'hidden';
