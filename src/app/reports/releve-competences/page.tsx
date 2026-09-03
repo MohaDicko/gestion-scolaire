@@ -293,7 +293,29 @@ export default function ReleveCompetencesPage() {
       doc.setFontSize(6); doc.setTextColor(130, 130, 130); doc.setFont("helvetica", "normal");
       doc.text(`Document officiel - ${school.name} - ${school.city} - ${new Date().getFullYear()}`, pageW / 2, 291, { align: "center" });
 
-      doc.save(`Releve_Competences_${student.lastName}_${student.firstName}_${enrollment.academicYear.replace("/", "-")}.pdf`);
+      const filename = `Releve_Competences_${student.lastName}_${student.firstName}_${enrollment.academicYear.replace("/", "-")}.pdf`;
+      const base64Data = doc.output('datauristring');
+      
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/api/reports/download-pdf';
+      
+      const inputBase64 = document.createElement('input');
+      inputBase64.type = 'hidden';
+      inputBase64.name = 'base64';
+      inputBase64.value = base64Data;
+      form.appendChild(inputBase64);
+      
+      const inputFilename = document.createElement('input');
+      inputFilename.type = 'hidden';
+      inputFilename.name = 'filename';
+      inputFilename.value = filename;
+      form.appendChild(inputFilename);
+      
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+      
       toast.success("Releve de competences genere !");
     } catch (e: any) {
       toast.error(e.message || "Erreur lors de la generation.");
