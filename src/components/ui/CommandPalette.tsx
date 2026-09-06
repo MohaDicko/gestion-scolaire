@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, GraduationCap, Users, FileText, Settings, LayoutDashboard, CreditCard, X, GraduationCap as StudentIcon, Briefcase } from 'lucide-react';
+import { Search, GraduationCap, Users, FileText, Settings, LayoutDashboard, CreditCard, X, GraduationCap as StudentIcon, Briefcase, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Définition des raccourcis globaux
