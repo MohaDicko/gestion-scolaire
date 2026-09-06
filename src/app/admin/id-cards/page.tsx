@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { IDCardTemplate, StudentCardData } from '@/components/students/IDCardTemplate';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Printer, Users, Loader2, Download, FileArchive } from 'lucide-react';
+import { Printer, Users, Loader2, Download, FileArchive, FileText } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import { generateSVGCard } from '@/lib/cardGenerator';
 import QRCode from 'qrcode';
@@ -25,6 +25,9 @@ export default function IDCardsPage() {
   const [isLoadingClasses, setIsLoadingClasses] = useState(true);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
   const [isExportingZip, setIsExportingZip] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [exportingPdfId, setExportingPdfId] = useState<string | null>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const toast = useToast();
 
   useEffect(() => {
@@ -168,6 +171,104 @@ export default function IDCardsPage() {
     }
   };
 
+  // ─── Export PDF individuel ──────────────────────────────────────────────────
+  const handleDownloadSinglePDF = async (student: StudentCardData) => {
+    const cardEl = cardRefs.current[student.id];
+    if (!cardEl) {
+      toast.error('Impossible de capturer la carte');
+      return;
+    }
+    setExportingPdfId(student.id);
+    try {
+      const { toPng } = await import('html-to-image');
+      const { default: jsPDF } = await import('jspdf');
+
+      const dataUrl = await toPng(cardEl, { cacheBust: true, pixelRatio: 3 });
+
+      // Format carte de crédit CR80 : 85.6mm x 54mm (paysage)
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
+      doc.addImage(dataUrl, 'PNG', 0, 0, 85.6, 54);
+      doc.save(`Carte_${student.studentNumber}_${student.lastName}_${student.firstName}.pdf`);
+      toast.success(`PDF de ${student.firstName} ${student.lastName} téléchargé !`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Erreur lors de la génération du PDF');
+    } finally {
+      setExportingPdfId(null);
+    }
+  };
+
+  // ─── Export toutes les cartes en un seul PDF ────────────────────────────────
+  const handleDownloadAllPDF = async () => {
+    if (students.length === 0) {
+      toast.error('Aucun élève sélectionné');
+      return;
+    }
+    setIsExportingPdf(true);
+    try {
+      const { toPng } = await import('html-to-image');
+      const { default: jsPDF } = await import('jspdf');
+      const currentClass = classrooms.find(c => c.id === selectedClassroomId);
+      const className = currentClass?.name || 'Classe';
+
+      // PDF A4, 4 cartes par page (2 colonnes x 2 lignes)
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const cardW = 85.6;
+      const cardH = 54;
+      const marginX = 12;
+      const marginY = 15;
+      const gapX = 5;
+      const gapY = 5;
+
+      // En-tête
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Cartes Scolaires — ${className}`, 105, 8, { align: 'center' });
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')} — ${students.length} élève(s)`, 105, 13, { align: 'center' });
+
+      let col = 0;
+      let row = 0;
+      const startY = 20;
+
+      for (let i = 0; i < students.length; i++) {
+        const student = students[i];
+        const cardEl = cardRefs.current[student.id];
+        if (!cardEl) continue;
+
+        const dataUrl = await toPng(cardEl, { cacheBust: true, pixelRatio: 2 });
+
+        const x = marginX + col * (cardW + gapX);
+        const y = startY + row * (cardH + gapY);
+
+        doc.addImage(dataUrl, 'PNG', x, y, cardW, cardH);
+
+        col++;
+        if (col >= 2) {
+          col = 0;
+          row++;
+        }
+        if (row >= 4) {
+          doc.addPage();
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`Cartes Scolaires — ${className} (suite)`, 105, 8, { align: 'center' });
+          col = 0;
+          row = 0;
+        }
+      }
+
+      doc.save(`Cartes_Scolaires_${className.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+      toast.success(`PDF avec ${students.length} cartes téléchargé !`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Erreur lors de la génération du PDF groupé');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   return (
     <>
       {/* 
@@ -211,8 +312,26 @@ export default function IDCardsPage() {
               </div>
               
               <Button 
+                onClick={handleDownloadAllPDF}
+                disabled={students.length === 0 || isLoadingStudents || isExportingPdf || isExportingZip}
+                className="bg-violet-600 hover:bg-violet-700 text-white gap-2 shadow-lg"
+              >
+                {isExportingPdf ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Génération PDF...
+                  </>
+                ) : (
+                  <>
+                    <FileText size={18} />
+                    Télécharger PDF (Lot)
+                  </>
+                )}
+              </Button>
+
+              <Button 
                 onClick={handleDownloadAllSVG} 
-                disabled={students.length === 0 || isLoadingStudents || isExportingZip}
+                disabled={students.length === 0 || isLoadingStudents || isExportingZip || isExportingPdf}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-lg"
               >
                 {isExportingZip ? (
@@ -230,7 +349,7 @@ export default function IDCardsPage() {
 
               <Button 
                 onClick={handlePrint} 
-                disabled={students.length === 0 || isLoadingStudents || isExportingZip}
+                disabled={students.length === 0 || isLoadingStudents || isExportingZip || isExportingPdf}
                 className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg"
               >
                 <Printer size={18} />
@@ -255,16 +374,32 @@ export default function IDCardsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 bg-slate-100 dark:bg-slate-900/50 p-8 rounded-xl overflow-auto border border-slate-200 dark:border-slate-800">
                   {students.map(student => (
                     <div key={student.id} className="flex flex-col items-center gap-3 bg-white dark:bg-slate-800/80 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 hover:shadow-md transition-shadow">
-                      <IDCardTemplate student={student} />
-                      <div className="w-full pt-2 border-t border-slate-100 dark:border-slate-700/50 flex justify-center">
+                      <div ref={el => { cardRefs.current[student.id] = el; }}>
+                        <IDCardTemplate student={student} />
+                      </div>
+                      <div className="w-full pt-2 border-t border-slate-100 dark:border-slate-700/50 flex gap-2 justify-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDownloadSinglePDF(student)}
+                          disabled={exportingPdfId === student.id}
+                          className="flex-1 text-xs font-semibold text-violet-700 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 border-violet-300 dark:border-violet-700/50 gap-1.5 shadow-sm"
+                        >
+                          {exportingPdfId === student.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <FileText size={14} />
+                          )}
+                          PDF
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleDownloadSingleSVG(student)}
-                          className="w-full text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700/50 gap-1.5 shadow-sm"
+                          className="flex-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700/50 gap-1.5 shadow-sm"
                         >
                           <Download size={14} />
-                          Télécharger cette carte (SVG)
+                          SVG
                         </Button>
                       </div>
                     </div>

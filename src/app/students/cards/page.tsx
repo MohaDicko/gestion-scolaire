@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Users, AlertCircle, Loader2, ShieldCheck, Printer, QrCode, CheckSquare, Square, DownloadCloud } from 'lucide-react';
-import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import AppLayout from '@/components/AppLayout';
 

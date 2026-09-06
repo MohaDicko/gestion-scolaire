@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { FileText, Search, Printer, Loader2, Award, BookOpen, AlertCircle, TrendingUp, CheckCircle2 } from 'lucide-react';
-import jsPDF from 'jspdf';
+import { FileText, Search, Printer, Loader2, Award, BookOpen, AlertCircle, TrendingUp, CheckCircle2, Download } from 'lucide-react';
 import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
 
 interface BulletinData {
@@ -105,6 +104,8 @@ export default function BulletinsPage() {
     if (!bulletin) return;
     setGenerating(true);
     try {
+      // Import dynamique pour éviter les erreurs SSR avec Next.js
+      const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const { student, school, enrollment, subjectResults, summary, trimestre: t } = bulletin;
       const pageW = 210; 
@@ -436,8 +437,8 @@ export default function BulletinsPage() {
                   disabled={generating}
                   className="px-5 py-2.5 bg-white text-slate-900 hover:bg-slate-50 disabled:opacity-50 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center gap-2 shadow-lg"
                 >
-                  {generating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
-                  Imprimer (PDF Blanc)
+                  {generating ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                  Télécharger PDF
                 </button>
               </div>
             </div>
@@ -449,8 +450,8 @@ export default function BulletinsPage() {
                 disabled={generating}
                 className="w-full px-5 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2"
               >
-                {generating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
-                Imprimer le Bulletin (PDF)
+                {generating ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                Télécharger le Bulletin (PDF)
               </button>
             </div>
 
