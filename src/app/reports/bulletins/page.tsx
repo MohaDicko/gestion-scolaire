@@ -6,7 +6,7 @@ import { FileText, Search, Printer, Loader2, Award, BookOpen, AlertCircle, Trend
 import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
 
 interface BulletinData {
-  school: { name: string; motto: string; logoUrl?: string };
+  school: { name: string; motto: string; logoUrl?: string; city?: string };
   student: { id: string; studentNumber: string; firstName: string; lastName: string; dateOfBirth: string; gender: string; campus: string };
   enrollment: { classroom: string; level: string; academicYear: string };
   trimestre: number;
