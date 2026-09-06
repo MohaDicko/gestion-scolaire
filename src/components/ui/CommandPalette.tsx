@@ -20,6 +20,7 @@ const PAGES = [
   { id: 'finance', title: 'Finances & Factures', href: '/finance', icon: CreditCard, category: 'Finances' },
   { id: 'payments', title: 'Encaisser un Paiement', href: '/finance/payments', icon: CreditCard, category: 'Finances' },
   { id: 'settings', title: 'Paramètres du système', href: '/settings', icon: Settings, category: 'Général' },
+  { id: 'audit', title: 'Journaux d\'Audit (Sécurité)', href: '/admin/audit', icon: Settings, category: 'Administration' },
 ];
 
 export function CommandPalette({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {

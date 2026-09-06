@@ -67,6 +67,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Personnel (RH)',     href: '/employees',   icon: <Briefcase size={16}/> },
       { label: 'Classes & Modules',  href: '/classrooms',  icon: <School size={16}/> },
       { label: 'Inventaire',         href: '/inventory',   icon: <Package size={16}/> },
+      { label: 'Journaux d\'Audit',  href: '/admin/audit', icon: <ShieldAlert size={16}/> },
       { label: 'Paramètres',         href: '/settings',    icon: <Settings size={16}/> },
     ]
   }
