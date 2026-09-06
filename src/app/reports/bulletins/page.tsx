@@ -682,7 +682,7 @@ export default function BulletinsPage() {
               </table>
             </div>
 
-          </div>
+          </motion.div>
         )}
 
         {/* ── Empty State ── */}
