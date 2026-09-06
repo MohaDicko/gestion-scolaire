@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { redis } from '@/lib/redis';
 
 export async function GET() {
   const session = await getSession();
@@ -9,6 +10,15 @@ export async function GET() {
   }
 
   try {
+    const cacheKey = `dashboard_stats_${session.tenantId}`;
+    
+    if (redis) {
+      const cachedData = await redis.get(cacheKey);
+      if (cachedData) {
+        return NextResponse.json(cachedData);
+      }
+    }
+
     const [studentsCount, employeesCount, classroomsCount, subjectsCount, timetableCount, invoiceStats, paidStats] = await Promise.all([
       prisma.student.count({ where: { tenantId: session.tenantId } }),
       prisma.employee.count({ where: { tenantId: session.tenantId } }),
@@ -25,7 +35,7 @@ export async function GET() {
       })
     ]);
 
-    return NextResponse.json({
+    const statsData = {
       studentsCount,
       employeesCount,
       classroomsCount,
@@ -33,7 +43,13 @@ export async function GET() {
       timetableCount,
       invoicesTotal: invoiceStats._sum.amount || 0,
       invoicesPaid: paidStats._sum.amount || 0
-    });
+    };
+
+    if (redis) {
+      await redis.set(cacheKey, statsData, { ex: 300 }); // Cache for 5 minutes
+    }
+
+    return NextResponse.json(statsData);
   } catch (error) {
     console.error('Dashboard Stats Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
