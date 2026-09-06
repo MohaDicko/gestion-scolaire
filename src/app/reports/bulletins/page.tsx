@@ -337,20 +337,8 @@ export default function BulletinsPage() {
       const cleanYear = sanitizeFilename(enrollment?.academicYear || '2025-2026');
       const filename = `Bulletin_${cleanLast}_${cleanFirst}_T${t}_${cleanYear}.pdf`;
 
-      // Forcer le format binaire pur application/pdf
-      const pdfBlob = doc.output('blob');
-      const safeBlob = new Blob([pdfBlob], { type: 'application/pdf' });
-      const blobUrl = window.URL.createObjectURL(safeBlob);
-
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename;
-      link.type = 'application/pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 20000);
+      // doc.save() est la méthode native jsPDF — garantit toujours l'extension .pdf
+      doc.save(filename);
     } catch (err) {
       console.error('Erreur export PDF:', err);
     } finally { 
@@ -371,21 +359,22 @@ export default function BulletinsPage() {
       const cleanYear = sanitizeFilename(enrollment?.academicYear || '2025-2026');
       const filename = `Bulletin_${cleanLast}_${cleanFirst}_T${t}_${cleanYear}.pdf`;
 
-      // Ouvrir dans un nouvel onglet en forçant le nom via un lien <a>
-      const pdfBlob = doc.output('blob');
-      const safeBlob = new Blob([pdfBlob], { type: 'application/pdf' });
-      const blobUrl = window.URL.createObjectURL(safeBlob);
-
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.download = filename; // force le nom si l'utilisateur "Enregistre sous"
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 30000);
+      // Ouvrir dans un nouvel onglet via une data URI nommée
+      const dataUri = doc.output('datauristring');
+      // Injecter dans un iframe caché pour forcer l'affichage PDF avec le bon nom
+      const newWin = window.open('', '_blank');
+      if (newWin) {
+        newWin.document.write(
+          `<html><head><title>${filename}</title></head>` +
+          `<body style="margin:0;padding:0;height:100vh;">` +
+          `<embed src="${dataUri}" type="application/pdf" width="100%" height="100%" />` +
+          `</body></html>`
+        );
+        newWin.document.close();
+      } else {
+        // Fallback si popup bloqué : téléchargement direct
+        doc.save(filename);
+      }
     } catch (err) {
       console.error('Erreur aperçu PDF:', err);
     } finally {
