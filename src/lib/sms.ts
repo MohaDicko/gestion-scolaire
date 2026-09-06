@@ -21,6 +21,17 @@ export async function sendSMS({ to, message }: SMSOptions) {
       return { success: true, messageId: 'sim_' + Math.random().toString(36).substr(2, 9) };
     }
 
+    if (PROVIDER === 'TWILIO') {
+      const twilio = require('twilio');
+      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const result = await client.messages.create({
+        body: message,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to,
+      });
+      return { success: true, messageId: result.sid };
+    }
+
     if (PROVIDER === 'ORANGE_MALI') {
       // Exemple de structure pour Orange Mali API
       /*
