@@ -188,7 +188,23 @@ export default function IDCardsPage() {
       // Format carte de crédit CR80 : 85.6mm x 54mm (paysage)
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
       doc.addImage(dataUrl, 'PNG', 0, 0, 85.6, 54);
-      doc.save(`Carte_${student.studentNumber}_${student.lastName}_${student.firstName}.pdf`);
+
+      const sanitize = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = `Carte_${student.studentNumber || '00'}_${sanitize(student.lastName)}_${sanitize(student.firstName)}.pdf`;
+
+      const pdfBlob = doc.output('blob');
+      const safeBlob = new Blob([pdfBlob], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(safeBlob);
+
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.type = 'application/pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 15000);
+
       toast.success(`PDF de ${student.firstName} ${student.lastName} téléchargé !`);
     } catch (err) {
       console.error(err);
@@ -259,7 +275,18 @@ export default function IDCardsPage() {
         }
       }
 
-      doc.save(`Cartes_Scolaires_${className.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+      const pdfBlob = doc.output('blob');
+      const safeBlob = new Blob([pdfBlob], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(safeBlob);
+
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `Cartes_Scolaires_${className.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
+      a.type = 'application/pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 20000);
       toast.success(`PDF avec ${students.length} cartes téléchargé !`);
     } catch (err) {
       console.error(err);
