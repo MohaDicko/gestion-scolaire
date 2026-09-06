@@ -118,6 +118,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   const [notifLoading, setNotifLoading]   = useState(false);
   const [isDark, setIsDark]               = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
   // Type d'école — conditionne l'affichage de certains modules (ex: Relevé de Compétences)
   const [schoolType, setSchoolType] = useState<string | null>(null);
 
@@ -130,9 +131,22 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
     setIsDark(dark);
     if (dark) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
+    
     const hk = (e: KeyboardEvent) => { if ((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); setIsCommandPaletteOpen(true); } };
     window.addEventListener('keydown', hk);
-    return () => window.removeEventListener('keydown', hk);
+
+    // Offline / Online detection
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    setIsOffline(!navigator.onLine);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('keydown', hk);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   const toggleTheme = () => {
@@ -376,6 +390,18 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           overflow: 'hidden',
           position: 'relative',
         }}>
+
+          {/* ── OFFLINE BANNER ── */}
+          {isOffline && (
+            <div style={{
+              background: '#ef4444', color: 'white', padding: '6px 12px',
+              fontSize: '12px', fontWeight: 600, display: 'flex',
+              alignItems: 'center', justifyContent: 'center', gap: '8px',
+              zIndex: 40
+            }}>
+              <span>⚠️ Vous êtes hors-ligne. Vos modifications seront synchronisées une fois la connexion rétablie.</span>
+            </div>
+          )}
 
           {/* ── TOP HEADER ── */}
           <header style={{
