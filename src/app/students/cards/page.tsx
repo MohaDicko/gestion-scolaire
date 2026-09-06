@@ -1,8 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Users, AlertCircle, Loader2, ShieldCheck, Printer, QrCode, CheckSquare, Square, DownloadCloud } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Search, Users, AlertCircle, Loader2, ShieldCheck, Printer, QrCode, CheckSquare, Square, DownloadCloud, Download } from 'lucide-react';
 import QRCode from 'qrcode';
 import AppLayout from '@/components/AppLayout';
 
@@ -22,12 +22,50 @@ interface Student {
 import { generateSVGCard } from '@/lib/cardGenerator';
 
 // ─── Composant carte visuelle (preview) ────────────────────────────────────────
-function StudentCardPreview({ student, qrDataUrl, isSelected, onToggle }: {
+function StudentCardPreview({ student, qrDataUrl, isSelected, onToggle, cardRef }: {
   student: Student;
   qrDataUrl: string;
   isSelected: boolean;
   onToggle: () => void;
+  cardRef?: (el: HTMLDivElement | null) => void;
 }) {
+  const innerRef = useRef<HTMLDivElement | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const downloadAsPDF = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!innerRef.current) return;
+    setIsExportingPdf(true);
+    try {
+      const { toPng } = await import('html-to-image');
+      const { default: jsPDF } = await import('jspdf');
+
+      const dataUrl = await toPng(innerRef.current, { cacheBust: true, pixelRatio: 3 });
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [54, 85.6] });
+      doc.addImage(dataUrl, 'PNG', 0, 0, 54, 85.6);
+
+      const sanitize = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = `Carte_${student.studentNumber || '00'}_${sanitize(student.lastName)}_${sanitize(student.firstName)}.pdf`;
+
+      const pdfBlob = doc.output('blob');
+      const safeBlob = new Blob([pdfBlob], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(safeBlob);
+
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.type = 'application/pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 15000);
+    } catch (err) {
+      console.error('Erreur export PDF carte:', err);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   const downloadAsSVG = (e: React.MouseEvent) => {
     e.stopPropagation();
     const svgContent = generateSVGCard(student, qrDataUrl);
@@ -44,16 +82,30 @@ function StudentCardPreview({ student, qrDataUrl, isSelected, onToggle }: {
 
   return (
     <div className="relative group">
-      {/* Bouton de téléchargement SVG visible au survol */}
-      <button 
-        onClick={downloadAsSVG}
-        className="absolute -top-3 -right-3 z-10 p-3 bg-white hover:bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 hover:scale-110"
-        title="Télécharger en format SVG"
-      >
-        <DownloadCloud size={18} />
-      </button>
+      {/* Boutons d'export PDF et SVG visibles au survol */}
+      <div className="absolute -top-3 -right-3 z-20 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+        <button 
+          onClick={downloadAsPDF}
+          disabled={isExportingPdf}
+          className="p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-xl hover:scale-110 flex items-center justify-center cursor-pointer transition-all"
+          title="Télécharger la carte en format PDF"
+        >
+          {isExportingPdf ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+        </button>
+        <button 
+          onClick={downloadAsSVG}
+          className="p-2.5 bg-white hover:bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-full shadow-xl hover:scale-110 flex items-center justify-center cursor-pointer transition-all"
+          title="Télécharger en format SVG"
+        >
+          <DownloadCloud size={16} />
+        </button>
+      </div>
 
       <div 
+        ref={(el) => {
+          innerRef.current = el;
+          if (cardRef) cardRef(el);
+        }}
         onClick={onToggle} 
         className={`cursor-pointer select-none group/card relative transition-all duration-300 w-full max-w-[280px] mx-auto aspect-[54/85.6] rounded-[1.5rem] p-1 flex flex-col ${
           isSelected 
@@ -197,10 +249,68 @@ export default function StudentCardsPage() {
     else setSelectedStudents(new Set(students.map(s => s.id)));
   };
 
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [isBatchPdf, setIsBatchPdf] = useState(false);
+
+  const downloadSelectedPDFs = async () => {
+    const toDownload = students.filter(s => selectedStudents.size === 0 || selectedStudents.has(s.id));
+    if (toDownload.length === 0) return;
+    setIsBatchPdf(true);
+    try {
+      const { toPng } = await import('html-to-image');
+      const { default: jsPDF } = await import('jspdf');
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const cardW = 85;
+      const cardH = 134;
+      const marginX = 13;
+      const marginY = 12;
+      const gapX = 14;
+      const gapY = 5;
+      const perPage = 4;
+
+      for (let i = 0; i < toDownload.length; i++) {
+        const student = toDownload[i];
+        const cardEl = cardRefs.current[student.id];
+        if (!cardEl) continue;
+
+        if (i > 0 && i % perPage === 0) {
+          doc.addPage();
+        }
+
+        const pageIdx = i % perPage;
+        const col = pageIdx % 2;
+        const row = Math.floor(pageIdx / 2);
+
+        const x = marginX + col * (cardW + gapX);
+        const y = marginY + row * (cardH + gapY);
+
+        const dataUrl = await toPng(cardEl, { cacheBust: true, pixelRatio: 2 });
+        doc.addImage(dataUrl, 'PNG', x, y, cardW, cardH);
+      }
+
+      const pdfBlob = doc.output('blob');
+      const safeBlob = new Blob([pdfBlob], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(safeBlob);
+
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `Cartes_Scolaires_${toDownload.length}_eleves.pdf`;
+      a.type = 'application/pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 20000);
+    } catch (err) {
+      console.error('Erreur export lot PDF:', err);
+    } finally {
+      setIsBatchPdf(false);
+    }
+  };
+
   const downloadSelectedSVGs = () => {
     const toDownload = students.filter(s => selectedStudents.size === 0 || selectedStudents.has(s.id));
     toDownload.forEach((student, index) => {
-      // Un léger délai pour ne pas bloquer le navigateur si on télécharge 50 fichiers d'un coup
       setTimeout(() => {
         const svgContent = generateSVGCard(student, qrCache[student.id]);
         const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
@@ -221,7 +331,7 @@ export default function StudentCardsPage() {
   return (
     <AppLayout
       title="Cartes Scolaires Premium"
-      subtitle="Génération des badges d'identité avec QR Code et export SVG"
+      subtitle="Génération et impression des badges d'identité officiels en format PDF"
       breadcrumbs={[{ label: 'Élèves', href: '/students' }, { label: 'Cartes Scolaires' }]}
     >
       <div className="max-w-7xl mx-auto py-8">
@@ -251,18 +361,27 @@ export default function StudentCardsPage() {
 
             <button
               onClick={toggleAll}
-              className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 shadow-sm"
+              className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 shadow-sm cursor-pointer"
             >
               {allSelected ? <CheckSquare size={16} className="text-indigo-600" /> : <Square size={16} className="text-zinc-400" />}
               {allSelected ? 'Désélectionner' : 'Tout sélectionner'}
             </button>
 
             <button
+              onClick={downloadSelectedPDFs}
+              disabled={students.length === 0 || isBatchPdf}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-indigo-500/30 cursor-pointer"
+            >
+              {isBatchPdf ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+              Télécharger PDF {selectedStudents.size > 0 ? `(${selectedStudents.size})` : '(Tout)'}
+            </button>
+
+            <button
               onClick={downloadSelectedSVGs}
               disabled={students.length === 0}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-indigo-500/30"
+              className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 shadow-sm cursor-pointer"
             >
-              <DownloadCloud size={18} /> Télécharger SVG {selectedStudents.size > 0 ? `(${selectedStudents.size})` : '(Tout)'}
+              <DownloadCloud size={16} /> SVG
             </button>
           </div>
         </div>
@@ -295,6 +414,7 @@ export default function StudentCardsPage() {
                     qrDataUrl={qrCache[student.id] || ''}
                     isSelected={selectedStudents.has(student.id)}
                     onToggle={() => toggleStudent(student.id)}
+                    cardRef={(el) => (cardRefs.current[student.id] = el)}
                   />
                 ))}
               </div>

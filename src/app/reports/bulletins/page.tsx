@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { FileText, Search, Printer, Loader2, Award, BookOpen, AlertCircle, TrendingUp, CheckCircle2, Download } from 'lucide-react';
+import { FileText, Search, Printer, Loader2, Award, BookOpen, AlertCircle, TrendingUp, CheckCircle2, Download, ExternalLink } from 'lucide-react';
 import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
 
 interface BulletinData {
@@ -280,6 +280,13 @@ export default function BulletinsPage() {
     return doc;
   };
 
+  const sanitizeFilename = (str: string) => {
+    return (str || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9_-]/g, '_');
+  };
+
   const generatePDF = async () => {
     if (!bulletin) return;
     setGenerating(true);
@@ -287,11 +294,48 @@ export default function BulletinsPage() {
       const doc = await createBulletinDoc();
       if (!doc) return;
       const { student, enrollment, trimestre: t } = bulletin;
-      doc.save(`Bulletin_${student.lastName}_${student.firstName}_T${t}_${(enrollment?.academicYear || '').replace('/', '-')}.pdf`);
+      
+      const cleanLast = sanitizeFilename(student?.lastName || 'Eleve');
+      const cleanFirst = sanitizeFilename(student?.firstName || '');
+      const cleanYear = sanitizeFilename(enrollment?.academicYear || '2025-2026');
+      const filename = `Bulletin_${cleanLast}_${cleanFirst}_T${t}_${cleanYear}.pdf`;
+
+      // Forcer le format binaire pur application/pdf
+      const pdfBlob = doc.output('blob');
+      const safeBlob = new Blob([pdfBlob], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(safeBlob);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.type = 'application/pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 20000);
     } catch (err) {
       console.error('Erreur export PDF:', err);
     } finally { 
       setGenerating(false); 
+    }
+  };
+
+  const viewPDF = async () => {
+    if (!bulletin) return;
+    setGenerating(true);
+    try {
+      const doc = await createBulletinDoc();
+      if (!doc) return;
+      const pdfBlob = doc.output('blob');
+      const safeBlob = new Blob([pdfBlob], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(safeBlob);
+      window.open(blobUrl, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 30000);
+    } catch (err) {
+      console.error('Erreur aperçu PDF:', err);
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -302,11 +346,14 @@ export default function BulletinsPage() {
       const doc = await createBulletinDoc();
       if (!doc) return;
       doc.autoPrint();
-      const blobUrl = doc.output('bloburl');
+      const pdfBlob = doc.output('blob');
+      const safeBlob = new Blob([pdfBlob], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(safeBlob);
       const printWin = window.open(blobUrl, '_blank');
       if (!printWin) {
         window.print();
       }
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 30000);
     } catch (err) {
       console.error('Erreur impression PDF:', err);
       window.print();
@@ -464,8 +511,8 @@ export default function BulletinsPage() {
                     <MentionBadge mention={bulletin.summary.generalMention} />
                   </div>
 
-                  {/* Actions Imprimer / Télécharger */}
-                  <div className="flex flex-col gap-2.5 flex-1 sm:flex-initial min-w-[170px] print:hidden">
+                  {/* Actions Imprimer / Télécharger / Aperçu */}
+                  <div className="flex flex-col gap-2 flex-1 sm:flex-initial min-w-[170px] print:hidden">
                     <button 
                       onClick={generatePDF} 
                       disabled={generating}
@@ -475,16 +522,28 @@ export default function BulletinsPage() {
                       {generating ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
                       Télécharger PDF
                     </button>
-                    
-                    <button 
-                      onClick={printBulletin} 
-                      disabled={generating}
-                      className="w-full px-4 py-2.5 bg-white text-slate-900 hover:bg-slate-100 disabled:opacity-50 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md cursor-pointer"
-                      title="Imprimer directement le bulletin"
-                    >
-                      {generating ? <Loader2 size={15} className="animate-spin" /> : <Printer size={15} />}
-                      Imprimer
-                    </button>
+
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={printBulletin} 
+                        disabled={generating}
+                        className="flex-1 px-3 py-2 bg-white text-slate-900 hover:bg-slate-100 disabled:opacity-50 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                        title="Imprimer directement le bulletin"
+                      >
+                        {generating ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+                        Imprimer
+                      </button>
+
+                      <button 
+                        onClick={viewPDF} 
+                        disabled={generating}
+                        className="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-50 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                        title="Ouvrir le PDF dans un nouvel onglet"
+                      >
+                        <ExternalLink size={14} />
+                        Voir PDF
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -507,6 +566,14 @@ export default function BulletinsPage() {
               >
                 <Printer size={14} />
                 Imprimer
+              </button>
+              <button 
+                onClick={viewPDF} 
+                disabled={generating}
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+              >
+                <ExternalLink size={14} />
+                Voir PDF
               </button>
             </div>
 
