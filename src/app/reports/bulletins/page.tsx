@@ -199,6 +199,18 @@ export default function BulletinsPage() {
     
     doc.setDrawColor(226, 232, 240); // slate-200
     (subjectResults || []).forEach((r, idx) => {
+      if (y + 12 > 270) {
+        doc.addPage();
+        y = 20;
+        doc.setFillColor(241, 245, 249);
+        doc.rect(margin, y, pageW - 2 * margin, 8, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.rect(margin, y, pageW - 2 * margin, 8, 'S');
+        doc.setTextColor(15, 23, 42); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+        headers.forEach((h, i) => doc.text(h, colX[i] + 2, y + 5.5));
+        y += 8;
+      }
+
       const rowBg = idx % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
       doc.setFillColor(rowBg[0], rowBg[1], rowBg[2]);
       doc.rect(margin, y, pageW - 2 * margin, 7, 'F');
@@ -231,7 +243,12 @@ export default function BulletinsPage() {
     });
 
     // ── Résumé ───────────────────────────────────────────────────────
-    y += 6;
+    if (y + 70 > 270) {
+      doc.addPage();
+      y = 20;
+    } else {
+      y += 6;
+    }
     
     doc.setDrawColor(15, 23, 42);
     doc.setLineWidth(0.5);
@@ -261,7 +278,7 @@ export default function BulletinsPage() {
 
     // Date sur la droite au-dessus du Directeur Général
     doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
-    doc.text(`${school?.city || 'Gao'}, le ${new Date().toLocaleDateString('fr-FR')}`, pageW - margin - 24, y - 8, { align: 'center' });
+    doc.text(`${(school as any)?.city || 'Gao'}, le ${new Date().toLocaleDateString('fr-FR')}`, pageW - margin - 24, y - 8, { align: 'center' });
 
     // Titres des signataires au-dessus de la zone de signature
     sigLabels.forEach((label, i) => {
@@ -289,9 +306,13 @@ export default function BulletinsPage() {
     doc.text('(Cachet & Signature)', sigCols[2] + 24, y + 28, { align: 'center' });
 
     // ── Pied de page ─────────────────────────────────────────────────
-    doc.setFontSize(6.5); doc.setTextColor(148, 163, 184); doc.setFont('helvetica', 'normal');
-    doc.text(`Document officiel généré numériquement le ${new Date().toLocaleDateString('fr-FR')} — ${school?.name || ''}`, pageW / 2, 285, { align: 'center' });
-    doc.text(`ID Unique : BULT-${(student?.id || '00000000').substring(0, 8).toUpperCase()}-${t}-${new Date().getFullYear()}`, pageW / 2, 289, { align: 'center' });
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      doc.setFontSize(6.5); doc.setTextColor(148, 163, 184); doc.setFont('helvetica', 'normal');
+      doc.text(`Document officiel généré numériquement le ${new Date().toLocaleDateString('fr-FR')} — ${school?.name || ''} (Page ${p}/${pageCount})`, pageW / 2, 287, { align: 'center' });
+      doc.text(`ID Unique : BULT-${(student?.id || '00000000').substring(0, 8).toUpperCase()}-${t}-${new Date().getFullYear()}`, pageW / 2, 291, { align: 'center' });
+    }
 
     return doc;
   };
