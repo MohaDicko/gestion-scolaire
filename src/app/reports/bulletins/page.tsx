@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { FileText, Search, Printer, Loader2, Award, BookOpen, AlertCircle, TrendingUp, CheckCircle2, Download, ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
 
 interface BulletinData {
