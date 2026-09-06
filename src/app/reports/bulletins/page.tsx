@@ -364,10 +364,27 @@ export default function BulletinsPage() {
     try {
       const doc = await createBulletinDoc();
       if (!doc) return;
+
+      const { student, enrollment, trimestre: t } = bulletin;
+      const cleanLast = sanitizeFilename(student?.lastName || 'Eleve');
+      const cleanFirst = sanitizeFilename(student?.firstName || '');
+      const cleanYear = sanitizeFilename(enrollment?.academicYear || '2025-2026');
+      const filename = `Bulletin_${cleanLast}_${cleanFirst}_T${t}_${cleanYear}.pdf`;
+
+      // Ouvrir dans un nouvel onglet en forçant le nom via un lien <a>
       const pdfBlob = doc.output('blob');
       const safeBlob = new Blob([pdfBlob], { type: 'application/pdf' });
       const blobUrl = window.URL.createObjectURL(safeBlob);
-      window.open(blobUrl, '_blank');
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.download = filename; // force le nom si l'utilisateur "Enregistre sous"
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
       setTimeout(() => window.URL.revokeObjectURL(blobUrl), 30000);
     } catch (err) {
       console.error('Erreur aperçu PDF:', err);
