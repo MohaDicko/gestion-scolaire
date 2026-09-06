@@ -73,14 +73,14 @@ export default function DashboardPage() {
 
   const kpis = [
     {
-      label: 'Apprenants', value: isLoading ? '...' : (stats.studentsCount || 131),
+      label: 'Apprenants', value: stats.studentsCount || 131,
       sub: 'Inscrits (2025-2026)', icon: <GraduationCap size={28} />,
       gradient: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)',
       glow: 'rgba(30,58,138,0.25)',
       href: '/students',
     },
     {
-      label: 'Formateurs', value: isLoading ? '...' : (stats.employeesCount || 21),
+      label: 'Formateurs', value: stats.employeesCount || 21,
       sub: '1 750 FCFA / heure', icon: <Users size={28} />,
       gradient: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
       glow: 'rgba(5,150,105,0.25)',
@@ -177,7 +177,13 @@ export default function DashboardPage() {
                   <div style={{ opacity: 0.2 }} className="hidden sm:block">{kpi.icon}</div>
                 </div>
                 <div style={{ fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 900, fontFamily: 'Outfit, sans-serif', letterSpacing: '-2px', lineHeight: 1, position: 'relative' }}>
-                  {kpi.value}
+                  {isLoading ? (
+                    <div className="h-8 w-16 bg-white/20 rounded-md overflow-hidden relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" />
+                    </div>
+                  ) : (
+                    kpi.value
+                  )}
                 </div>
                 <div style={{ fontSize: 'clamp(9px, 1.2vw, 11px)', opacity: 0.65, marginTop: 'clamp(4px, 1vw, 8px)', fontWeight: 600, position: 'relative' }}>
                   {kpi.sub}

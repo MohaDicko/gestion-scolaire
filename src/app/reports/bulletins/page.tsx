@@ -415,8 +415,8 @@ export default function BulletinsPage() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-        {/* ── Filtres ── */}
-        <div className="bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl p-5 shadow-sm">
+        {/* ── Filtres (Sticky Toolbar) ── */}
+        <div className="sticky top-[72px] z-30 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-800/50 rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] transition-all">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             
             {/* Recherche élève */}
@@ -515,7 +515,13 @@ export default function BulletinsPage() {
 
         {/* ── Preview Bulletin ── */}
         {!loading && bulletin && (
-          <div id="printable-bulletin" className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            id="printable-bulletin" 
+            className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden mt-8"
+          >
             
             {/* En-tête Web du Bulletin */}
             <div className="bg-slate-900 text-white relative overflow-hidden">

@@ -238,12 +238,13 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="w-full flex items-center justify-center gap-2 px-4 py-4 mt-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none shadow-sm shadow-slate-900/10"
+              className="group relative w-full flex items-center justify-center gap-2 px-4 py-4 mt-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-semibold transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.5)] overflow-hidden"
             >
+              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
               {loading ? (
-                <><Loader2 size={18} className="animate-spin" /> Connexion...</>
+                <><Loader2 size={18} className="animate-spin relative z-10" /> <span className="relative z-10">Connexion en cours...</span></>
               ) : (
-                <>Se connecter <ArrowRight size={18} /></>
+                <><span className="relative z-10">Accéder à mon espace</span> <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" /></>
               )}
             </button>
           </form>
