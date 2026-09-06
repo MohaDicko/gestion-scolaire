@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 
-export async function POST(req: Request, { params }: { params: { filename: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ filename: string }> }) {
   try {
+    const { filename: rawFilename } = await params;
     const formData = await req.formData();
     const base64 = formData.get('base64') as string;
-    const filename = decodeURIComponent(params.filename) || 'document.pdf';
+    const filename = decodeURIComponent(rawFilename) || 'document.pdf';
 
     if (!base64) {
       return NextResponse.json({ error: 'Fichier manquant' }, { status: 400 });
