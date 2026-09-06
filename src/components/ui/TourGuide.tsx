@@ -134,7 +134,7 @@ export function TourGuide() {
         onClick={startTour}
         variant="outline"
         size="icon"
-        className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg bg-bg-3/80 backdrop-blur-md border border-border hover:scale-110 hover:bg-primary hover:text-white transition-all z-40"
+        className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg bg-bg-3/80 backdrop-blur-md border border-border hover:scale-110 hover:bg-primary hover:text-white transition-all z-40 print:hidden"
         title="Lancer la visite guidée"
       >
         <HelpCircle size={24} />

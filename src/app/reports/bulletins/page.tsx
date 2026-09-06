@@ -99,188 +99,219 @@ export default function BulletinsPage() {
 
   useEffect(() => { if (selectedStudentId) loadBulletin(); }, [selectedStudentId, loadBulletin]);
 
-  // ─── Export PDF Optimisé ───────────────────────────────────────────────────
+  // ─── Export & Impression PDF Optimisé ─────────────────────────────────────
+  const createBulletinDoc = async () => {
+    if (!bulletin) return null;
+    const { default: jsPDF } = await import('jspdf');
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const { student, school, enrollment, subjectResults, summary, trimestre: t } = bulletin;
+    const pageW = 210; 
+    const margin = 15;
+
+    // ── En-tête (Design Blanc A4) ───────────────────────────────────
+    // Bandeau Mali tout en haut
+    doc.setFillColor(0, 154, 68); doc.rect(0, 0, pageW / 3, 3, 'F');
+    doc.setFillColor(252, 209, 22); doc.rect(pageW / 3, 0, pageW / 3, 3, 'F');
+    doc.setFillColor(206, 17, 38); doc.rect(2 * pageW / 3, 0, pageW / 3, 3, 'F');
+
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+    doc.text('RÉPUBLIQUE DU MALI', pageW / 2, 12, { align: 'center' });
+    doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+    doc.text('Un Peuple - Un But - Une Foi', pageW / 2, 16, { align: 'center' });
+    
+    // Séparateur
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.line(margin, 20, pageW - margin, 20);
+
+    // Nom de l'école
+    doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+    doc.text((school?.name || 'ÉTABLISSEMENT SCOLAIRE').toUpperCase(), pageW / 2, 28, { align: 'center' });
+    
+    if (school?.motto) { 
+      doc.setFontSize(8); doc.setFont('helvetica', 'italic'); doc.setTextColor(100, 116, 139);
+      doc.text(`"${school.motto}"`, pageW / 2, 33, { align: 'center' }); 
+    }
+
+    // Titre du Bulletin
+    doc.setFillColor(241, 245, 249); // slate-100
+    doc.roundedRect(pageW / 2 - 35, 38, 70, 8, 2, 2, 'F');
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+    doc.text(`BULLETIN DU ${t}${t === 1 ? 'ER' : 'ÈME'} TRIMESTRE`, pageW / 2, 43.5, { align: 'center' });
+
+    let y = 54;
+
+    // ── Infos élève (Design épuré) ──────────────────────────────────
+    doc.setDrawColor(15, 23, 42); // slate-900
+    doc.setLineWidth(0.3);
+    doc.roundedRect(margin, y, pageW - 2 * margin, 26, 2, 2, 'S');
+
+    doc.setTextColor(15, 23, 42); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+    doc.text('INFORMATIONS DE L\'ÉLÈVE', margin + 4, y + 6);
+
+    const dob = student?.dateOfBirth && !isNaN(new Date(student.dateOfBirth).getTime())
+      ? new Date(student.dateOfBirth).toLocaleDateString('fr-FR')
+      : '—';
+
+    const infos = [
+      ['Nom & Prénom', `${(student?.lastName || '').toUpperCase()} ${student?.firstName || ''}`],
+      ['Matricule', student?.studentNumber || '—'],
+      ['Classe', enrollment?.classroom || '—'],
+      ['Année Scolaire', enrollment?.academicYear || '—'],
+      ['Né(e) le', dob],
+      ['Campus', student?.campus || 'Principal'],
+    ];
+    
+    const col1 = infos.slice(0, 3);
+    const col2 = infos.slice(3);
+    
+    col1.forEach(([label, value], i) => {
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
+      doc.text(label + ' :', margin + 4, y + 13 + i * 5);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
+      doc.text(value, margin + 35, y + 13 + i * 5);
+    });
+    
+    col2.forEach(([label, value], i) => {
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
+      doc.text(label + ' :', pageW / 2 + 4, y + 13 + i * 5);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
+      doc.text(value, pageW / 2 + 35, y + 13 + i * 5);
+    });
+
+    y += 32;
+
+    // ── Tableau des notes ───────────────────────────────────────────
+    const headers = ['MATIÈRE', 'COEFF', 'NOTE', 'SUR', 'MOY/20', 'MENTION', 'POINTS'];
+    const colX = [margin, margin + 65, margin + 83, margin + 101, margin + 119, margin + 139, margin + 165];
+
+    // Header tableau
+    doc.setFillColor(241, 245, 249); // slate-100
+    doc.rect(margin, y, pageW - 2 * margin, 8, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.rect(margin, y, pageW - 2 * margin, 8, 'S');
+    
+    doc.setTextColor(15, 23, 42); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+    headers.forEach((h, i) => doc.text(h, colX[i] + 2, y + 5.5));
+
+    y += 8;
+    
+    doc.setDrawColor(226, 232, 240); // slate-200
+    (subjectResults || []).forEach((r, idx) => {
+      const rowBg = idx % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
+      doc.setFillColor(rowBg[0], rowBg[1], rowBg[2]);
+      doc.rect(margin, y, pageW - 2 * margin, 7, 'F');
+      
+      doc.line(margin, y, margin, y + 7);
+      doc.line(pageW - margin, y, pageW - margin, y + 7);
+
+      const isPass = (r.average || 0) >= 10;
+      doc.setTextColor(15, 23, 42); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+      doc.text(r.subjectName || '', colX[0] + 2, y + 4.8);
+      
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
+      doc.text((r.coefficient ?? 1).toString(), colX[1] + 2, y + 4.8);
+      
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(isPass ? 15 : 185, isPass ? 23 : 28, isPass ? 42 : 28);
+      doc.text((r.score ?? 0).toString(), colX[2] + 2, y + 4.8);
+      
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
+      doc.text((r.maxScore ?? 20).toString(), colX[3] + 2, y + 4.8);
+      
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(isPass ? 15 : 185, isPass ? 23 : 28, isPass ? 42 : 28);
+      doc.text((r.average ?? 0).toFixed(2), colX[4] + 2, y + 4.8);
+      
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
+      doc.text(r.mention || '', colX[5] + 2, y + 4.8);
+      doc.text((r.weighted ?? 0).toFixed(2), colX[6] + 2, y + 4.8);
+
+      doc.line(margin, y + 7, margin + (pageW - 2 * margin), y + 7);
+      y += 7;
+    });
+
+    // ── Résumé ───────────────────────────────────────────────────────
+    y += 6;
+    
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y, pageW - 2 * margin, 20, 2, 2, 'S');
+
+    const genAvg = summary?.generalAverage ?? 0;
+    const isGenPass = genAvg >= 10;
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+    doc.text('MOYENNE GÉNÉRALE :', margin + 6, y + 8);
+    
+    doc.setFontSize(14); doc.setTextColor(isGenPass ? 15 : 185, isGenPass ? 23 : 28, isGenPass ? 42 : 28);
+    doc.text(`${genAvg.toFixed(2)} / 20`, margin + 55, y + 8);
+    
+    doc.setTextColor(15, 23, 42); doc.setFontSize(9);
+    doc.text(`MENTION : ${(summary?.generalMention || '').toUpperCase()}`, margin + 6, y + 15);
+    
+    const totCoeff = summary?.totalCoeff || 0;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100, 116, 139);
+    doc.text(`Total points : ${(totCoeff > 0 ? (genAvg * totCoeff).toFixed(2) : '0')} / ${(totCoeff * 20).toFixed(0)}`, pageW - margin - 6, y + 8, { align: 'right' });
+    doc.text(`Total coefficients : ${totCoeff}`, pageW - margin - 6, y + 14, { align: 'right' });
+
+    // ── Signatures ───────────────────────────────────────────────────
+    y += 35;
+    const sigCols = [margin, pageW / 2 - 20, pageW - margin - 48];
+    const sigLabels = ['Le Titulaire', 'Le Directeur', 'Les Parents'];
+    
+    try {
+      doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', pageW / 2 - 22, y - 10, 52, 24);
+    } catch (e) {
+      console.warn('Tampon directeur non ajouté', e);
+    }
+
+    sigLabels.forEach((label, i) => {
+      doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.3);
+      doc.line(sigCols[i], y + 15, sigCols[i] + 48, y + 15);
+      doc.setTextColor(15, 23, 42); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+      doc.text(label, sigCols[i] + 24, y + 20, { align: 'center' });
+    });
+
+    // ── Pied de page ─────────────────────────────────────────────────
+    doc.setFontSize(6.5); doc.setTextColor(148, 163, 184); doc.setFont('helvetica', 'normal');
+    doc.text(`Document officiel généré numériquement le ${new Date().toLocaleDateString('fr-FR')} — ${school?.name || ''}`, pageW / 2, 285, { align: 'center' });
+    doc.text(`ID Unique : BULT-${(student?.id || '00000000').substring(0, 8).toUpperCase()}-${t}-${new Date().getFullYear()}`, pageW / 2, 289, { align: 'center' });
+
+    return doc;
+  };
+
   const generatePDF = async () => {
     if (!bulletin) return;
     setGenerating(true);
     try {
-      // Import dynamique pour éviter les erreurs SSR avec Next.js
-      const { default: jsPDF } = await import('jspdf');
-      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-      const { student, school, enrollment, subjectResults, summary, trimestre: t } = bulletin;
-      const pageW = 210; 
-      const margin = 15;
-
-      // ── En-tête (Design Blanc A4) ───────────────────────────────────
-      // Bandeau Mali tout en haut
-      doc.setFillColor(0, 154, 68); doc.rect(0, 0, pageW / 3, 3, 'F');
-      doc.setFillColor(252, 209, 22); doc.rect(pageW / 3, 0, pageW / 3, 3, 'F');
-      doc.setFillColor(206, 17, 38); doc.rect(2 * pageW / 3, 0, pageW / 3, 3, 'F');
-
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.setFontSize(8); doc.setFont('helvetica', 'bold');
-      doc.text('RÉPUBLIQUE DU MALI', pageW / 2, 12, { align: 'center' });
-      doc.setFontSize(6); doc.setFont('helvetica', 'normal');
-      doc.text('Un Peuple - Un But - Une Foi', pageW / 2, 16, { align: 'center' });
-      
-      // Séparateur
-      doc.setDrawColor(226, 232, 240); // slate-200
-      doc.line(margin, 20, pageW - margin, 20);
-
-      // Nom de l'école
-      doc.setFontSize(16); doc.setFont('helvetica', 'bold');
-      doc.text(school.name.toUpperCase(), pageW / 2, 28, { align: 'center' });
-      
-      if (school.motto) { 
-        doc.setFontSize(8); doc.setFont('helvetica', 'italic'); doc.setTextColor(100, 116, 139);
-        doc.text(`"${school.motto}"`, pageW / 2, 33, { align: 'center' }); 
-      }
-
-      // Titre du Bulletin
-      doc.setFillColor(241, 245, 249); // slate-100
-      doc.roundedRect(pageW / 2 - 35, 38, 70, 8, 2, 2, 'F');
-      doc.setTextColor(15, 23, 42);
-      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-      doc.text(`BULLETIN DU ${t}${t === 1 ? 'ER' : 'ÈME'} TRIMESTRE`, pageW / 2, 43.5, { align: 'center' });
-
-      let y = 54;
-
-      // ── Infos élève (Design épuré) ──────────────────────────────────
-      doc.setDrawColor(15, 23, 42); // slate-900
-      doc.setLineWidth(0.3);
-      doc.roundedRect(margin, y, pageW - 2 * margin, 26, 2, 2, 'S'); // Seulement une bordure (Stroke)
-
-      doc.setTextColor(15, 23, 42); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-      doc.text('INFORMATIONS DE L\'ÉLÈVE', margin + 4, y + 6);
-
-      const infos = [
-        ['Nom & Prénom', `${student.lastName.toUpperCase()} ${student.firstName}`],
-        ['Matricule', student.studentNumber],
-        ['Classe', enrollment.classroom],
-        ['Année Scolaire', enrollment.academicYear],
-        ['Né(e) le', new Date(student.dateOfBirth).toLocaleDateString('fr-FR')],
-        ['Campus', student.campus],
-      ];
-      
-      const col1 = infos.slice(0, 3);
-      const col2 = infos.slice(3);
-      
-      col1.forEach(([label, value], i) => {
-        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
-        doc.text(label + ' :', margin + 4, y + 13 + i * 5);
-        doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
-        doc.text(value, margin + 35, y + 13 + i * 5);
-      });
-      
-      col2.forEach(([label, value], i) => {
-        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
-        doc.text(label + ' :', pageW / 2 + 4, y + 13 + i * 5);
-        doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
-        doc.text(value, pageW / 2 + 35, y + 13 + i * 5);
-      });
-
-      y += 32;
-
-      // ── Tableau des notes ───────────────────────────────────────────
-      const headers = ['MATIÈRE', 'COEFF', 'NOTE', 'SUR', 'MOY/20', 'MENTION', 'POINTS'];
-      const colX = [margin, margin + 65, margin + 83, margin + 101, margin + 119, margin + 139, margin + 165];
-
-      // Header tableau
-      doc.setFillColor(241, 245, 249); // slate-100
-      doc.rect(margin, y, pageW - 2 * margin, 8, 'F');
-      doc.setDrawColor(226, 232, 240);
-      doc.rect(margin, y, pageW - 2 * margin, 8, 'S'); // Contour du header
-      
-      doc.setTextColor(15, 23, 42); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
-      headers.forEach((h, i) => doc.text(h, colX[i] + 2, y + 5.5));
-
-      y += 8;
-      
-      doc.setDrawColor(226, 232, 240); // slate-200
-      subjectResults.forEach((r, idx) => {
-        const rowBg = idx % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
-        doc.setFillColor(rowBg[0], rowBg[1], rowBg[2]);
-        doc.rect(margin, y, pageW - 2 * margin, 7, 'F'); // Ligne fond alternatif
-        
-        // Lignes verticales du tableau (optionnel, pour faire plus officiel)
-        doc.line(margin, y, margin, y + 7);
-        doc.line(pageW - margin, y, pageW - margin, y + 7);
-
-        // Couleur de la note
-        const isPass = r.average >= 10;
-        doc.setTextColor(15, 23, 42); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
-        doc.text(r.subjectName, colX[0] + 2, y + 4.8);
-        
-        doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
-        doc.text(r.coefficient.toString(), colX[1] + 2, y + 4.8);
-        
-        doc.setFont('helvetica', 'bold'); doc.setTextColor(isPass ? 15 : 185, isPass ? 23 : 28, isPass ? 42 : 28); // Noir si ok, rouge si échec
-        doc.text(r.score.toString(), colX[2] + 2, y + 4.8);
-        
-        doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
-        doc.text(r.maxScore.toString(), colX[3] + 2, y + 4.8);
-        
-        doc.setFont('helvetica', 'bold'); doc.setTextColor(isPass ? 15 : 185, isPass ? 23 : 28, isPass ? 42 : 28);
-        doc.text(r.average.toFixed(2), colX[4] + 2, y + 4.8);
-        
-        doc.setFont('helvetica', 'normal'); doc.setTextColor(15, 23, 42);
-        doc.text(r.mention, colX[5] + 2, y + 4.8);
-        doc.text(r.weighted.toFixed(2), colX[6] + 2, y + 4.8);
-
-        // Ligne de séparation horizontale
-        doc.line(margin, y + 7, margin + (pageW - 2 * margin), y + 7);
-        y += 7;
-      });
-
-      // ── Résumé ───────────────────────────────────────────────────────
-      y += 6;
-      
-      doc.setDrawColor(15, 23, 42); // slate-900 contour
-      doc.setLineWidth(0.5); // Contour plus épais
-      doc.roundedRect(margin, y, pageW - 2 * margin, 20, 2, 2, 'S');
-
-      const isGenPass = summary.generalAverage >= 10;
-      doc.setTextColor(15, 23, 42);
-      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-      doc.text('MOYENNE GÉNÉRALE :', margin + 6, y + 8);
-      
-      doc.setFontSize(14); doc.setTextColor(isGenPass ? 15 : 185, isGenPass ? 23 : 28, isGenPass ? 42 : 28);
-      doc.text(`${summary.generalAverage.toFixed(2)} / 20`, margin + 55, y + 8);
-      
-      doc.setTextColor(15, 23, 42); doc.setFontSize(9);
-      doc.text(`MENTION : ${summary.generalMention.toUpperCase()}`, margin + 6, y + 15);
-      
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100, 116, 139);
-      doc.text(`Total points : ${(summary.totalCoeff > 0 ? (summary.generalAverage * summary.totalCoeff).toFixed(2) : '0')} / ${(summary.totalCoeff * 20).toFixed(0)}`, pageW - margin - 6, y + 8, { align: 'right' });
-      doc.text(`Total coefficients : ${summary.totalCoeff}`, pageW - margin - 6, y + 14, { align: 'right' });
-
-      // ── Signatures ───────────────────────────────────────────────────
-      y += 35;
-      const sigCols = [margin, pageW / 2 - 20, pageW - margin - 48];
-      const sigLabels = ['Le Titulaire', 'Le Directeur', 'Les Parents'];
-      
-      // Tampon et Signature officielle du Directeur Général
-      try {
-        doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', pageW / 2 - 22, y - 10, 52, 24);
-      } catch (e) {
-        console.warn('Tampon directeur non ajouté', e);
-      }
-
-      sigLabels.forEach((label, i) => {
-        doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.3); // slate-300
-        doc.line(sigCols[i], y + 15, sigCols[i] + 48, y + 15); // Ligne pour signer
-        doc.setTextColor(15, 23, 42); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
-        doc.text(label, sigCols[i] + 24, y + 20, { align: 'center' });
-      });
-
-      // ── Pied de page ─────────────────────────────────────────────────
-      doc.setFontSize(6.5); doc.setTextColor(148, 163, 184); doc.setFont('helvetica', 'normal');
-      doc.text(`Document officiel généré numériquement le ${new Date().toLocaleDateString('fr-FR')} — ${school.name}`, pageW / 2, 285, { align: 'center' });
-      doc.text(`ID Unique : BULT-${student.id.substring(0, 8).toUpperCase()}-${t}-${new Date().getFullYear()}`, pageW / 2, 289, { align: 'center' });
-
-      doc.save(`Bulletin_${student.lastName}_${student.firstName}_T${t}_${enrollment.academicYear.replace('/', '-')}.pdf`);
+      const doc = await createBulletinDoc();
+      if (!doc) return;
+      const { student, enrollment, trimestre: t } = bulletin;
+      doc.save(`Bulletin_${student.lastName}_${student.firstName}_T${t}_${(enrollment?.academicYear || '').replace('/', '-')}.pdf`);
+    } catch (err) {
+      console.error('Erreur export PDF:', err);
     } finally { 
       setGenerating(false); 
+    }
+  };
+
+  const printBulletin = async () => {
+    if (!bulletin) return;
+    setGenerating(true);
+    try {
+      const doc = await createBulletinDoc();
+      if (!doc) return;
+      doc.autoPrint();
+      const blobUrl = doc.output('bloburl');
+      const printWin = window.open(blobUrl, '_blank');
+      if (!printWin) {
+        window.print();
+      }
+    } catch (err) {
+      console.error('Erreur impression PDF:', err);
+      window.print();
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -394,7 +425,7 @@ export default function BulletinsPage() {
 
         {/* ── Preview Bulletin ── */}
         {!loading && bulletin && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div id="printable-bulletin" className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             
             {/* En-tête Web du Bulletin */}
             <div className="bg-slate-900 text-white relative overflow-hidden">
@@ -402,10 +433,11 @@ export default function BulletinsPage() {
                 <div className="flex-1 bg-[#009a44]" /><div className="flex-1 bg-[#fcd116]" /><div className="flex-1 bg-[#ce1126]" />
               </div>
               
-              <div className="px-6 py-8 sm:px-8 sm:py-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 relative z-10">
+              <div className="px-6 py-6 sm:px-8 sm:py-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
+                {/* Infos Étudiant */}
                 <div>
                   <div className="text-[10px] text-indigo-300 font-bold tracking-[0.2em] mb-1.5 uppercase">Bulletin Officiel</div>
-                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight mb-4">
+                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight mb-3">
                     {bulletin.student.firstName} {bulletin.student.lastName.toUpperCase()}
                   </h2>
                   
@@ -421,39 +453,63 @@ export default function BulletinsPage() {
                   </div>
                 </div>
 
-                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 text-center min-w-[160px] shadow-2xl">
-                  <div className={`text-4xl font-black ${isPassing ? 'text-emerald-400' : 'text-red-400'} tracking-tighter leading-none mb-1`}>
-                    {bulletin.summary.generalAverage.toFixed(2)}
+                {/* Bloc Moyenne + Boutons d'action clairs et séparés */}
+                <div className="flex flex-wrap items-center gap-4 self-stretch sm:self-auto justify-between sm:justify-end">
+                  {/* Carte Moyenne */}
+                  <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 text-center min-w-[140px] shadow-lg">
+                    <div className={`text-3xl sm:text-4xl font-black ${isPassing ? 'text-emerald-400' : 'text-red-400'} tracking-tighter leading-none mb-1`}>
+                      {bulletin.summary.generalAverage.toFixed(2)}
+                    </div>
+                    <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-2">Moyenne / 20</div>
+                    <MentionBadge mention={bulletin.summary.generalMention} />
                   </div>
-                  <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-3">Moyenne / 20</div>
-                  <MentionBadge mention={bulletin.summary.generalMention} />
-                </div>
-              </div>
 
-              {/* Bouton Print Flottant */}
-              <div className="absolute bottom-6 right-8 hidden sm:block">
-                <button 
-                  onClick={generatePDF} 
-                  disabled={generating}
-                  className="px-5 py-2.5 bg-white text-slate-900 hover:bg-slate-50 disabled:opacity-50 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center gap-2 shadow-lg"
-                >
-                  {generating ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                  Télécharger PDF
-                </button>
+                  {/* Actions Imprimer / Télécharger */}
+                  <div className="flex flex-col gap-2.5 flex-1 sm:flex-initial min-w-[170px] print:hidden">
+                    <button 
+                      onClick={generatePDF} 
+                      disabled={generating}
+                      className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                      title="Télécharger le bulletin au format PDF"
+                    >
+                      {generating ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+                      Télécharger PDF
+                    </button>
+                    
+                    <button 
+                      onClick={printBulletin} 
+                      disabled={generating}
+                      className="w-full px-4 py-2.5 bg-white text-slate-900 hover:bg-slate-100 disabled:opacity-50 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                      title="Imprimer directement le bulletin"
+                    >
+                      {generating ? <Loader2 size={15} className="animate-spin" /> : <Printer size={15} />}
+                      Imprimer
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Bouton Print Mobile */}
-            <div className="p-4 bg-slate-50 border-b border-slate-100 sm:hidden">
+            {/* Barre d'action mobile sous l'en-tête */}
+            <div className="p-3 bg-slate-100 border-b border-slate-200 flex sm:hidden gap-2 print:hidden">
               <button 
                 onClick={generatePDF} 
                 disabled={generating}
-                className="w-full px-5 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
               >
-                {generating ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                Télécharger le Bulletin (PDF)
+                {generating ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                Télécharger PDF
+              </button>
+              <button 
+                onClick={printBulletin} 
+                disabled={generating}
+                className="flex-1 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+              >
+                <Printer size={14} />
+                Imprimer
               </button>
             </div>
+
 
             {/* Tableau des notes */}
             <div className="overflow-x-auto">
