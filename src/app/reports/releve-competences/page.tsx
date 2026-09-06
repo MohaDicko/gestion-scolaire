@@ -267,59 +267,65 @@ export default function ReleveCompetencesPage() {
       const sigY = resumeY + 26;
       const today = new Date().toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" });
 
-      doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
-      doc.text(`Gao, le ${today}`, pageW - margin - 4, sigY, { align: "right" });
+      const sigCols: [string, number][] = [
+        ["Le Secretaire", margin + 2],
+        ["Emargement", pageW / 2 - 22],
+        ["Le Directeur General", pageW - margin - 48],
+      ];
 
-      // Tampon directeur
+      // Date sur la droite au-dessus du Directeur Général
+      doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(70, 80, 95);
+      doc.text(`Gao, le ${today}`, pageW - margin - 26, sigY - 2, { align: "center" });
+
+      // Titres des signataires au-dessus de la zone de signature
+      sigCols.forEach(([label, x]) => {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(15, 23, 42);
+        doc.text(label, x + 22, sigY + 5, { align: "center" });
+      });
+
+      // Tampon et signature officielle du Directeur Général (strictement sous le nom du Directeur Général)
       try {
-        doc.addImage(DIRECTOR_STAMP_BASE64, "JPEG", pageW / 2 - 20, sigY + 2, 44, 20);
+        doc.addImage(DIRECTOR_STAMP_BASE64, "JPEG", pageW - margin - 49, sigY + 7, 46, 22);
       } catch (e) {
         console.warn("Tampon non ajoute", e);
       }
 
-      const sigCols: [string, number][] = [
-        ["Le Directeur General", margin + 2],
-        ["Le Secretaire", pageW / 2 - 18],
-        ["Emargement", pageW - margin - 48],
-      ];
-      sigCols.forEach(([label, x]) => {
-        doc.setDrawColor(0); doc.setLineWidth(0.3);
-        doc.line(x, sigY + 24, x + 44, sigY + 24);
-        doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(60, 60, 60);
-        doc.text(label, x + 22, sigY + 29, { align: "center" });
+      // Lignes de signature
+      sigCols.forEach(([_, x]) => {
+        doc.setDrawColor(200, 210, 220); doc.setLineWidth(0.3);
+        doc.line(x, sigY + 30, x + 44, sigY + 30);
       });
+
+      // Mentions sous les lignes
+      doc.setFont("helvetica", "italic"); doc.setFontSize(6.5); doc.setTextColor(100, 116, 139);
+      doc.text("(Signature)", margin + 24, sigY + 34, { align: "center" });
+      doc.text("(Visa)", pageW / 2, sigY + 34, { align: "center" });
+      doc.text("(Cachet et Signature)", pageW - margin - 26, sigY + 34, { align: "center" });
 
       // ── PIED DE PAGE ───────────────────────────────────────────────────
       doc.setFontSize(6); doc.setTextColor(130, 130, 130); doc.setFont("helvetica", "normal");
       doc.text(`Document officiel - ${school.name} - ${school.city} - ${new Date().getFullYear()}`, pageW / 2, 291, { align: "center" });
 
-      const filename = `Releve_Competences_${student.lastName}_${student.firstName}_${enrollment.academicYear.replace("/", "-")}.pdf`;
-      const base64Data = doc.output('datauristring');
+      const cleanLastName = (student.lastName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const cleanFirstName = (student.firstName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const cleanYear = (enrollment.academicYear || '').replace('/', '-').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = `Releve_Competences_${cleanLastName}_${cleanFirstName}_${cleanYear}.pdf`;
       
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `/api/reports/download/${encodeURIComponent(filename)}`;
-      form.target = '_blank';
+      const blob = doc.output('blob');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 1000);
       
-      const inputBase64 = document.createElement('input');
-      inputBase64.type = 'hidden';
-      inputBase64.name = 'base64';
-      inputBase64.value = base64Data;
-      form.appendChild(inputBase64);
-      
-      const inputFilename = document.createElement('input');
-      inputFilename.type = 'hidden';
-      inputFilename.name = 'filename';
-      inputFilename.value = filename;
-      form.appendChild(inputFilename);
-      
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
-      
-      toast.success("Releve de competences genere !");
+      toast.success("Relevé de compétences téléchargé en PDF !");
     } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la generation.");
+      toast.error(e.message || "Erreur lors de la génération.");
     } finally {
       setIsGenerating(null);
     }

@@ -256,21 +256,37 @@ export default function BulletinsPage() {
 
     // ── Signatures ───────────────────────────────────────────────────
     y += 35;
-    const sigCols = [margin, pageW / 2 - 20, pageW - margin - 48];
-    const sigLabels = ['Le Titulaire', 'Le Directeur', 'Les Parents'];
-    
+    const sigCols = [margin, pageW / 2 - 22, pageW - margin - 48];
+    const sigLabels = ['Le Titulaire', 'Les Parents', 'Le Directeur Général'];
+
+    // Date sur la droite au-dessus du Directeur Général
+    doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
+    doc.text(`${school?.city || 'Gao'}, le ${new Date().toLocaleDateString('fr-FR')}`, pageW - margin - 24, y - 8, { align: 'center' });
+
+    // Titres des signataires au-dessus de la zone de signature
+    sigLabels.forEach((label, i) => {
+      doc.setTextColor(15, 23, 42); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+      doc.text(label, sigCols[i] + 24, y - 2, { align: 'center' });
+    });
+
+    // Tampon et signature officielle du Directeur Général (strictement sous le nom du Directeur Général)
     try {
-      doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', pageW / 2 - 22, y - 10, 52, 24);
+      doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', pageW - margin - 50, y, 48, 22);
     } catch (e) {
       console.warn('Tampon directeur non ajouté', e);
     }
 
-    sigLabels.forEach((label, i) => {
+    // Lignes de signature
+    sigCols.forEach((colX) => {
       doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.3);
-      doc.line(sigCols[i], y + 15, sigCols[i] + 48, y + 15);
-      doc.setTextColor(15, 23, 42); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
-      doc.text(label, sigCols[i] + 24, y + 20, { align: 'center' });
+      doc.line(colX, y + 24, colX + 48, y + 24);
     });
+
+    // Mentions sous les lignes
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(6.5); doc.setTextColor(100, 116, 139);
+    doc.text('(Signature)', sigCols[0] + 24, y + 28, { align: 'center' });
+    doc.text('(Visa)', sigCols[1] + 24, y + 28, { align: 'center' });
+    doc.text('(Cachet & Signature)', sigCols[2] + 24, y + 28, { align: 'center' });
 
     // ── Pied de page ─────────────────────────────────────────────────
     doc.setFontSize(6.5); doc.setTextColor(148, 163, 184); doc.setFont('helvetica', 'normal');
