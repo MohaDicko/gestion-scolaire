@@ -10,10 +10,15 @@ const PAGES = [
   { id: 'dashboard', title: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard, category: 'Général' },
   { id: 'students', title: 'Liste des élèves', href: '/students', icon: StudentIcon, category: 'Scolarité' },
   { id: 'attendance', title: 'Faire l\'appel (Présences)', href: '/attendance', icon: Users, category: 'Scolarité' },
-  { id: 'id-cards', title: 'Générer les Cartes Scolaires (Badges)', href: '/admin/id-cards', icon: FileText, category: 'Scolarité' },
+  { id: 'bulletins', title: 'Générer les Bulletins de notes', href: '/reports/bulletins', icon: FileText, category: 'Scolarité' },
+  { id: 'id-cards', title: 'Générer les Cartes Scolaires (Badges)', href: '/students/cards', icon: FileText, category: 'Scolarité' },
   { id: 'certificates', title: 'Générer un Certificat de Scolarité', href: '/admin/certificates', icon: GraduationCap, category: 'Scolarité' },
+  { id: 'timetable', title: 'Emplois du temps', href: '/timetable', icon: LayoutDashboard, category: 'Scolarité' },
+  { id: 'classrooms', title: 'Gestion des Classes', href: '/classrooms', icon: Users, category: 'Configuration' },
+  { id: 'subjects', title: 'Modules et Matières', href: '/subjects', icon: BookOpen, category: 'Configuration' },
   { id: 'employees', title: 'Liste du Personnel (RH)', href: '/employees', icon: Briefcase, category: 'Ressources Humaines' },
   { id: 'finance', title: 'Finances & Factures', href: '/finance', icon: CreditCard, category: 'Finances' },
+  { id: 'payments', title: 'Encaisser un Paiement', href: '/finance/payments', icon: CreditCard, category: 'Finances' },
   { id: 'settings', title: 'Paramètres du système', href: '/settings', icon: Settings, category: 'Général' },
 ];
 
