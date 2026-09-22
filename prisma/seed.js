@@ -3,10 +3,16 @@ const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log('🏗️  RE-SEEDING UNIFIÉ: Correction et Peuplement...');
+function getScoreForStudent(studentIndex, subjectIndex, trimester) {
+  const base = 8 + ((studentIndex * 7 + subjectIndex * 5 + trimester * 3) % 10);
+  const adjustment = ((studentIndex + subjectIndex + trimester) % 3) - 1;
+  const score = base + adjustment;
+  return Math.min(18, Math.max(6, score));
+}
 
-  // 1. Établissement
+async function main() {
+  console.log('🏗️  RE-SEEDING UNIFIÉ: notes de bulletin réalistes et variées...');
+
   const school = await prisma.school.upsert({
     where: { code: 'SCH-001' },
     update: { isSetupComplete: true },
@@ -50,10 +56,8 @@ async function main() {
     },
   });
 
-  // 2. Utilisateurs (Super Admin et Admin Ecole)
   const pass = await bcrypt.hash('admin123', 10);
-  
-  // Super Admin (SaaS Controller)
+
   await prisma.user.upsert({
     where: { email: 'superadmin@schoolerp.com' },
     update: { password: pass },
@@ -66,7 +70,6 @@ async function main() {
     },
   });
 
-  // Admin École 1
   await prisma.user.upsert({
     where: { email: 'admin@schoolerp.com' },
     update: { tenantId: school.id, password: pass },
@@ -80,42 +83,32 @@ async function main() {
     },
   });
 
-  // 2b. Deuxième École pour test Multi-tenant
-  const school2 = await prisma.school.upsert({
-    where: { code: 'SCH-002' },
-    update: {},
-    create: {
-      name: 'Lycée Massa Makan Diabaté',
-      code: 'SCH-002',
-      address: 'Sébénikoro, Bamako',
-      city: 'Bamako',
-      country: 'Mali',
-      phoneNumber: '+223 20 22 11 00',
-      email: 'massa@makan.ml',
-      type: 'LYCEE',
-      isSetupComplete: true,
-    },
-  });
-
-  // 3. Sujets
-  const subjects = [];
   const subjectsData = [
-    { n: 'Mathématiques', c: 'MATH', coef: 5 },
-    { n: 'Physique-Chimie', c: 'PC', coef: 4 },
-    { n: 'Français', c: 'FRA', coef: 3 },
-    { n: 'Anglais', c: 'ANG', coef: 2 },
+    { name: 'Mathématiques', code: 'MATH', coefficient: 5 },
+    { name: 'Physique-Chimie', code: 'PC', coefficient: 4 },
+    { name: 'Français', code: 'FRA', coefficient: 3 },
+    { name: 'Anglais', code: 'ANG', coefficient: 2 },
+    { name: 'Biologie', code: 'BIO', coefficient: 3 },
+    { name: 'Informatique', code: 'INFO', coefficient: 2 },
   ];
 
+  const subjects = [];
   for (const s of subjectsData) {
-    const sub = await prisma.subject.upsert({
-      where: { id: `SUB-${s.c}` },
+    const subject = await prisma.subject.upsert({
+      where: { id: `SUB-${s.code}` },
       update: {},
-      create: { id: `SUB-${s.c}`, tenantId: school.id, name: s.n, code: s.c, coefficient: s.coef }
+      create: {
+        id: `SUB-${s.code}`,
+        tenantId: school.id,
+        name: s.name,
+        code: s.code,
+        coefficient: s.coefficient,
+      },
     });
-    subjects.push(sub);
+    subjects.push(subject);
   }
 
-  const cl = await prisma.classroom.upsert({
+  const classroom = await prisma.classroom.upsert({
     where: { id: 'CLASS-10A' },
     update: {},
     create: {
@@ -126,84 +119,129 @@ async function main() {
       name: '10ème Commune A',
       level: '10ème',
       maxCapacity: 60,
-    }
+    },
   });
 
-  // 4. Inscription de 20 élèves
-  console.log('🎓 Inscription des élèves...');
-  for (let i = 0; i < 20; i++) {
-    const sNumber = `2025ST${i.toString().padStart(3, '1')}`;
+  const students = [
+    ['Awa', 'Diallo', '2025ST001'],
+    ['Boubacar', 'Traoré', '2025ST002'],
+    ['Cissé', 'Sow', '2025ST003'],
+    ['Djeneba', 'Diakité', '2025ST004'],
+    ['Fanta', 'Kéita', '2025ST005'],
+    ['Ibrahim', 'Koné', '2025ST006'],
+    ['Mariam', 'Coulibaly', '2025ST007'],
+    ['Oumar', 'Sanogo', '2025ST008'],
+    ['Saliou', 'Sylla', '2025ST009'],
+    ['Yacouba', 'Diarra', '2025ST010'],
+  ];
+
+  console.log('🎓 Création des élèves et notes des bulletins...');
+
+  await prisma.grade.deleteMany({ where: { academicYearId: year.id } });
+
+  for (let i = 0; i < students.length; i++) {
+    const [firstName, lastName, studentNumber] = students[i];
+
     const student = await prisma.student.upsert({
-      where: { studentNumber: sNumber },
+      where: { studentNumber },
       update: {},
       create: {
         tenantId: school.id,
         campusId: campus.id,
-        studentNumber: sNumber,
-        firstName: `Elève_${i}`,
-        lastName: `Diallo`,
-        dateOfBirth: new Date('2010-01-01'),
+        studentNumber,
+        firstName,
+        lastName,
+        dateOfBirth: new Date(`2010-${(i % 12) + 1}-0${(i % 9) + 1}`),
         gender: i % 2 === 0 ? 'MALE' : 'FEMALE',
-        nationalId: `ML-BKO-${i}`,
-        parentName: `Parent_${i}`,
-        parentPhone: '+223 70 00 00 00',
-        parentEmail: `p${i}@gmail.com`,
+        nationalId: `ML-${1000 + i}`,
+        parentName: `Parent ${firstName}`,
+        parentPhone: `+223 70 00 ${String(10 + i).padStart(2, '0')} ${String(10 + i).padStart(2, '0')}`,
+        parentEmail: `${firstName.toLowerCase()}.parent@gmail.com`,
         parentRelationship: 'PERE',
-        enrollments: { create: { classroomId: cl.id, academicYearId: year.id } },
-        Invoice: {
-          create: {
-            tenantId: school.id,
-            invoiceNumber: `FAC-RE-25-U-${i}`,
-            title: 'Scolarité T1',
-            amount: 75000,
-            status: i % 2 === 0 ? 'PAID' : 'UNPAID',
-            dueDate: new Date('2024-11-30'),
-          }
-        }
-      }
+      },
     });
 
-    const studentEmail = `${sNumber.toLowerCase()}@student.schoolerp.com`;
+    const enrollment = await prisma.enrollment.upsert({
+      where: {
+        studentId_academicYearId: {
+          studentId: student.id,
+          academicYearId: year.id,
+        },
+      },
+      update: {},
+      create: {
+        studentId: student.id,
+        classroomId: classroom.id,
+        academicYearId: year.id,
+        status: 'ACTIVE',
+      },
+    });
+
     await prisma.user.upsert({
-      where: { email: studentEmail },
+      where: { email: `${studentNumber.toLowerCase()}@student.schoolerp.com` },
       update: { tenantId: school.id, password: pass },
       create: {
         tenantId: school.id,
-        email: studentEmail,
+        email: `${studentNumber.toLowerCase()}@student.schoolerp.com`,
         password: pass,
-        firstName: `Elève_${i}`,
-        lastName: `Diallo`,
+        firstName,
+        lastName,
         role: 'STUDENT',
-      }
+      },
     });
 
-    // Notes
-    for (const sub of subjects) {
-      await prisma.grade.create({
-        data: {
-          studentId: student.id,
-          subjectId: sub.id,
-          academicYearId: year.id,
-          trimestre: 1,
-          examType: 'FINAL',
-          score: 8 + Math.random() * 10,
-        }
-      });
+    for (let trimester = 1; trimester <= 3; trimester++) {
+      for (let subjectIndex = 0; subjectIndex < subjects.length; subjectIndex++) {
+        const subject = subjects[subjectIndex];
+        const score = getScoreForStudent(i, subjectIndex, trimester);
+
+        await prisma.grade.create({
+          data: {
+            studentId: student.id,
+            subjectId: subject.id,
+            academicYearId: year.id,
+            trimestre: trimester,
+            examType: 'FINAL',
+            score,
+            maxScore: 20,
+            comment: `Note ${trimester} pour ${subject.name}`,
+          },
+        });
+      }
     }
   }
-  
-  // 5. Personnel et Paie (Test Malien)
-  console.log('💰 Génération du personnel et de la paie...');
-  const dept = await prisma.department.create({
-    data: {
+
+  const dept = await prisma.department.upsert({
+    where: { id: 'DEPT-TEACH' },
+    update: {
       tenantId: school.id,
       name: 'Corps Enseignant',
       code: 'TEACH',
-    }
+    },
+    create: {
+      id: 'DEPT-TEACH',
+      tenantId: school.id,
+      name: 'Corps Enseignant',
+      code: 'TEACH',
+    },
   });
 
-  const employee = await prisma.employee.create({
-    data: {
+  const employee = await prisma.employee.upsert({
+    where: { employeeNumber: 'EMP-2025-001' },
+    update: {
+      tenantId: school.id,
+      firstName: 'Ibrahim',
+      lastName: 'Keita',
+      email: 'i.keita@excellence.ml',
+      phoneNumber: '+223 76 00 11 22',
+      dateOfBirth: new Date('1985-05-15'),
+      gender: 'MALE',
+      hireDate: new Date('2020-01-01'),
+      employeeType: 'TEACHER',
+      departmentId: dept.id,
+      campusId: campus.id,
+    },
+    create: {
       tenantId: school.id,
       employeeNumber: 'EMP-2025-001',
       firstName: 'Ibrahim',
@@ -222,26 +260,24 @@ async function main() {
           contractType: 'CDI',
           startDate: new Date('2020-01-01'),
           baseSalary: 450000,
-          status: 'ACTIVE'
-        }
-      }
-    }
+          status: 'ACTIVE',
+        },
+      },
+    },
   });
 
-  // Création d'un bulletin (Simulation calculs Mali)
-  // Brut: 450000
-  // INPS (3.06%): 13770
-  // AMO (1.5%): 6750
-  // ITS (Estimé): ~45000
-  await prisma.payslip.create({
-    data: {
+  await prisma.payslip.upsert({
+    where: {
+      id: 'PAYSLIP-EMP-2025-001-2025-03',
+    },
+    update: {
       tenantId: school.id,
       employeeId: employee.id,
       periodStart: new Date('2025-03-01'),
       periodEnd: new Date('2025-03-31'),
       baseSalary: 450000,
       taxableBonuses: 0,
-      nonTaxableBonuses: 25000, // Indemnité transport
+      nonTaxableBonuses: 25000,
       grossSalary: 450000,
       inpsEmployee: 13770,
       amoEmployee: 6750,
@@ -250,11 +286,33 @@ async function main() {
       its: 44250,
       netSalary: 410230,
       status: 'FINALIZED',
-      numberOfChildren: 2
-    }
+      numberOfChildren: 2,
+    },
+    create: {
+      id: 'PAYSLIP-EMP-2025-001-2025-03',
+      tenantId: school.id,
+      employeeId: employee.id,
+      periodStart: new Date('2025-03-01'),
+      periodEnd: new Date('2025-03-31'),
+      baseSalary: 450000,
+      taxableBonuses: 0,
+      nonTaxableBonuses: 25000,
+      grossSalary: 450000,
+      inpsEmployee: 13770,
+      amoEmployee: 6750,
+      totalDeductions: 20520,
+      fiscalBase: 429480,
+      its: 44250,
+      netSalary: 410230,
+      status: 'FINALIZED',
+      numberOfChildren: 2,
+    },
   });
 
-  console.log('✅ RE-SEEDING TERMINÉ !');
+  console.log('✅ RE-SEEDING TERMINÉ : notes variées pour les bulletins disponibles.');
 }
 
-main().catch(e => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+}).finally(() => prisma.$disconnect());
