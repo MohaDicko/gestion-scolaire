@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { resolveSubjectLabel } from '@/lib/subjectLabels';
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'studentId et academicYearId requis' }, { status: 400 });
   }
 
-  const [student, grades, enrollment, school] = await Promise.all([
+  const [student, grades, enrollment, school, officialSubjects, employees] = await Promise.all([
     prisma.student.findFirst({
       where: { id: studentId, tenantId: session.tenantId },
       include: { campus: { select: { name: true } } },
@@ -32,6 +33,14 @@ export async function GET(request: Request) {
       },
     }),
     prisma.school.findUnique({ where: { id: session.tenantId } }),
+    prisma.subject.findMany({
+      where: { tenantId: session.tenantId, code: { not: { startsWith: 'SUB-' } } },
+      select: { name: true, code: true },
+    }),
+    prisma.employee.findMany({
+      where: { tenantId: session.tenantId },
+      select: { firstName: true, lastName: true },
+    }),
   ]);
 
   if (!student) return NextResponse.json({ error: 'Eleve non trouve' }, { status: 404 });
@@ -45,6 +54,7 @@ export async function GET(request: Request) {
 
   const moduleResults = Array.from(gradesBySubject.values()).map((subjectGrades, index) => {
     const subject = subjectGrades[0].subject;
+    const displaySubject = resolveSubjectLabel(subject, officialSubjects, employees);
     const seuil = subject.coefficient; // Ex: 75 ou 80 (seuil de passage en %)
     const notesSur100 = subjectGrades.map((grade) => {
       const noteMax = grade.maxScore || 100;
@@ -60,8 +70,8 @@ export async function GET(request: Request) {
 
     return {
       numero: index + 1,
-      titreModule: subject.name,
-      subjectCode: subject.code,
+      titreModule: displaySubject.name,
+      subjectCode: displaySubject.code,
       duree,
       seuil,
       note: noteSur100,

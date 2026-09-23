@@ -15,6 +15,7 @@ vi.mock('@/lib/prisma', () => ({
     grade: { findMany: vi.fn() },
     subject: { findMany: vi.fn() },
     timetable: { findMany: vi.fn() },
+    employee: { findMany: vi.fn() },
     enrollment: { findFirst: vi.fn(), findMany: vi.fn() },
     school: { findUnique: vi.fn() },
   }
@@ -84,6 +85,7 @@ describe('GET /api/reports/bulletins — Bulletin Standard (Barème /20)', () =>
     vi.clearAllMocks();
     vi.mocked(prisma.timetable.findMany).mockResolvedValue(MOCK_TIMETABLE_SUBJECTS as any);
     vi.mocked(prisma.subject.findMany).mockResolvedValue(MOCK_SUBJECTS as any);
+    vi.mocked(prisma.employee.findMany).mockResolvedValue([]);
   });
 
   it('Retourne 401 si non authentifié', async () => {
@@ -239,6 +241,7 @@ describe('GET /api/reports/bulletins — Barème /100 (Multi-tenant CFPPAS)', ()
       { id: 'subject-bio', name: 'Biologie', code: 'BIO', coefficient: 3 },
       { id: 'subject-agr', name: 'Agropastorale', code: 'AGR', coefficient: 4 },
     ] as any);
+    vi.mocked(prisma.employee.findMany).mockResolvedValue([]);
   });
 
   const MOCK_SCHOOL_SCALE100 = { ...MOCK_SCHOOL_SCALE20, gradingScale: 100 };

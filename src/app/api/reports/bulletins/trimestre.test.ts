@@ -9,6 +9,7 @@ vi.mock('@/lib/prisma', () => ({
     grade: { findMany: vi.fn() },
     subject: { findMany: vi.fn() },
     timetable: { findMany: vi.fn() },
+    employee: { findMany: vi.fn() },
     enrollment: { findFirst: vi.fn(), findMany: vi.fn() },
     school: { findUnique: vi.fn() },
   }
@@ -27,6 +28,7 @@ describe('GET /api/reports/bulletins — Génération de bulletin par Trimestre'
     vi.mocked(prisma.subject.findMany).mockResolvedValue([
       { id: 'subject-math', name: 'Math', code: 'MATH', coefficient: 2 },
     ] as any);
+    vi.mocked(prisma.employee.findMany).mockResolvedValue([]);
   });
 
   it('Filtre les notes selon le trimestre demandé (ex: Trimestre 2)', async () => {
