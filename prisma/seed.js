@@ -90,6 +90,7 @@ async function main() {
     { name: 'Anglais', code: 'ANG', coefficient: 2 },
     { name: 'Biologie', code: 'BIO', coefficient: 3 },
     { name: 'Informatique', code: 'INFO', coefficient: 2 },
+    { name: 'Histoire-Géographie', code: 'HG', coefficient: 2 },
   ];
 
   const subjects = [];
@@ -108,19 +109,70 @@ async function main() {
     subjects.push(subject);
   }
 
-  const classroom = await prisma.classroom.upsert({
-    where: { id: 'CLASS-10A' },
-    update: {},
-    create: {
+  const classroomConfig = [
+    {
       id: 'CLASS-10A',
-      tenantId: school.id,
-      campusId: campus.id,
-      academicYearId: year.id,
       name: '10ème Commune A',
       level: '10ème',
-      maxCapacity: 60,
+      codes: ['MATH', 'FRA', 'BIO', 'PC', 'INFO', 'ANG'],
     },
+    {
+      id: 'CLASS-11A',
+      name: '11ème Sciences',
+      level: '11ème',
+      codes: ['MATH', 'PC', 'BIO', 'FRA', 'HG', 'INFO'],
+    },
+  ];
+
+  const teachers = await prisma.employee.findMany({
+    where: { tenantId: school.id, employeeType: 'TEACHER', isActive: true },
+    select: { id: true },
   });
+
+  const slots = [
+    { start: '08:00', end: '10:00' },
+    { start: '10:00', end: '12:00' },
+    { start: '14:00', end: '16:00' },
+    { start: '16:00', end: '18:00' },
+  ];
+
+  for (const classroomMeta of classroomConfig) {
+    const classRoom = await prisma.classroom.upsert({
+      where: { id: classroomMeta.id },
+      update: {},
+      create: {
+        id: classroomMeta.id,
+        tenantId: school.id,
+        campusId: campus.id,
+        academicYearId: year.id,
+        name: classroomMeta.name,
+        level: classroomMeta.level,
+        maxCapacity: 60,
+      },
+    });
+
+    const subjectIds = classroomMeta.codes.map((code) => subjects.find((s) => s.code === code).id);
+
+    const timetableData = [];
+    for (let day = 1; day <= 5; day++) {
+      for (let slotIndex = 0; slotIndex < slots.length; slotIndex++) {
+        const subjectId = subjectIds[(day + slotIndex) % subjectIds.length];
+        const teacher = teachers[(day + slotIndex) % teachers.length];
+        timetableData.push({
+          tenantId: school.id,
+          classroomId: classRoom.id,
+          subjectId,
+          employeeId: teacher.id,
+          dayOfWeek: day,
+          startTime: slots[slotIndex].start,
+          endTime: slots[slotIndex].end,
+        });
+      }
+    }
+
+    await prisma.timetable.deleteMany({ where: { classroomId: classRoom.id, tenantId: school.id } });
+    await prisma.timetable.createMany({ data: timetableData });
+  }
 
   const students = [
     ['Awa', 'Diallo', '2025ST001'],
@@ -133,14 +185,26 @@ async function main() {
     ['Oumar', 'Sanogo', '2025ST008'],
     ['Saliou', 'Sylla', '2025ST009'],
     ['Yacouba', 'Diarra', '2025ST010'],
+    ['Adama', 'Samaké', '2025ST011'],
+    ['Hawa', 'Toure', '2025ST012'],
   ];
 
-  console.log('🎓 Création des élèves et notes des bulletins...');
+  console.log('🎓 Création des élèves et des notes selon les modules réels de chaque classe...');
 
   await prisma.grade.deleteMany({ where: { academicYearId: year.id } });
 
+  const gradesToInsert = [];
+
   for (let i = 0; i < students.length; i++) {
     const [firstName, lastName, studentNumber] = students[i];
+    const classIndex = i % classroomConfig.length;
+    const selectedClass = classroomConfig[classIndex];
+    const classRoom = await prisma.classroom.findFirst({ where: { id: selectedClass.id, tenantId: school.id } });
+    const classSubjects = await prisma.timetable.findMany({
+      where: { classroomId: classRoom.id, tenantId: school.id },
+      select: { subjectId: true },
+    });
+    const uniqueSubjectIds = [...new Set(classSubjects.map((entry) => entry.subjectId))];
 
     const student = await prisma.student.upsert({
       where: { studentNumber },
@@ -161,17 +225,20 @@ async function main() {
       },
     });
 
-    const enrollment = await prisma.enrollment.upsert({
+    await prisma.enrollment.upsert({
       where: {
         studentId_academicYearId: {
           studentId: student.id,
           academicYearId: year.id,
         },
       },
-      update: {},
+      update: {
+        classroomId: classRoom.id,
+        status: 'ACTIVE',
+      },
       create: {
         studentId: student.id,
-        classroomId: classroom.id,
+        classroomId: classRoom.id,
         academicYearId: year.id,
         status: 'ACTIVE',
       },
@@ -191,24 +258,34 @@ async function main() {
     });
 
     for (let trimester = 1; trimester <= 3; trimester++) {
-      for (let subjectIndex = 0; subjectIndex < subjects.length; subjectIndex++) {
-        const subject = subjects[subjectIndex];
-        const score = getScoreForStudent(i, subjectIndex, trimester);
+      for (const subjectId of uniqueSubjectIds) {
+        const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
+        const profileBoost = i % 4 === 0 ? 2 : i % 4 === 1 ? 1 : i % 4 === 2 ? 0 : -1;
+        const trimesterBoost = trimester === 1 ? 0 : trimester === 2 ? 1 : 2;
+        const subjectBoost = subject.code === 'MATH' ? 1 : subject.code === 'PC' ? 0 : subject.code === 'BIO' ? 1 : -1;
+        const score = Math.min(
+          18,
+          Math.max(6, 9 + profileBoost + trimesterBoost + subjectBoost + ((studentNumber.length + trimester + subject.code.length) % 5))
+        );
 
-        await prisma.grade.create({
-          data: {
-            studentId: student.id,
-            subjectId: subject.id,
-            academicYearId: year.id,
-            trimestre: trimester,
-            examType: 'FINAL',
-            score,
-            maxScore: 20,
-            comment: `Note ${trimester} pour ${subject.name}`,
-          },
+        gradesToInsert.push({
+          studentId: student.id,
+          subjectId: subject.id,
+          academicYearId: year.id,
+          trimestre: trimester,
+          examType: 'FINAL',
+          score,
+          maxScore: 20,
+          comment: `Bulletin ${trimester} - ${subject.name}`,
         });
       }
     }
+  }
+
+  for (let i = 0; i < gradesToInsert.length; i += 100) {
+    await prisma.grade.createMany({
+      data: gradesToInsert.slice(i, i + 100),
+    });
   }
 
   const dept = await prisma.department.upsert({
