@@ -36,22 +36,32 @@ export async function GET(request: Request) {
 
   if (!student) return NextResponse.json({ error: 'Eleve non trouve' }, { status: 404 });
 
-  const moduleResults = grades.map((g, index) => {
-    const seuil = g.subject.coefficient; // Ex: 75 ou 80 (seuil de passage en %)
-    const noteRaw = g.score;
-    const noteMax = g.maxScore || 100;
-    const noteSur100 = noteMax !== 100 ? Math.round((noteRaw / noteMax) * 100 * 10) / 10 : noteRaw;
+  const gradesBySubject = new Map<string, typeof grades>();
+  for (const grade of grades) {
+    const subjectGrades = gradesBySubject.get(grade.subjectId) || [];
+    subjectGrades.push(grade);
+    gradesBySubject.set(grade.subjectId, subjectGrades);
+  }
+
+  const moduleResults = Array.from(gradesBySubject.values()).map((subjectGrades, index) => {
+    const subject = subjectGrades[0].subject;
+    const seuil = subject.coefficient; // Ex: 75 ou 80 (seuil de passage en %)
+    const notesSur100 = subjectGrades.map((grade) => {
+      const noteMax = grade.maxScore || 100;
+      return noteMax !== 100 ? (grade.score / noteMax) * 100 : grade.score;
+    });
+    const noteSur100 = Math.round((notesSur100.reduce((sum, note) => sum + note, 0) / notesSur100.length) * 10) / 10;
     const reussi = noteSur100 >= seuil;
 
     // Duree stockee dans le code du subject (ex: "MOD-01-15H" ou "ANGL-01-90H")
     // On capture le nombre juste avant le suffixe H en fin de code
-    const dureeMatch = g.subject.code?.match(/(\d+)H$/i);
+    const dureeMatch = subject.code?.match(/(\d+)H$/i);
     const duree = dureeMatch ? parseInt(dureeMatch[1]) : null;
 
     return {
       numero: index + 1,
-      titreModule: g.subject.name,
-      subjectCode: g.subject.code,
+      titreModule: subject.name,
+      subjectCode: subject.code,
       duree,
       seuil,
       note: noteSur100,
