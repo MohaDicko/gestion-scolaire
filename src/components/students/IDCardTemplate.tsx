@@ -26,6 +26,7 @@ interface IDCardTemplateProps {
 
 export const IDCardTemplate: React.FC<IDCardTemplateProps> = ({ student }) => {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const officialSchoolName = student.schoolName?.trim() || 'CFP-PAS DE GAO';
 
   useEffect(() => {
     // Generate QR Code containing student verification URL or simple ID
@@ -62,9 +63,11 @@ export const IDCardTemplate: React.FC<IDCardTemplateProps> = ({ student }) => {
       <div className="w-[85.6mm] h-[53.98mm] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden relative print:shadow-none print:border-slate-300">
         {/* Header background */}
         <div 
-          className="absolute top-0 left-0 w-full h-[18mm]" 
-          style={{ backgroundColor: student.primaryColor || '#2563eb' }}
+          className="absolute top-0 left-0 w-full h-[20mm] bg-slate-950" 
         />
+        <div className="absolute top-0 left-0 w-full h-[1.4mm] flex">
+          <span className="flex-1 bg-[#009a44]" /><span className="flex-1 bg-[#fcd116]" /><span className="flex-1 bg-[#ce1126]" />
+        </div>
         
         {/* Header Content */}
         <div className="relative z-10 flex items-center justify-between px-4 pt-2">
@@ -81,16 +84,16 @@ export const IDCardTemplate: React.FC<IDCardTemplateProps> = ({ student }) => {
               LOGO
             </div>
           )}
-          <div className="text-right text-white">
-            <h1 className="text-[10px] font-black uppercase tracking-wider leading-tight">
-              {student.schoolName}
+          <div className="text-right text-white max-w-[49mm]">
+            <h1 className="text-[8.5px] font-black uppercase tracking-[0.06em] leading-tight">
+              {officialSchoolName}
             </h1>
-            <p className="text-[8px] opacity-80">CARTE D'IDENTITÉ SCOLAIRE</p>
+            <p className="text-[6.5px] opacity-70 tracking-[0.14em] mt-0.5">CARTE SCOLAIRE OFFICIELLE</p>
           </div>
         </div>
 
         {/* Body */}
-        <div className="relative z-10 mt-6 px-4 flex gap-4">
+        <div className="relative z-10 mt-7 px-4 flex gap-4">
           {/* Photo */}
           <div className="w-[22mm] h-[28mm] bg-slate-100 rounded-md border-2 border-white shadow-sm overflow-hidden flex-shrink-0">
             {student.photoUrl ? (
@@ -105,15 +108,15 @@ export const IDCardTemplate: React.FC<IDCardTemplateProps> = ({ student }) => {
           
           {/* Info */}
           <div className="flex flex-col justify-center flex-1">
-            <div className="mb-1">
+            <div className="mb-1.5">
               <p className="text-[7px] text-slate-400 uppercase font-bold">Nom</p>
               <p className="text-[11px] font-black text-slate-800 leading-none">{student.lastName.toUpperCase()}</p>
             </div>
-            <div className="mb-1">
+            <div className="mb-1.5">
               <p className="text-[7px] text-slate-400 uppercase font-bold">Prénom(s)</p>
               <p className="text-[10px] font-bold text-slate-700 leading-none">{student.firstName}</p>
             </div>
-            <div className="flex gap-4 mb-1">
+            <div className="flex gap-3 mb-1.5">
               <div>
                 <p className="text-[7px] text-slate-400 uppercase font-bold">Classe</p>
                 <p 
@@ -151,10 +154,11 @@ export const IDCardTemplate: React.FC<IDCardTemplateProps> = ({ student }) => {
 
       {/* Verso (Back) */}
       <div className="w-[85.6mm] h-[53.98mm] bg-white rounded-xl shadow-lg border border-slate-200 relative print:shadow-none print:border-slate-300 p-4 flex flex-col justify-between">
-        <div className="text-center">
-          <p className="text-[8px] text-slate-500 font-medium leading-tight mb-2">
-            Cette carte est strictement personnelle. Elle doit être présentée à toute réquisition des autorités de l'établissement. En cas de perte, veuillez prévenir l'administration.
+        <div className="border-b border-slate-200 pb-2">
+          <p className="text-[7px] text-slate-500 font-medium leading-tight text-center">
+            Cette carte est personnelle. Elle doit être présentée à toute réquisition de l'établissement.
           </p>
+          <p className="text-[7px] font-black text-slate-800 text-center uppercase tracking-[0.12em] mt-1">{officialSchoolName}</p>
         </div>
         
         <div className="flex justify-between items-end">

@@ -125,8 +125,8 @@ function StudentCardPreview({ student, qrDataUrl, isSelected, onToggle, cardRef 
 
           {/* Header */}
           <div className="text-center pt-5 pb-3 relative z-10">
-            <div className="text-[11px] uppercase font-black text-indigo-300 tracking-[0.2em] mb-1">SchoolERP Pro</div>
-            <div className="text-[9px] text-slate-400 font-medium tracking-widest">CARTE SCOLAIRE</div>
+            <div className="text-[10px] uppercase font-black text-white tracking-[0.08em] leading-tight">CFP-PAS DE GAO</div>
+            <div className="text-[8px] uppercase text-amber-300 font-bold tracking-[0.12em] mt-1">Agro-Pastorale · Carte officielle</div>
           </div>
 
           {/* Photo */}

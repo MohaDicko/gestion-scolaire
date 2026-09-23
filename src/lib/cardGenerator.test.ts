@@ -42,6 +42,12 @@ describe('generateSVGCard — Structure SVG de base', () => {
     expect(svg).toContain('1ère EA');
   });
 
+  it('Contient le nom officiel du CFP-PAS de Gao', () => {
+    const svg = generateSVGCard(MOCK_STUDENT, MOCK_QR);
+    expect(svg).toContain('CFP-PAS DE GAO (AGRO-PASTORALE)');
+    expect(svg).toContain("CARTE SCOLAIRE OFFICIELLE");
+  });
+
   it('Contient la date de naissance formatée', () => {
     const svg = generateSVGCard(MOCK_STUDENT, MOCK_QR);
     expect(svg).toContain('15/03/2004');

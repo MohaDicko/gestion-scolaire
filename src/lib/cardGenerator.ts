@@ -19,7 +19,7 @@ export interface StudentCardData {
 
 export const generateSVGCard = (student: StudentCardData, qrDataUrl: string): string => {
   const fullName = `${student.firstName.toUpperCase()} ${student.lastName.toUpperCase()}`;
-  const schoolName = (student.schoolName || 'CFP-PAS DE GAO').toUpperCase();
+  const schoolName = (student.schoolName || 'CFP-PAS DE GAO (AGRO-PASTORALE)').toUpperCase();
   const academicYear = student.academicYear || '2025-2026';
   const cleanId = student.id.replace(/[^a-zA-Z0-9_-]/g, '_');
   
@@ -37,6 +37,7 @@ export const generateSVGCard = (student: StudentCardData, qrDataUrl: string): st
       </defs>
       
       <rect width="100%" height="100%" rx="24" fill="url(#bg-grad-${cleanId})" />
+      <rect x="12" y="18" width="316" height="504" rx="18" fill="none" stroke="#64748b" stroke-opacity="0.35" />
       
       <!-- Bandeau Supérieur Mali -->
       <rect x="0" y="0" width="113.3" height="8" fill="#009a44" />
@@ -49,8 +50,8 @@ export const generateSVGCard = (student: StudentCardData, qrDataUrl: string): st
       <text x="180" y="42" fill="#a5b4fc" font-family="sans-serif" font-size="11" font-weight="bold" letter-spacing="2" text-anchor="middle">${schoolName}</text>
       <text x="180" y="60" fill="#94a3b8" font-family="sans-serif" font-size="9" font-weight="normal" letter-spacing="1.5" text-anchor="middle">CARTE D'IDENTITÉ SCOLAIRE</text>
       ` : `
-      <text x="170" y="45" fill="#a5b4fc" font-family="sans-serif" font-size="12" font-weight="bold" letter-spacing="2" text-anchor="middle">${schoolName}</text>
-      <text x="170" y="65" fill="#94a3b8" font-family="sans-serif" font-size="10" font-weight="normal" letter-spacing="2" text-anchor="middle">CARTE D'IDENTITÉ SCOLAIRE</text>
+      <text x="170" y="45" fill="#f8fafc" font-family="sans-serif" font-size="12" font-weight="bold" letter-spacing="1.2" text-anchor="middle">${schoolName}</text>
+      <text x="170" y="65" fill="#fcd116" font-family="sans-serif" font-size="9" font-weight="bold" letter-spacing="1.8" text-anchor="middle">CARTE SCOLAIRE OFFICIELLE</text>
       `}
 
       <!-- Photo Border -->
@@ -66,15 +67,16 @@ export const generateSVGCard = (student: StudentCardData, qrDataUrl: string): st
       `}
 
       <text x="170" y="300" fill="#ffffff" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">${fullName}</text>
-      <text x="170" y="325" fill="#818cf8" font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">${student.classroom?.name || '—'}</text>
+      <rect x="112" y="309" width="116" height="26" rx="13" fill="#312e81" stroke="#818cf8" stroke-opacity="0.5" />
+      <text x="170" y="326" fill="#e0e7ff" font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">${student.classroom?.name || '—'}</text>
 
       <!-- Infos -->
       <rect x="30" y="355" width="280" height="1" fill="#334155" />
       
-      <text x="40" y="385" fill="#94a3b8" font-family="sans-serif" font-size="10" font-weight="bold" letter-spacing="1">MATRICULE</text>
+      <text x="40" y="385" fill="#fcd116" font-family="sans-serif" font-size="10" font-weight="bold" letter-spacing="1">MATRICULE</text>
       <text x="40" y="405" fill="#ffffff" font-family="sans-serif" font-size="14" font-weight="bold">${student.studentNumber}</text>
 
-      <text x="40" y="435" fill="#94a3b8" font-family="sans-serif" font-size="10" font-weight="bold" letter-spacing="1">NÉ(E) LE</text>
+      <text x="40" y="435" fill="#fcd116" font-family="sans-serif" font-size="10" font-weight="bold" letter-spacing="1">NÉ(E) LE</text>
       <text x="40" y="455" fill="#ffffff" font-family="sans-serif" font-size="14" font-weight="bold">${new Date(student.dateOfBirth).toLocaleDateString('fr-FR')}</text>
 
       <!-- QR Code -->
