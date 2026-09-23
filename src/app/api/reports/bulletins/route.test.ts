@@ -202,6 +202,30 @@ describe('GET /api/reports/bulletins — Bulletin Standard (Barème /20)', () =>
     expect(data.school.name).toContain('CFP-PAS');
     expect(data.school.logoUrl).toBeTruthy();
   });
+
+  it('Affiche uniquement le nom officiel du module sans le nom du professeur', async () => {
+    vi.mocked(getSession).mockResolvedValueOnce(ADMIN_SESSION as any);
+    vi.mocked(prisma.student.findFirst).mockResolvedValueOnce(MOCK_STUDENT as any);
+    vi.mocked(prisma.enrollment.findFirst).mockResolvedValueOnce(MOCK_ENROLLMENT as any);
+    vi.mocked(prisma.school.findUnique).mockResolvedValueOnce(MOCK_SCHOOL_SCALE20 as any);
+    vi.mocked(prisma.enrollment.findMany).mockResolvedValueOnce([{ studentId: 'stu-001' }] as any);
+    vi.mocked(prisma.timetable.findMany).mockResolvedValueOnce([{ subjectId: 'subject-imported' }] as any);
+    vi.mocked(prisma.subject.findMany)
+      .mockResolvedValueOnce([{ id: 'subject-imported', name: 'Mathématique Zoubeirou Hachimi', code: 'SUB-955', coefficient: 1 }] as any)
+      .mockResolvedValueOnce([{ name: 'Mathématique', code: 'MATH-06-135H' }] as any);
+    vi.mocked(prisma.grade.findMany).mockResolvedValueOnce([{
+      studentId: 'stu-001', subjectId: 'subject-imported', score: 14, maxScore: 20,
+      examType: 'FINAL', trimestre: 1, comment: null,
+      subject: { name: 'Mathématique Zoubeirou Hachimi', code: 'SUB-955', coefficient: 1 },
+    }] as any);
+
+    const req = new Request('http://localhost/api/reports/bulletins?studentId=stu-001&academicYearId=ay-001');
+    const res = await GET(req);
+    const data = await res.json();
+
+    expect(data.subjectResults[0].subjectName).toBe('Mathématique');
+    expect(data.subjectResults[0].subjectCode).toBe('MATH-06-135H');
+  });
 });
 
 describe('GET /api/reports/bulletins — Barème /100 (Multi-tenant CFPPAS)', () => {

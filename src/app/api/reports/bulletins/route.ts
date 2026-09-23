@@ -2,6 +2,25 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
+function normalizeLabel(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[.:]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function resolveOfficialSubject(subject: { name: string; code: string }, officialSubjects: { name: string; code: string }[]) {
+  const subjectLabel = normalizeLabel(subject.name);
+  const match = officialSubjects
+    .filter((candidate) => subjectLabel.startsWith(normalizeLabel(candidate.name)))
+    .sort((a, b) => normalizeLabel(b.name).length - normalizeLabel(a.name).length)[0];
+
+  return match || subject;
+}
+
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -42,7 +61,7 @@ export async function GET(request: Request) {
       })
     : [];
   const timetableSubjectIds = timetableSubjects.map((entry) => entry.subjectId);
-  const [timetableSubjectsData, grades] = timetableSubjectIds.length > 0
+  const [timetableSubjectsData, grades, officialSubjects] = timetableSubjectIds.length > 0
     ? await Promise.all([
         prisma.subject.findMany({
           where: { id: { in: timetableSubjectIds }, tenantId: session.tenantId },
@@ -52,14 +71,22 @@ export async function GET(request: Request) {
           where: { studentId, academicYearId, trimestre, subjectId: { in: timetableSubjectIds } },
           include: { subject: true },
         }),
+        prisma.subject.findMany({
+          where: {
+            tenantId: session.tenantId,
+            code: { not: { startsWith: 'SUB-' } },
+          },
+          select: { name: true, code: true },
+        }),
       ])
-    : [[], []];
+    : [[], [], []];
 
   // CFPPAS ou autre école : utiliser le barème configuré dans la DB
   const scale = school?.gradingScale ?? 20;
 
   // Calcul moyennes pondérées par coefficient, ramenées sur l'échelle de l'école
   const subjectResults = timetableSubjectsData.map(subject => {
+    const officialSubject = resolveOfficialSubject(subject, officialSubjects);
     const subjectGrades = grades.filter((grade) => grade.subjectId === subject.id);
     const continuousGrades = subjectGrades.filter((grade) => grade.examType === 'CONTINUOUS');
     const compositionGrades = subjectGrades.filter((grade) => grade.examType !== 'CONTINUOUS');
@@ -81,8 +108,8 @@ export async function GET(request: Request) {
     else if (avg >= scale * 0.50) mention = 'Passable';
     else mention = 'Insuffisant';
     return {
-      subjectName: subject.name,
-      subjectCode: subject.code,
+      subjectName: officialSubject.name,
+      subjectCode: officialSubject.code,
       coefficient: subject.coefficient,
       score: Math.round(avg * 100) / 100,
       maxScore: scale,
