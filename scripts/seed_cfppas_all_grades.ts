@@ -42,17 +42,6 @@ async function main() {
   console.log(`📚 ${classrooms.length} classe(s) trouvée(s) :`);
   classrooms.forEach((c) => console.log(`   - ${c.name} (${c.level || 'N/A'})`));
 
-  // 4. Tous les modules/matières
-  const subjects = await prisma.subject.findMany({
-    where: { tenantId: school.id },
-  });
-  console.log(`\n📖 ${subjects.length} module(s)/matière(s) trouvé(s)\n`);
-
-  if (subjects.length === 0) {
-    console.error('❌ Aucune matière trouvée. Impossible de créer des notes.');
-    return;
-  }
-
   const maxScore = school.gradingScale || 20;
   const trimestres = [1, 2, 3];
   const gradeTypes: ('CONTINUOUS' | 'MIDTERM' | 'FINAL')[] = ['CONTINUOUS', 'MIDTERM', 'FINAL'];
@@ -79,6 +68,23 @@ async function main() {
     }
     console.log(`   👤 ${enrollments.length} apprenant(s) inscrit(s)`);
     totalStudents += enrollments.length;
+
+    // Un bulletin doit contenir uniquement les modules planifiés pour cette classe.
+    const timetableEntries = await prisma.timetable.findMany({
+      where: { classroomId: classroom.id, tenantId: school.id },
+      select: { subjectId: true },
+    });
+    const timetableSubjectIds = Array.from(new Set(timetableEntries.map((entry) => entry.subjectId)));
+    const subjects = await prisma.subject.findMany({
+      where: { tenantId: school.id, id: { in: timetableSubjectIds } },
+      orderBy: { name: 'asc' },
+    });
+
+    if (subjects.length === 0) {
+      console.log('   ⚠️ Aucun module dans l’emploi du temps — Classe ignorée.');
+      continue;
+    }
+    console.log(`   📖 ${subjects.length} module(s) planifié(s)`);
 
     const studentIds = enrollments.map((e) => e.studentId);
 

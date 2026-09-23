@@ -15,18 +15,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'studentId et academicYearId requis' }, { status: 400 });
   }
 
-  const [student, grades, enrollment, school] = await Promise.all([
+  const [student, enrollment, school] = await Promise.all([
     prisma.student.findFirst({
       where: { id: studentId, tenantId: session.tenantId },
       include: { campus: { select: { name: true } } },
     }),
-    prisma.grade.findMany({
-      where: { studentId, academicYearId, trimestre },
-      include: { subject: true },
-      orderBy: { subject: { name: 'asc' } },
-    }),
     prisma.enrollment.findFirst({
-      where: { studentId, academicYearId },
+      where: { studentId, academicYearId, classroom: { tenantId: session.tenantId } },
       include: { classroom: { select: { name: true, level: true, id: true } }, academicYear: { select: { name: true } } },
     }),
     prisma.school.findUnique({ where: { id: session.tenantId } }),
@@ -39,12 +34,46 @@ export async function GET(request: Request) {
 
   if (!student) return NextResponse.json({ error: 'Élève non trouvé' }, { status: 404 });
 
+  const timetableSubjects = enrollment
+    ? await prisma.timetable.findMany({
+        where: { classroomId: enrollment.classroom.id, tenantId: session.tenantId },
+        select: { subjectId: true },
+        distinct: ['subjectId'],
+      })
+    : [];
+  const timetableSubjectIds = timetableSubjects.map((entry) => entry.subjectId);
+  const [timetableSubjectsData, grades] = timetableSubjectIds.length > 0
+    ? await Promise.all([
+        prisma.subject.findMany({
+          where: { id: { in: timetableSubjectIds }, tenantId: session.tenantId },
+          orderBy: { name: 'asc' },
+        }),
+        prisma.grade.findMany({
+          where: { studentId, academicYearId, trimestre, subjectId: { in: timetableSubjectIds } },
+          include: { subject: true },
+        }),
+      ])
+    : [[], []];
+
   // CFPPAS ou autre école : utiliser le barème configuré dans la DB
   const scale = school?.gradingScale ?? 20;
 
   // Calcul moyennes pondérées par coefficient, ramenées sur l'échelle de l'école
-  const subjectResults = grades.map(g => {
-    const avg = (g.score / g.maxScore) * scale;
+  const subjectResults = timetableSubjectsData.map(subject => {
+    const subjectGrades = grades.filter((grade) => grade.subjectId === subject.id);
+    const continuousGrades = subjectGrades.filter((grade) => grade.examType === 'CONTINUOUS');
+    const compositionGrades = subjectGrades.filter((grade) => grade.examType !== 'CONTINUOUS');
+    const normalize = (grade: (typeof grades)[number]) => (grade.score / grade.maxScore) * scale;
+    const classAverage = continuousGrades.length > 0
+      ? continuousGrades.reduce((sum, grade) => sum + normalize(grade), 0) / continuousGrades.length
+      : 0;
+    const compositionAverage = compositionGrades.length > 0
+      ? compositionGrades.reduce((sum, grade) => sum + normalize(grade), 0) / compositionGrades.length
+      : classAverage;
+    const avg = classAverage > 0
+      ? (classAverage + 2 * compositionAverage) / 3
+      : compositionAverage;
+    const lastGrade = subjectGrades[subjectGrades.length - 1];
     let mention = '';
     if (avg >= scale * 0.80) mention = 'Très Bien';
     else if (avg >= scale * 0.70) mention = 'Bien';
@@ -52,16 +81,16 @@ export async function GET(request: Request) {
     else if (avg >= scale * 0.50) mention = 'Passable';
     else mention = 'Insuffisant';
     return {
-      subjectName: g.subject.name,
-      subjectCode: g.subject.code,
-      coefficient: g.subject.coefficient,
-      score: g.score,
+      subjectName: subject.name,
+      subjectCode: subject.code,
+      coefficient: subject.coefficient,
+      score: Math.round(avg * 100) / 100,
       maxScore: scale,
       average: Math.round(avg * 100) / 100,
-      weighted: Math.round(avg * g.subject.coefficient * 100) / 100,
+      weighted: Math.round(avg * subject.coefficient * 100) / 100,
       mention,
-      comment: g.comment,
-      examType: g.examType,
+      comment: lastGrade?.comment,
+      examType: lastGrade?.examType || 'FINAL',
     };
   });
 
@@ -87,7 +116,8 @@ export async function GET(request: Request) {
       where: { 
         studentId: { in: classmates.map(c => c.studentId) },
         academicYearId,
-        trimestre
+        trimestre,
+        ...(timetableSubjectIds.length > 0 ? { subjectId: { in: timetableSubjectIds } } : {})
       },
       include: { subject: true }
     });
@@ -149,6 +179,7 @@ export async function GET(request: Request) {
       totalCoeff, 
       totalWeighted, 
       subjectCount: subjectResults.length,
+      timetableModuleCount: timetableSubjectIds.length,
       rank,
       totalInClass
     },

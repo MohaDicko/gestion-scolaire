@@ -7,6 +7,8 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     student: { findFirst: vi.fn(), findMany: vi.fn() },
     grade: { findMany: vi.fn() },
+    subject: { findMany: vi.fn() },
+    timetable: { findMany: vi.fn() },
     enrollment: { findFirst: vi.fn(), findMany: vi.fn() },
     school: { findUnique: vi.fn() },
   }
@@ -19,7 +21,13 @@ vi.mock('@/lib/auth', () => ({
 const MOCK_SESSION = { id: 'admin-1', tenantId: 'tenant-1', role: 'SCHOOL_ADMIN' };
 
 describe('GET /api/reports/bulletins — Génération de bulletin par Trimestre', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.timetable.findMany).mockResolvedValue([{ subjectId: 'subject-math' }] as any);
+    vi.mocked(prisma.subject.findMany).mockResolvedValue([
+      { id: 'subject-math', name: 'Math', code: 'MATH', coefficient: 2 },
+    ] as any);
+  });
 
   it('Filtre les notes selon le trimestre demandé (ex: Trimestre 2)', async () => {
     vi.mocked(getSession).mockResolvedValueOnce(MOCK_SESSION as any);
@@ -35,7 +43,7 @@ describe('GET /api/reports/bulletins — Génération de bulletin par Trimestre'
     
     // Simuler des notes renvoyées par Prisma (appelé plusieurs fois)
     vi.mocked(prisma.grade.findMany).mockResolvedValue([
-      { studentId: 'stu-1', score: 14, maxScore: 20, subject: { name: 'Math', coefficient: 2 }, trimestre: 2 }
+      { studentId: 'stu-1', subjectId: 'subject-math', score: 14, maxScore: 20, examType: 'FINAL', subject: { name: 'Math', coefficient: 2 }, trimestre: 2 }
     ] as any);
 
     const req = new Request('http://localhost/api/reports/bulletins?studentId=stu-1&academicYearId=ay-1&trimestre=2');

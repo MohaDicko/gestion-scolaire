@@ -13,6 +13,8 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     student: { findFirst: vi.fn() },
     grade: { findMany: vi.fn() },
+    subject: { findMany: vi.fn() },
+    timetable: { findMany: vi.fn() },
     enrollment: { findFirst: vi.fn(), findMany: vi.fn() },
     school: { findUnique: vi.fn() },
   }
@@ -45,12 +47,24 @@ const MOCK_ENROLLMENT = {
   academicYear: { name: '2025-2026' },
 };
 
+const MOCK_TIMETABLE_SUBJECTS = [
+  { subjectId: 'subject-bio' },
+  { subjectId: 'subject-math' },
+];
+
+const MOCK_SUBJECTS = [
+  { id: 'subject-bio', name: 'Biologie', code: 'BIO', coefficient: 3 },
+  { id: 'subject-math', name: 'Mathématiques', code: 'MATH', coefficient: 4 },
+];
+
 const MOCK_GRADES_SCALE20 = [
   {
+    studentId: 'stu-001', subjectId: 'subject-bio',
     score: 14, maxScore: 20, examType: 'FINAL', trimestre: 1, comment: null,
     subject: { name: 'Biologie', code: 'BIO', coefficient: 3 }
   },
   {
+    studentId: 'stu-001', subjectId: 'subject-math',
     score: 11, maxScore: 20, examType: 'FINAL', trimestre: 1, comment: null,
     subject: { name: 'Mathématiques', code: 'MATH', coefficient: 4 }
   },
@@ -66,7 +80,11 @@ const MOCK_SCHOOL_SCALE20 = {
 };
 
 describe('GET /api/reports/bulletins — Bulletin Standard (Barème /20)', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.timetable.findMany).mockResolvedValue(MOCK_TIMETABLE_SUBJECTS as any);
+    vi.mocked(prisma.subject.findMany).mockResolvedValue(MOCK_SUBJECTS as any);
+  });
 
   it('Retourne 401 si non authentifié', async () => {
     vi.mocked(getSession).mockResolvedValueOnce(null);
@@ -187,20 +205,32 @@ describe('GET /api/reports/bulletins — Bulletin Standard (Barème /20)', () =>
 });
 
 describe('GET /api/reports/bulletins — Barème /100 (Multi-tenant CFPPAS)', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.timetable.findMany).mockResolvedValue([
+      { subjectId: 'subject-bio' },
+      { subjectId: 'subject-agr' },
+    ] as any);
+    vi.mocked(prisma.subject.findMany).mockResolvedValue([
+      { id: 'subject-bio', name: 'Biologie', code: 'BIO', coefficient: 3 },
+      { id: 'subject-agr', name: 'Agropastorale', code: 'AGR', coefficient: 4 },
+    ] as any);
+  });
 
   const MOCK_SCHOOL_SCALE100 = { ...MOCK_SCHOOL_SCALE20, gradingScale: 100 };
 
-  const MOCK_GRADES_SCALE100 = [
-    {
-      score: 72, maxScore: 100, examType: 'FINAL', trimestre: 1, comment: null,
-      subject: { name: 'Biologie', code: 'BIO', coefficient: 3 }
-    },
-    {
-      score: 55, maxScore: 100, examType: 'FINAL', trimestre: 1, comment: null,
-      subject: { name: 'Agropastorale', code: 'AGR', coefficient: 4 }
-    },
-  ];
+    const MOCK_GRADES_SCALE100 = [
+      {
+        studentId: 'stu-001', subjectId: 'subject-bio',
+        score: 72, maxScore: 100, examType: 'FINAL', trimestre: 1, comment: null,
+        subject: { name: 'Biologie', code: 'BIO', coefficient: 3 }
+      },
+      {
+        studentId: 'stu-001', subjectId: 'subject-agr',
+        score: 55, maxScore: 100, examType: 'FINAL', trimestre: 1, comment: null,
+        subject: { name: 'Agropastorale', code: 'AGR', coefficient: 4 }
+      },
+    ];
 
   it('Les notes sont ramenées sur /100 et la moyenne est cohérente', async () => {
     vi.mocked(getSession).mockResolvedValueOnce(ADMIN_SESSION as any);
