@@ -209,7 +209,7 @@ export default function PayslipsPage() {
     doc.setTextColor(0, 0, 0);
     doc.text('LE DIRECTEUR GÉNÉRAL', 140, finalY + 45);
     if (DIRECTOR_STAMP_BASE64) {
-      doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', 135, finalY + 48, 50, 50);
+      doc.addImage(DIRECTOR_STAMP_BASE64, 'PNG', 135, finalY + 48, 50, 50);
     }
     
     doc.save(`Bulletin_${p.employee?.lastName || 'Employe'}_${new Date(p.periodStart).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}.pdf`);

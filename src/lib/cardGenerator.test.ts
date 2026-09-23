@@ -70,7 +70,7 @@ describe('generateSVGCard — Identité visuelle Mali', () => {
 describe('generateSVGCard — Cachet du Directeur Général', () => {
   it('Contient une image de cachet (tampon directeur en Base64)', () => {
     const svg = generateSVGCard(MOCK_STUDENT, MOCK_QR);
-    expect(svg).toContain('data:image/jpeg;base64,');
+    expect(svg).toContain('data:image/png;base64,');
   });
 
   it('Contient le libellé "DIRECTEUR GÉNÉRAL"', () => {

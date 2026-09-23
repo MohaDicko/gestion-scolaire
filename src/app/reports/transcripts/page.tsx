@@ -173,7 +173,7 @@ export default function TranscriptsPage() {
 
       // Tampon et Signature officielle du Directeur Général
       try {
-        doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', margin, sigY + 2, 45, 20);
+        doc.addImage(DIRECTOR_STAMP_BASE64, 'PNG', margin, sigY + 2, 45, 20);
       } catch (e) {
         console.warn('Tampon directeur non ajouté', e);
       }

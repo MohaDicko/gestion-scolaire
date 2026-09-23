@@ -285,7 +285,7 @@ export default function ReleveCompetencesPage() {
 
       // Tampon et signature officielle du Directeur Général (strictement sous le nom du Directeur Général)
       try {
-        doc.addImage(DIRECTOR_STAMP_BASE64, "JPEG", pageW - margin - 49, sigY + 7, 46, 22);
+        doc.addImage(DIRECTOR_STAMP_BASE64, "PNG", pageW - margin - 49, sigY + 7, 46, 22);
       } catch (e) {
         console.warn("Tampon non ajoute", e);
       }

@@ -177,7 +177,7 @@ export default function FinancePaymentsPage() {
         // --- Signatures ---
         y += 25;
         try {
-          doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', width - margin - 45, y - 10, 45, 20);
+          doc.addImage(DIRECTOR_STAMP_BASE64, 'PNG', width - margin - 45, y - 10, 45, 20);
         } catch (e) {
           console.warn('Tampon non ajouté', e);
         }

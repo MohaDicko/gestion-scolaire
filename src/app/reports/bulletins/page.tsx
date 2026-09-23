@@ -289,7 +289,7 @@ export default function BulletinsPage() {
 
     // Tampon et signature officielle du Directeur Général (strictement sous le nom du Directeur Général)
     try {
-      doc.addImage(DIRECTOR_STAMP_BASE64, 'JPEG', pageW - margin - 50, y, 48, 22);
+      doc.addImage(DIRECTOR_STAMP_BASE64, 'PNG', pageW - margin - 50, y, 48, 22);
     } catch (e) {
       console.warn('Tampon directeur non ajouté', e);
     }
