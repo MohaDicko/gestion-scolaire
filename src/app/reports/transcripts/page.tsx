@@ -72,7 +72,7 @@ export default function TranscriptsPage() {
       doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
       doc.text('RÉPUBLIQUE DU MALI — MINISTÈRE DE L\'ÉDUCATION NATIONALE', pageW / 2, 9, { align: 'center' });
       doc.setFontSize(13); doc.setFont('helvetica', 'bold');
-      doc.text(data.school.name.toUpperCase(), pageW / 2, 17, { align: 'center' });
+      doc.text(data.school.name.toUpperCase().replace(/\s*\(AGRO\s*PASTORAL\)/i, ''), pageW / 2, 17, { align: 'center' });
       doc.setFontSize(9); doc.setFont('helvetica', 'normal');
       doc.text('RELEVÉ DE NOTES ANNUEL OFFICIEL', pageW / 2, 24, { align: 'center' });
 
@@ -93,8 +93,6 @@ export default function TranscriptsPage() {
         ['Classe', data.enrollment.classroom],
         ['Filière/Série', data.enrollment.series || data.enrollment.level || '—'],
         ['Année Scolaire', data.enrollment.academicYear],
-        ['Campus', data.student.campus],
-        ['Date de naissance', new Date(data.student.dateOfBirth).toLocaleDateString('fr-FR')],
       ];
 
       const half = Math.ceil(idFields.length / 2);
@@ -126,14 +124,14 @@ export default function TranscriptsPage() {
 
       (doc as any).autoTable({
         startY: y,
-        head: [['MATIÈRE', 'COEFF', 'T1/20', 'T2/20', 'T3/20', 'MOY. ANNUELLE', 'MENTION']],
+        head: [['MATIÈRE', 'SEUIL DE RÉUSSITE', 'T1/20', 'T2/20', 'T3/20', 'MOY. ANNUELLE', 'MENTION']],
         body: tableRows,
         theme: 'grid',
         headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold', fontSize: 7.5, halign: 'center', cellPadding: 4 },
         bodyStyles: { fontSize: 7, cellPadding: 3 },
         columnStyles: {
-          0: { fontStyle: 'bold', halign: 'left', cellWidth: 60 },
-          1: { halign: 'center', cellWidth: 14 },
+          0: { fontStyle: 'bold', halign: 'left', cellWidth: 50 },
+          1: { halign: 'center', cellWidth: 24 },
           2: { halign: 'center', cellWidth: 20 },
           3: { halign: 'center', cellWidth: 20 },
           4: { halign: 'center', cellWidth: 20 },
@@ -162,7 +160,7 @@ export default function TranscriptsPage() {
       doc.text(`MOYENNE GÉNÉRALE ANNUELLE : ${avg !== null ? avg.toFixed(2) : '—'} / 20`, margin + 6, finalY + 6);
       doc.text(`MENTION : ${data.summary.generalMention || '—'}`, margin + 6, finalY + 11);
       doc.setFontSize(8);
-      doc.text(`${data.summary.subjectCount} matière(s) — Total coeff. : ${data.summary.totalCoeff}`, pageW - margin - 4, finalY + 8.5, { align: 'right' });
+      doc.text(`${data.summary.subjectCount} matière(s) — Total seuils : ${data.summary.totalCoeff}`, pageW - margin - 4, finalY + 8.5, { align: 'right' });
 
       // ── Décision + Signatures ─────────────────────────────────────────
       const sigY = finalY + 26;
