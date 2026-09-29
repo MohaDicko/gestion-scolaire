@@ -15,7 +15,8 @@ const EMPLOYEE_TYPES = ['TEACHER', 'ADMIN', 'ACCOUNTANT', 'HR', 'MAINTENANCE', '
 const emptyForm = {
   firstName: '', lastName: '', email: '', phoneNumber: '',
   dateOfBirth: '', gender: 'MALE', hireDate: new Date().toISOString().split('T')[0],
-  employeeType: 'TEACHER', campusId: ''
+  employeeType: 'TEACHER', campusId: '',
+  photoUrl: '', cvUrl: '', educationLevel: ''
 };
 
 export default function EmployeesPage() {
@@ -249,6 +250,18 @@ export default function EmployeesPage() {
                   <select id="emp-type" name="employeeType" required value={formData.employeeType} onChange={e => setFormData({...formData, employeeType: e.target.value})}>
                     {EMPLOYEE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="emp-edu">Niveau d'étude</label>
+                  <input id="emp-edu" name="educationLevel" value={formData.educationLevel} onChange={e => setFormData({...formData, educationLevel: e.target.value})} placeholder="Ex: Master 2, Doctorat..." />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="emp-photo">Photo (URL)</label>
+                  <input id="emp-photo" name="photoUrl" value={formData.photoUrl} onChange={e => setFormData({...formData, photoUrl: e.target.value})} placeholder="Lien vers la photo" />
+                </div>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label htmlFor="emp-cv">CV (URL)</label>
+                  <input id="emp-cv" name="cvUrl" value={formData.cvUrl} onChange={e => setFormData({...formData, cvUrl: e.target.value})} placeholder="Lien vers le CV (Drive, Dropbox...)" />
                 </div>
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                   <label htmlFor="emp-campus">Campus d'affectation *</label>

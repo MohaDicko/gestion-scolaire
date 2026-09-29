@@ -185,6 +185,8 @@ model Employee {
   hireDate        DateTime
   employeeType    EmployeeType
   photoUrl        String?
+  cvUrl           String?
+  educationLevel  String?
   isActive        Boolean           @default(true)
   departmentId    String
   campusId        String

@@ -47,7 +47,8 @@ export async function POST(request: Request) {
     const data = await request.json();
     const { 
       firstName, lastName, email, phoneNumber, dateOfBirth, gender, 
-      hireDate, employeeType, campusId, createAccount, password 
+      hireDate, employeeType, campusId, createAccount, password,
+      photoUrl, cvUrl, educationLevel
     } = data;
 
     const employeeNumber = `EMP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -83,6 +84,9 @@ export async function POST(request: Request) {
           employeeType: employeeType.toUpperCase(),
           departmentId: department!.id,
           campusId: campusId,
+          photoUrl: photoUrl || null,
+          cvUrl: cvUrl || null,
+          educationLevel: educationLevel || null,
         },
       });
 
