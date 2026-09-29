@@ -10,6 +10,7 @@ export async function GET(request: Request) {
     const books = await prisma.book.findMany({
       where: { tenantId: session.tenantId },
       include: {
+        subject: true,
         _count: { select: { loans: { where: { status: 'BORROWED' } } } }
       },
       orderBy: { title: 'asc' }
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, author, isbn, category, totalCopies, shelfLocation } = body;
+    const { title, author, isbn, subjectId, totalCopies, shelfLocation } = body;
 
     const book = await prisma.book.create({
       data: {
@@ -34,7 +35,8 @@ export async function POST(request: Request) {
         title,
         author,
         isbn,
-        category,
+        subjectId,
+        category: 'Discipline', // Par défaut
         totalCopies: parseInt(totalCopies) || 1,
         availableCopies: parseInt(totalCopies) || 1,
         shelfLocation

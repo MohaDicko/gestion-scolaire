@@ -25,7 +25,7 @@ export default function LibraryPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // New Book Form
-  const [bookForm, setBookForm] = useState({ title: '', author: '', isbn: '', category: 'Sciences', totalCopies: 1, shelfLocation: '' });
+  const [bookForm, setBookForm] = useState({ title: '', author: '', isbn: '', subjectId: '', totalCopies: 1, shelfLocation: '' });
   
   // New Loan Form
   const [loanForm, setLoanForm] = useState({ targetType: 'STUDENT', studentId: '', employeeId: '', dueDate: '' });
@@ -33,15 +33,17 @@ export default function LibraryPage() {
   // Lists for dropdowns
   const [students, setStudents] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [resBooks, resLoans, resStudents, resEmp] = await Promise.all([
+      const [resBooks, resLoans, resStudents, resEmp, resSubjects] = await Promise.all([
         fetch('/api/library'),
         fetch('/api/library/loans'),
         fetch('/api/students?pageSize=50'),
-        fetch('/api/employees')
+        fetch('/api/employees'),
+        fetch('/api/subjects')
       ]);
       
       if (resBooks.ok) setBooks(await resBooks.json());
@@ -51,6 +53,7 @@ export default function LibraryPage() {
         setStudents(d.items || []);
       }
       if (resEmp.ok) setEmployees(await resEmp.json());
+      if (resSubjects.ok) setSubjects(await resSubjects.json());
       
     } catch (e) {
       toast.error('Erreur de chargement');
@@ -79,7 +82,7 @@ export default function LibraryPage() {
       if (res.ok) {
         toast.success('Livre ajouté à l\'inventaire');
         setIsAddBookModalOpen(false);
-        setBookForm({ title: '', author: '', isbn: '', category: 'Sciences', totalCopies: 1, shelfLocation: '' });
+        setBookForm({ title: '', author: '', isbn: '', subjectId: '', totalCopies: 1, shelfLocation: '' });
         fetchData();
       } else {
         toast.error('Erreur d\'ajout');
@@ -211,8 +214,8 @@ export default function LibraryPage() {
                       
                       <div className="p-6 flex-1 flex flex-col gap-3">
                         <div className="flex justify-between items-center text-xs">
-                          <span className="text-slate-400 font-medium">Catégorie:</span>
-                          <span className="font-bold text-slate-700 dark:text-slate-300">{book.category}</span>
+                          <span className="text-slate-400 font-medium">Discipline:</span>
+                          <span className="font-bold text-slate-700 dark:text-slate-300">{book.subject?.name || '—'}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-slate-400 font-medium">Emplacement:</span>
@@ -338,13 +341,12 @@ export default function LibraryPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Catégorie</label>
-                    <select value={bookForm.category} onChange={e => setBookForm({...bookForm, category: e.target.value})} className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="Sciences">Sciences</option>
-                      <option value="Littérature">Littérature</option>
-                      <option value="Histoire">Histoire / Géo</option>
-                      <option value="Langues">Langues</option>
-                      <option value="Manuels">Manuels Scolaires</option>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Discipline *</label>
+                    <select required value={bookForm.subjectId} onChange={e => setBookForm({...bookForm, subjectId: e.target.value})} className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="">-- Choisir une discipline --</option>
+                      {subjects.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="space-y-1.5">

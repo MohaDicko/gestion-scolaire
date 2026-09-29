@@ -234,6 +234,7 @@ model Subject {
   grades      Grade[]
   lessonLogs  LessonLog[]
   Timetable   Timetable[]
+  books       Book[]
 
   @@index([tenantId])
 }
@@ -474,8 +475,11 @@ model Book {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   loans           Loan[]
+  subjectId       String?
+  subject         Subject? @relation(fields: [subjectId], references: [id])
 
   @@index([tenantId])
+  @@index([subjectId])
 }
 
 model Loan {
