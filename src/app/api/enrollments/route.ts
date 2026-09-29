@@ -64,6 +64,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Cet élève est déjà inscrit pour cette année académique' }, { status: 400 });
     }
 
+    const currentEnrollmentCount = await prisma.enrollment.count({
+      where: { classroomId, academicYearId }
+    });
+    
+    if (currentEnrollmentCount >= 50) {
+      return NextResponse.json({ error: 'La limite de 50 élèves par classe est atteinte pour cette classe.' }, { status: 400 });
+    }
+
     // ── Transaction atomique : inscription + facture auto ────────────
     const result = await prisma.$transaction(async (tx) => {
       const enrollment = await tx.enrollment.create({
