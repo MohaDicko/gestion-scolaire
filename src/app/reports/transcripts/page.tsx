@@ -14,7 +14,7 @@ interface TranscriptData {
   enrollment: { classroom: string; level: string; series: string; academicYear: string };
   subjectResults: {
     subjectName: string; subjectCode: string; coefficient: number;
-    t1?: number; t2?: number; t3?: number; annualAvg: number | null; weighted: number | null; mention: string;
+    t1?: number; t2?: number; t3?: number; annualAvg: number | null; weighted: number | null; mention: string; moduleStatus: string;
   }[];
   summary: { generalAverage: number | null; generalMention: string; totalCoeff: number; subjectCount: number };
 }
@@ -114,7 +114,7 @@ export default function TranscriptsPage() {
       // ── Tableau des notes ─────────────────────────────────────────────
       const tableRows = data.subjectResults.map(r => [
         r.subjectName,
-        r.coefficient.toString(),
+        r.moduleStatus || '—',
         r.t1 !== undefined ? r.t1.toFixed(2) : '—',
         r.t2 !== undefined ? r.t2.toFixed(2) : '—',
         r.t3 !== undefined ? r.t3.toFixed(2) : '—',
@@ -124,7 +124,7 @@ export default function TranscriptsPage() {
 
       (doc as any).autoTable({
         startY: y,
-        head: [['MATIÈRE', 'SEUIL DE RÉUSSITE', 'T1/20', 'T2/20', 'T3/20', 'MOY. ANNUELLE', 'MENTION']],
+        head: [['MATIÈRE', 'SEUIL DE RÉUSSITE', 'T1/100', 'T2/100', 'T3/100', 'MOY. ANNUELLE', 'MENTION']],
         body: tableRows,
         theme: 'grid',
         headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold', fontSize: 7.5, halign: 'center', cellPadding: 4 },
@@ -143,7 +143,7 @@ export default function TranscriptsPage() {
           if (cellData.column.index === 5 && cellData.section === 'body') {
             const val = parseFloat(cellData.cell.text[0]);
             if (!isNaN(val)) {
-              cellData.cell.styles.textColor = val >= 14 ? [21, 128, 61] : val >= 10 ? [30, 41, 59] : [185, 28, 28];
+              cellData.cell.styles.textColor = val >= 70 ? [21, 128, 61] : val >= 50 ? [30, 41, 59] : [185, 28, 28];
             }
           }
         },
@@ -153,11 +153,11 @@ export default function TranscriptsPage() {
 
       // ── Récapitulatif ─────────────────────────────────────────────────
       const avg = data.summary.generalAverage;
-      const avgColor: [number, number, number] = avg !== null && avg >= 14 ? [21, 128, 61] : avg !== null && avg >= 10 ? [30, 41, 59] : [185, 28, 28];
+      const avgColor: [number, number, number] = avg !== null && avg >= 70 ? [21, 128, 61] : avg !== null && avg >= 50 ? [30, 41, 59] : [185, 28, 28];
       doc.setFillColor(avgColor[0], avgColor[1], avgColor[2]);
       doc.roundedRect(margin, finalY, pageW - 2 * margin, 14, 2, 2, 'F');
       doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-      doc.text(`MOYENNE GÉNÉRALE ANNUELLE : ${avg !== null ? avg.toFixed(2) : '—'} / 20`, margin + 6, finalY + 6);
+      doc.text(`MOYENNE GÉNÉRALE ANNUELLE : ${avg !== null ? avg.toFixed(2) : '—'} / 100`, margin + 6, finalY + 6);
       doc.text(`MENTION : ${data.summary.generalMention || '—'}`, margin + 6, finalY + 11);
       doc.setFontSize(8);
       doc.text(`${data.summary.subjectCount} matière(s) — Total seuils : ${data.summary.totalCoeff}`, pageW - margin - 4, finalY + 8.5, { align: 'right' });
@@ -167,7 +167,7 @@ export default function TranscriptsPage() {
       doc.setTextColor(15, 23, 42); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
       doc.text('Décision du Conseil :', margin, sigY);
       doc.setFont('helvetica', 'bold');
-      doc.text(avg !== null && avg >= 10 ? 'Admis(e) en classe supérieure.' : 'Passage en conseil de classe.', margin + 35, sigY);
+      doc.text(avg !== null && avg >= 50 ? 'Admis(e) en classe supérieure.' : 'Passage en conseil de classe.', margin + 35, sigY);
 
       // Tampon et Signature officielle du Directeur Général
       try {

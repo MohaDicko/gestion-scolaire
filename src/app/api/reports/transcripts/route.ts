@@ -44,8 +44,8 @@ export async function GET(request: Request) {
     t1Max: number; t2Max: number; t3Max: number;
   }> = {};
 
-  // Barème de notation propre à l'école (multi-tenant)
-  const scale = school?.gradingScale ?? 20;
+  // Barème de notation forcé sur 100 pour cette école
+  const scale = 100;
 
   allGrades.forEach(g => {
     const key = g.subjectId;
@@ -77,7 +77,15 @@ export async function GET(request: Request) {
       else if (annualAvg >= scale * 0.50) mention = 'Passable';
       else mention = 'Insuffisant';
     }
-    return { ...s, annualAvg, weighted, mention };
+    // Statut du module (Passé, Redoublé, Exclu)
+    let moduleStatus = '—';
+    if (annualAvg !== null) {
+      if (annualAvg >= scale * 0.50) moduleStatus = 'Passé';
+      else if (annualAvg >= scale * 0.30) moduleStatus = 'Redoublé';
+      else moduleStatus = 'Exclu';
+    }
+
+    return { ...s, annualAvg, weighted, mention, moduleStatus };
   }).sort((a, b) => a.subjectName.localeCompare(b.subjectName));
 
   const validResults = subjectResults.filter(r => r.weighted !== null);
