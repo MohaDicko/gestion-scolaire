@@ -75,6 +75,20 @@ export function StudentSidebar({ student, currentEnrollment }: StudentSidebarPro
               </span>
             </div>
           )}
+
+          {(student as any).parentProfession && (
+            <div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter mb-1">Profession</div>
+              <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">{(student as any).parentProfession}</div>
+            </div>
+          )}
+
+          {(student as any).parentAddress && (
+            <div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter mb-1">Adresse</div>
+              <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">{(student as any).parentAddress}</div>
+            </div>
+          )}
         </div>
       </Card>
     </div>

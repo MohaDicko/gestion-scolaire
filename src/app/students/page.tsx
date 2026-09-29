@@ -23,7 +23,8 @@ const RELATION_LABELS: Record<string, string> = { FATHER: 'Père', MOTHER: 'Mèr
 const emptyForm = {
   firstName: '', lastName: '', dateOfBirth: '', gender: 'MALE',
   nationalId: '', parentName: '', parentPhone: '', parentEmail: '',
-  parentRelationship: 'FATHER', campusId: '',
+  parentRelationship: 'FATHER', parentProfession: '', parentAddress: '',
+  campusId: '',
   createStudentAccount: true, studentEmail: '', studentPassword: '',
   createParentAccount: false, parentAccountPassword: ''
 };
@@ -120,7 +121,8 @@ export default function StudentsPage() {
       'Matricule': s.studentNumber, 'Nom': s.lastName, 'Prénom': s.firstName,
       'Naissance': new Date(s.dateOfBirth).toLocaleDateString('fr-FR'),
       'Genre': GENDER_LABELS[s.gender] || s.gender,
-      'Parent': s.parentName, 'Tél. Parent': s.parentPhone
+      'Parent': s.parentName, 'Tél. Parent': s.parentPhone,
+      'Profession Parent': s.parentProfession || '', 'Adresse Parent': s.parentAddress || ''
     }));
     exportToExcel(data, `Eleves_${new Date().toISOString().split('T')[0]}`);
     toast.success('Export Excel généré avec succès.');
@@ -400,6 +402,14 @@ export default function StudentsPage() {
                     {RELATION_OPTIONS.map(r => <option key={r} value={r}>{RELATION_LABELS[r]}</option>)}
                   </select>
                 </div>
+                <div className="space-y-1">
+                  <label className={labelCls}>Profession du Parent</label>
+                  <input className={inputCls} value={formData.parentProfession} onChange={e => setFormData({...formData, parentProfession: e.target.value})} placeholder="Ex: Commerçant, Enseignant, Médecin..." />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className={labelCls}>Adresse du Parent</label>
+                <input className={inputCls} value={formData.parentAddress} onChange={e => setFormData({...formData, parentAddress: e.target.value})} placeholder="Quartier, rue, ville..." />
               </div>
             </div>
 

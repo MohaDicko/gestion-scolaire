@@ -365,89 +365,229 @@ export default function TimetablePage() {
                             <Loader2 size={32} className="spin" style={{ margin: '0 auto 12px' }} />
                             <p>Chargement du planning...</p>
                         </div>
-                    ) : (
-                        <div style={{ display: 'flex', overflowX: 'auto', borderBottom: '1px solid var(--border)' }}>
-                            {DAYS.map((day) => {
-                                const daySlots = schedule.filter(s => s.dayOfWeek === day.id);
-                                return (
-                                    <div key={day.id} style={{ flex: 1, minWidth: '220px', borderRight: '1px solid var(--border)', minHeight: '500px', background: 'var(--bg-1)' }}>
-                                        <div style={{ 
-                                            padding: '14px', 
-                                            background: 'var(--bg-2)', 
-                                            borderBottom: '1px solid var(--border)', 
-                                            textAlign: 'center', 
-                                            fontWeight: 700,
-                                            fontFamily: 'Plus Jakarta Sans',
-                                            fontSize: '14px',
-                                            color: 'var(--primary)'
-                                        }}>
-                                            {day.label}
-                                        </div>
-                                        <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                            {daySlots.sort((a,b) => a.startTime.localeCompare(b.startTime)).map(slot => (
-                                                <div key={slot.id} className="animate-up" style={{ 
-                                                    background: 'var(--bg-3)', 
-                                                    borderLeft: '4px solid var(--primary)', 
-                                                    padding: '14px', 
-                                                    borderRadius: '12px', 
-                                                    fontSize: '13px', 
-                                                    position: 'relative', 
-                                                    boxShadow: 'var(--shadow-sm)',
-                                                    transition: 'transform 0.2s, box-shadow 0.2s',
-                                                    cursor: 'default'
+                    ) : (() => {
+                        // ── Calcul des créneaux horaires uniques et triés ──
+                        const allTimes = Array.from(
+                            new Set(schedule.map(s => `${s.startTime}|${s.endTime}`))
+                        ).sort().map(t => {
+                            const [start, end] = t.split('|');
+                            return { start, end };
+                        });
+
+                        // Si aucun créneau, afficher une grille vide avec horaires par défaut
+                        const timeSlots = allTimes.length > 0 ? allTimes : [
+                            { start: '07:30', end: '09:30' },
+                            { start: '09:30', end: '11:30' },
+                            { start: '11:30', end: '13:30' },
+                            { start: '13:30', end: '15:30' },
+                            { start: '15:30', end: '17:30' },
+                        ];
+
+                        return (
+                            <div className="timetable-grid" style={{ overflowX: 'auto', border: '2px solid #1e293b', borderRadius: '8px', overflow: 'hidden' }}>
+                                <table style={{
+                                    width: '100%',
+                                    minWidth: '700px',
+                                    borderCollapse: 'collapse',
+                                    tableLayout: 'fixed',
+                                    border: '2px solid #475569',
+                                }}>
+                                    {/* ── En-tête : jours ── */}
+                                    <thead>
+                                        <tr>
+                                            {/* Colonne heure */}
+                                            <th style={{
+                                                width: '110px',
+                                                padding: '14px 10px',
+                                                background: '#1e293b',
+                                                borderRight: '2px solid #475569',
+                                                borderBottom: '3px solid #475569',
+                                                fontSize: '11px',
+                                                fontWeight: 800,
+                                                color: '#94a3b8',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.08em',
+                                                textAlign: 'center',
+                                            }}>
+                                                Horaire
+                                            </th>
+                                            {DAYS.map((day, idx) => (
+                                                <th key={day.id} style={{
+                                                    padding: '14px 10px',
+                                                    background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                                                    borderRight: idx < DAYS.length - 1 ? '2px solid rgba(255,255,255,0.25)' : 'none',
+                                                    borderBottom: '3px solid #475569',
+                                                    fontSize: '13px',
+                                                    fontWeight: 800,
+                                                    color: '#fff',
+                                                    textAlign: 'center',
+                                                    letterSpacing: '0.04em',
                                                 }}>
-                                                    <div style={{ color: 'var(--primary)', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                        <Clock size={13} /> {slot.startTime} — {slot.endTime}
-                                                    </div>
-                                                    <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '2px' }}>{slot.subject?.name}</div>
-                                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{slot.teacher?.firstName} {slot.teacher?.lastName}</div>
-                                                    
-                                                    <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '4px' }}>
-                                                        <button 
-                                                          onClick={() => handleEditSlot(slot)} 
-                                                          title="Modifier ce créneau"
-                                                          style={{ 
-                                                              color: 'var(--primary)', 
-                                                              background: 'none', 
-                                                              border: 'none', 
-                                                              cursor: 'pointer', 
-                                                              opacity: 0.6,
-                                                              padding: '4px'
-                                                          }}
-                                                          className="hover-opacity-1"
-                                                        >
-                                                            <Edit2 size={13}/>
-                                                        </button>
-                                                        <button 
-                                                          onClick={() => handleDelete(slot.id)} 
-                                                          title="Supprimer ce créneau"
-                                                          style={{ 
-                                                              color: 'var(--danger)', 
-                                                              background: 'none', 
-                                                              border: 'none', 
-                                                              cursor: 'pointer', 
-                                                              opacity: 0.6,
-                                                              padding: '4px'
-                                                          }}
-                                                          className="hover-opacity-1"
-                                                        >
-                                                            <Trash2 size={13}/>
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                                    {day.label}
+                                                </th>
                                             ))}
-                                            {daySlots.length === 0 && (
-                                                <div style={{ textAlign: 'center', opacity: 0.2, fontSize: '12px', marginTop: '40px' }}>
-                                                    Aucun cours
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
+                                        </tr>
+                                    </thead>
+
+                                    {/* ── Corps : créneaux horaires ── */}
+                                    <tbody>
+                                        {timeSlots.map((slot, rowIdx) => (
+                                            <tr key={`${slot.start}-${slot.end}`}>
+                                                {/* Colonne heure */}
+                                                <td className="col-time" style={{
+                                                    padding: '12px 8px',
+                                                    background: '#f1f5f9',
+                                                    borderRight: '3px solid #475569',
+                                                    borderBottom: rowIdx < timeSlots.length - 1
+                                                        ? '2px solid #cbd5e1'
+                                                        : 'none',
+                                                    textAlign: 'center',
+                                                    verticalAlign: 'middle',
+                                                    minHeight: '90px',
+                                                }}>
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        gap: '3px',
+                                                    }}>
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                            color: 'var(--primary)',
+                                                        }}>
+                                                            <Clock size={11} />
+                                                            <span style={{ fontSize: '12px', fontWeight: 800 }}>{slot.start}</span>
+                                                        </div>
+                                                        <div style={{
+                                                            width: '1px',
+                                                            height: '10px',
+                                                            background: 'var(--border)',
+                                                        }} />
+                                                        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>{slot.end}</span>
+                                                    </div>
+                                                </td>
+
+                                                {/* Colonnes par jour */}
+                                                {DAYS.map((day, colIdx) => {
+                                                    const entry = schedule.find(s =>
+                                                        s.dayOfWeek === day.id &&
+                                                        s.startTime === slot.start &&
+                                                        s.endTime === slot.end
+                                                    );
+                                                    return (
+                                                        <td key={day.id} style={{
+                                                            padding: '8px',
+                                                            verticalAlign: 'middle',
+                                                            textAlign: 'center',
+                                                            borderRight: colIdx < DAYS.length - 1
+                                                                ? '2px solid #cbd5e1'
+                                                                : 'none',
+                                                            borderBottom: rowIdx < timeSlots.length - 1
+                                                                ? '2px solid #cbd5e1'
+                                                                : 'none',
+                                                            background: rowIdx % 2 === 0 ? '#ffffff' : '#f8fafc',
+                                                            minHeight: '90px',
+                                                            position: 'relative',
+                                                        }}>
+                                                            {entry ? (
+                                                                <div style={{
+                                                                    background: 'var(--bg-3)',
+                                                                    border: '1px solid var(--border-md)',
+                                                                    borderLeft: '4px solid var(--primary)',
+                                                                    borderRadius: '10px',
+                                                                    padding: '10px 12px',
+                                                                    textAlign: 'left',
+                                                                    position: 'relative',
+                                                                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                                                                    transition: 'box-shadow 0.2s',
+                                                                }}>
+                                                                    <div style={{
+                                                                        fontWeight: 800,
+                                                                        fontSize: '13px',
+                                                                        color: 'var(--text)',
+                                                                        marginBottom: '3px',
+                                                                        lineHeight: 1.3,
+                                                                    }}>
+                                                                        {entry.subject?.name}
+                                                                    </div>
+                                                                    <div style={{
+                                                                        fontSize: '11px',
+                                                                        color: 'var(--text-muted)',
+                                                                        fontWeight: 600,
+                                                                    }}>
+                                                                        {entry.teacher?.firstName} {entry.teacher?.lastName}
+                                                                    </div>
+                                                                    {/* Boutons action */}
+                                                                    <div style={{
+                                                                        position: 'absolute',
+                                                                        top: '6px',
+                                                                        right: '6px',
+                                                                        display: 'flex',
+                                                                        gap: '2px',
+                                                                    }}>
+                                                                        <button
+                                                                            onClick={() => handleEditSlot(entry)}
+                                                                            title="Modifier"
+                                                                            style={{
+                                                                                background: 'none',
+                                                                                border: 'none',
+                                                                                cursor: 'pointer',
+                                                                                color: 'var(--primary)',
+                                                                                opacity: 0.5,
+                                                                                padding: '3px',
+                                                                                borderRadius: '4px',
+                                                                                transition: 'opacity 0.15s',
+                                                                            }}
+                                                                            className="hover-opacity-1"
+                                                                        >
+                                                                            <Edit2 size={11} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDelete(entry.id)}
+                                                                            title="Supprimer"
+                                                                            style={{
+                                                                                background: 'none',
+                                                                                border: 'none',
+                                                                                cursor: 'pointer',
+                                                                                color: 'var(--danger)',
+                                                                                opacity: 0.5,
+                                                                                padding: '3px',
+                                                                                borderRadius: '4px',
+                                                                                transition: 'opacity 0.15s',
+                                                                            }}
+                                                                            className="hover-opacity-1"
+                                                                        >
+                                                                            <Trash2 size={11} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div style={{
+                                                                    height: '70px',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    color: 'var(--border)',
+                                                                    fontSize: '18px',
+                                                                    userSelect: 'none',
+                                                                }}>
+                                                                    —
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        );
+                    })()}
                 </div>
+
             ) : (
                 <div className="card text-center" style={{ padding: '80px', color: 'var(--text-muted)', border: '1px dashed var(--border-md)' }}>
                     <CalendarDays size={56} style={{ margin: '0 auto 20px', opacity: 0.15 }} />
@@ -526,9 +666,6 @@ export default function TimetablePage() {
                 </div>
             )}
 
-            <style jsx>{`
-                .hover-opacity-1:hover { opacity: 1 !important; }
-            `}</style>
         </AppLayout>
     );
 }

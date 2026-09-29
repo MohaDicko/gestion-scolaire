@@ -1,32 +1,167 @@
-name: CI/CD Pipeline
+name: CI — SchoolERP Pro
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master, develop]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  # ─────────────────────────────────────────────
+  # JOB 1 : Qualité du code
+  # ─────────────────────────────────────────────
+  quality:
+    name: "Qualité — TypeScript & ESLint"
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Installer les dépendances
+        run: npm ci --legacy-peer-deps
+
+      - name: Générer le client Prisma
+        run: npx prisma generate
+
+      - name: "Vérification TypeScript"
+        run: npx tsc --noEmit
         
-    - name: Install dependencies
-      run: npm ci --legacy-peer-deps
+      - name: "Lint ESLint"
+        run: npm run lint
 
-    - name: Generate Prisma Client
-      run: npx prisma generate
+  # ─────────────────────────────────────────────
+  # JOB 2 : Tests unitaires & intégration
+  # ─────────────────────────────────────────────
+  tests:
+    name: "Tests — Vitest"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: quality
 
-    - name: Run Linter
-      run: npm run lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Run Tests
-      run: npm run test
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Installer les dépendances
+        run: npm ci --legacy-peer-deps
+
+      - name: Générer le client Prisma
+        run: npx prisma generate
+
+      - name: "Exécuter tous les tests"
+        run: npm run test -- --reporter=verbose
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/test' }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-jwt-secret-for-ci-only' }}
+          NEXT_PUBLIC_API_URL: "/api"
+
+      - name: "Rapport de couverture"
+        run: npm run test:coverage
+        continue-on-error: true
+
+      - name: Upload couverture vers Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: false
+        continue-on-error: true
+
+  # ─────────────────────────────────────────────
+  # JOB 3 : Vérification Build Next.js
+  # ─────────────────────────────────────────────
+  build:
+    name: "Build — Next.js Production"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Installer les dépendances
+        run: npm ci --legacy-peer-deps
+
+      - name: Build (avec variables minimales)
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/test' }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-jwt-secret-for-ci-only-32chars' }}
+          NEXT_PUBLIC_API_URL: "/api"
+          NEXT_PUBLIC_ROOT_DOMAIN: "localhost:3000"
+          SKIP_ENV_VALIDATION: "1"
+
+  # ─────────────────────────────────────────────
+  # JOB 4 : Scan de sécurité
+  # ─────────────────────────────────────────────
+  security:
+    name: "Sécurité — Audit des dépendances"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: quality
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Audit npm (vulnérabilités critiques)
+        run: npm audit --audit-level=critical
+        continue-on-error: true
+
+      - name: Vérifier que .env n'est pas committé
+        run: |
+          if git ls-files | grep -E '\.env$|\.env\.local|\.env\.production$'; then
+            echo "ERREUR: Fichier .env trouvé dans le dépôt !"
+            exit 1
+          fi
+          echo "OK: Aucun fichier .env sensible commité."
+
+  # ─────────────────────────────────────────────
+  # JOB 5 : Rapport final
+  # ─────────────────────────────────────────────
+  report:
+    name: "Rapport CI"
+    runs-on: ubuntu-latest
+    needs: [quality, tests, build, security]
+    if: always()
+
+    steps:
+      - name: Résumé des jobs
+        run: |
+          echo "## Résumé CI — SchoolERP Pro" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Statut |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Qualité TypeScript & ESLint | ${{ needs.quality.result == 'success' && '✅ Passé' || '❌ Échoué' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests Vitest | ${{ needs.tests.result == 'success' && '✅ Passé' || '❌ Échoué' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Next.js | ${{ needs.build.result == 'success' && '✅ Passé' || '❌ Échoué' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Sécurité | ${{ needs.security.result == 'success' && '✅ Passé' || '⚠️ Avertissement' }} |" >> $GITHUB_STEP_SUMMARY

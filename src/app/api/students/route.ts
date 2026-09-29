@@ -77,7 +77,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { 
       firstName, lastName, dateOfBirth, gender, nationalId, 
-      parentName, parentPhone, parentEmail, parentRelationship, campusId,
+      parentName, parentPhone, parentEmail, parentRelationship,
+      parentProfession, parentAddress,
+      campusId,
       createStudentAccount, studentEmail, studentPassword,
       createParentAccount, parentAccountPassword
     } = body;
@@ -99,6 +101,8 @@ export async function POST(request: Request) {
           parentPhone,
           parentEmail: parentEmail || '',
           parentRelationship,
+          parentProfession: parentProfession || null,
+          parentAddress: parentAddress || null,
           campusId,
         },
       });

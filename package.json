@@ -16,7 +16,9 @@
     "test:coverage": "vitest run --coverage",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "backup": "npx tsx scripts/backup.ts"
+    "backup": "npx tsx scripts/backup.ts",
+    "pre-push": "pwsh -ExecutionPolicy Bypass -File scripts/pre-push-check.ps1",
+    "install-hooks": "node scripts/install-hooks.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

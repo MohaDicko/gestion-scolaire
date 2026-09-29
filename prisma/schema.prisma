@@ -111,6 +111,8 @@ model Student {
   parentPhone        String
   parentEmail        String
   parentRelationship String
+  parentProfession   String?  // Profession du parent/tuteur
+  parentAddress      String?  // Adresse du parent/tuteur
   isActive           Boolean      @default(true)
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt

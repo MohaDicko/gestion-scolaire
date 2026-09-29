@@ -1432,3 +1432,77 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--primary); outli
   .card { border-width: 2px; }
   .badge, .chip { border-width: 2px; }
 }
+
+.hover-opacity-1 { opacity: 0.5; transition: opacity 0.15s; }
+.hover-opacity-1:hover { opacity: 1 !important; }
+
+/* ══════════════════════════════════════════════════════════
+   EMPLOI DU TEMPS — Grille avec lignes toujours visibles
+   ══════════════════════════════════════════════════════════ */
+
+/* Conteneur principal */
+.timetable-grid {
+  border: 2px solid #334155 !important;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Table */
+.timetable-grid table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+
+/* ── En-têtes (jours de la semaine) ── */
+.timetable-grid thead th {
+  border-right: 2px solid rgba(255, 255, 255, 0.25) !important;
+  border-bottom: 3px solid #1e293b !important;
+}
+.timetable-grid thead th:first-child {
+  border-right: 3px solid #1e293b !important;
+}
+.timetable-grid thead th:last-child {
+  border-right: none !important;
+}
+
+/* ── Colonne Horaire (première colonne du body) ── */
+.timetable-grid tbody td.col-time {
+  background-color: #eef2f7 !important;
+  border-right: 3px solid #334155 !important;
+  border-bottom: 2px solid #94a3b8 !important;
+  font-weight: 700 !important;
+}
+.timetable-grid tbody tr:last-child td.col-time {
+  border-bottom: none !important;
+}
+
+/* ── Cellules des jours ── */
+.timetable-grid tbody td {
+  border-right: 2px solid #94a3b8 !important;
+  border-bottom: 2px solid #94a3b8 !important;
+}
+.timetable-grid tbody td:last-child {
+  border-right: none !important;
+}
+.timetable-grid tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* ── Alternance lignes paires/impaires ── */
+.timetable-grid tbody tr:nth-child(odd) td:not(.col-time) {
+  background-color: #ffffff !important;
+}
+.timetable-grid tbody tr:nth-child(even) td:not(.col-time) {
+  background-color: #f8fafc !important;
+}
+
+/* ── Mode impression ── */
+@media print {
+  .timetable-grid table {
+    border-collapse: collapse !important;
+  }
+  .timetable-grid th,
+  .timetable-grid td {
+    border: 1px solid #000 !important;
+  }
+}
