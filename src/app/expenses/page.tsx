@@ -30,6 +30,8 @@ const categories = [
 export default function ExpensesPage() {
     const router = useRouter();
     const toast = useToast();
+    const toastRef = useRef(toast);
+    toastRef.current = toast;
 
     const [expenses, setExpenses] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -48,11 +50,11 @@ export default function ExpensesPage() {
             const data = await res.json();
             setExpenses(Array.isArray(data) ? data : []);
         } catch {
-            toast.error('Erreur lors du chargement des dépenses.');
+            toastRef.current.error('Erreur lors du chargement des dépenses.');
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, []);
 
     useEffect(() => {
         if (hasLoadedExpenses.current) return;
