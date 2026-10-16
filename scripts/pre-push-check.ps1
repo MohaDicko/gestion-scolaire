@@ -62,8 +62,15 @@ Run-Check "ESLint - Qualite du code" {
 
 # -- 3. Tests unitaires Vitest --------------------------------
 Run-Check "Vitest - Tests unitaires et integration" {
-  $out = npm run test 2>&1
-  if ($LASTEXITCODE -ne 0) { throw $out }
+  $previousErrorActionPreference = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try {
+    $out = npm run test 2>&1
+    $exitCode = $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
+  if ($exitCode -ne 0) { throw ($out -join [Environment]::NewLine) }
 } -Required $true
 
 # -- 4. Prisma generate ---------------------------------------
