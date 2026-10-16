@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   BarChart3, Plus, Search, Loader2, X, Wallet, 
   Trash2, ShoppingCart, Lightbulb, UserCheck, 
@@ -38,6 +38,7 @@ export default function ExpensesPage() {
     const [formData, setFormData] = useState({ ...emptyForm });
     const [search, setSearch] = useState('');
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const hasLoadedExpenses = useRef(false);
 
     const fetchExpenses = useCallback(async () => {
         setIsLoading(true);
@@ -54,7 +55,9 @@ export default function ExpensesPage() {
     }, [toast]);
 
     useEffect(() => {
-        fetchExpenses();
+        if (hasLoadedExpenses.current) return;
+        hasLoadedExpenses.current = true;
+        void fetchExpenses();
     }, [fetchExpenses]);
 
     const handleSubmit = async (e: React.FormEvent) => {
