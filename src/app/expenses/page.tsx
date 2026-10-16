@@ -46,6 +46,10 @@ export default function ExpensesPage() {
         setIsLoading(true);
         try {
             const res = await fetch('/api/expenses');
+            if (res.status === 401) {
+                router.push('/login');
+                return;
+            }
             if (!res.ok) throw new Error();
             const data = await res.json();
             setExpenses(Array.isArray(data) ? data : []);
@@ -54,7 +58,7 @@ export default function ExpensesPage() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [router]);
 
     useEffect(() => {
         if (hasLoadedExpenses.current) return;
