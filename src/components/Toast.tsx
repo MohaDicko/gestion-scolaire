@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -31,12 +31,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }, []);
 
-  const toast = {
+  const toast = useMemo(() => ({
     success: (msg: string) => addToast(msg, 'success'),
     error:   (msg: string) => addToast(msg, 'error'),
     warning: (msg: string) => addToast(msg, 'warning'),
     info:    (msg: string) => addToast(msg, 'info'),
-  };
+  }), [addToast]);
 
   const icons: Record<ToastType, string> = {
     success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️'
