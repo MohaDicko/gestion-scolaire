@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import { 
-  Shield, Zap, Users, BarChart3, ArrowRight, 
+  ShieldCheck, Calculator, UsersRound, LayoutDashboard, ArrowRight,
   GraduationCap, Globe, Lock, Cpu, Star, CheckCircle2,
   Menu, X, Play, ChevronRight, BookOpen, Clock, Activity
 } from 'lucide-react';
@@ -39,25 +39,25 @@ export default function LandingPage() {
 
   const features = [
     {
-      icon: <Users className="text-indigo-600 dark:text-indigo-400" size={28} />,
+      icon: <UsersRound className="text-indigo-600 dark:text-indigo-400" size={28} />,
       title: "Gestion des Élèves",
       desc: "Suivi complet du cycle de vie de l'élève, de l'inscription à la diplomation avec cartes d'identité à codes-barres.",
       color: "bg-indigo-100 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800/60"
     },
     {
-      icon: <BarChart3 className="text-purple-600 dark:text-purple-400" size={28} />,
+      icon: <LayoutDashboard className="text-purple-600 dark:text-purple-400" size={28} />,
       title: "Pilotage Stratégique",
       desc: "Tableaux de bord exécutifs en temps réel pour une vision claire de la santé financière et académique.",
       color: "bg-purple-100 dark:bg-purple-900/40 border-purple-200 dark:border-purple-800/60"
     },
     {
-      icon: <Shield className="text-emerald-600 dark:text-emerald-400" size={28} />,
+      icon: <ShieldCheck className="text-emerald-600 dark:text-emerald-400" size={28} />,
       title: "Sécurité Multi-Tenant",
       desc: "Isolation stricte des données et protection de grade bancaire pour la confidentialité de votre établissement.",
       color: "bg-emerald-100 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800/60"
     },
     {
-      icon: <Zap className="text-amber-600 dark:text-amber-400" size={28} />,
+      icon: <Calculator className="text-amber-600 dark:text-amber-400" size={28} />,
       title: "Paie Malienne Intégrée",
       desc: "Calcul automatique de l'ITS, INPS et AMO conforme au Code du Travail et au CGI du Mali.",
       color: "bg-amber-100 dark:bg-amber-900/40 border-amber-200 dark:border-amber-800/60"
@@ -178,12 +178,10 @@ export default function LandingPage() {
             </motion.div>
             
             <motion.div variants={fadeUp} className="flex items-center gap-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-              <div className="flex -space-x-3">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className={`w-10 h-10 rounded-full border-2 border-white dark:border-zinc-950 bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-700 z-${4-i}`} />
-                ))}
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
+                <CheckCircle2 className="text-emerald-600 dark:text-emerald-400" size={20} />
               </div>
-              <p>Une solution conçue pour les <strong className="text-zinc-900 dark:text-white">établissements maliens</strong></p>
+              <p>Une solution conçue pour les <strong className="text-zinc-900 dark:text-white">établissements maliens</strong>, avec des modules qui évoluent avec vos besoins.</p>
             </motion.div>
           </motion.div>
 
@@ -221,7 +219,7 @@ export default function LandingPage() {
                   <div className="grid grid-cols-2 gap-6 mb-8">
                     <div className="p-5 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 relative overflow-hidden group">
                       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-200/50 dark:bg-indigo-500/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                      <Users className="text-indigo-600 dark:text-indigo-400 mb-3" size={24} />
+                      <UsersRound className="text-indigo-600 dark:text-indigo-400 mb-3" size={24} />
                       <div className="text-3xl font-extrabold text-zinc-900 dark:text-white mb-1">1,420</div>
                       <div className="text-sm text-indigo-600/80 dark:text-indigo-400 font-semibold">Élèves Actifs</div>
                     </div>

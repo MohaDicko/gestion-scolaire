@@ -244,7 +244,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%)' }} />
           </div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 900, fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.5px', lineHeight: 1.2, color: 'var(--text)' }}>
+            <div style={{ fontSize: 16, fontWeight: 900, fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-0.5px', lineHeight: 1.2, color: 'var(--text)' }}>
               SahelEdu<span style={{ color: 'var(--primary)' }}>.pro</span>
             </div>
             <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 2 }}>
@@ -447,7 +447,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                     ))}
                   </div>
                 ) : title ? (
-                  <h1 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.3px' }}>
+                  <h1 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-0.3px' }}>
                     {title}
                   </h1>
                 ) : null}
@@ -522,7 +522,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" style={{ width: 320, padding: 0, borderRadius: 16, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-md)', overflow: 'hidden' }}>
                   <div style={{ padding: '14px 16px', background: 'var(--bg-4)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 800, fontSize: 14, fontFamily: 'Outfit, sans-serif' }}>Notifications</span>
+                    <span style={{ fontWeight: 800, fontSize: 14, fontFamily: 'var(--font-sans), sans-serif' }}>Notifications</span>
                     <span style={{ background: 'var(--primary-dim)', color: 'var(--primary)', borderRadius: 99, fontSize: 10, fontWeight: 800, padding: '2px 8px' }}>{notifications.length}</span>
                   </div>
                   <div style={{ maxHeight: 320, overflowY: 'auto' }}>
@@ -637,7 +637,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <h1 style={{
                       fontSize: 'clamp(17px, 2.5vw, 22px)', fontWeight: 900, color: 'var(--text)',
-                      fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.5px', lineHeight: 1.2,
+                      fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-0.5px', lineHeight: 1.2,
                       overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>
                       {title}

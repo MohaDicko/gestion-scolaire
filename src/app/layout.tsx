@@ -1,14 +1,12 @@
-import { Plus_Jakarta_Sans, Geist } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import { Metadata, Viewport } from "next";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-const jakarta = Plus_Jakarta_Sans({ 
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: '--font-jakarta',
+  variable: '--font-sans',
 });
 
 export const viewport: Viewport = {
@@ -40,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
+    <html lang="fr" className={cn("font-sans", manrope.variable)} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

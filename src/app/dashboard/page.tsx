@@ -182,7 +182,7 @@ export default function DashboardPage() {
                   </span>
                   <div style={{ opacity: 0.2 }} className="hidden sm:block">{kpi.icon}</div>
                 </div>
-                <div style={{ fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 900, fontFamily: 'Outfit, sans-serif', letterSpacing: '-2px', lineHeight: 1, position: 'relative' }}>
+                <div style={{ fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 900, fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-2px', lineHeight: 1, position: 'relative' }}>
                   {isLoading ? (
                     <div className="h-8 w-16 bg-white/20 rounded-md overflow-hidden relative">
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" />
@@ -203,7 +203,7 @@ export default function DashboardPage() {
         <motion.section variants={fadeUp} aria-labelledby="quick-actions-title">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <div style={{ width: 3, height: 20, borderRadius: 99, background: 'var(--primary-grad)' }} />
-            <h2 id="quick-actions-title" style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.3px' }}>
+            <h2 id="quick-actions-title" style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-0.3px' }}>
               Actions Rapides
             </h2>
           </div>
@@ -241,7 +241,7 @@ export default function DashboardPage() {
                 }}>
                   <a.icon size={20} />
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', marginBottom: 3, fontFamily: 'Outfit, sans-serif' }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', marginBottom: 3, fontFamily: 'var(--font-sans), sans-serif' }}>
                   {a.label}
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--text-dim)', fontWeight: 500 }}>
@@ -268,7 +268,7 @@ export default function DashboardPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <div style={{ width: 3, height: 20, borderRadius: 99, background: 'linear-gradient(180deg, #d97706, #f59e0b)' }} />
-              <h2 id="pending-tasks-title" style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.3px' }}>
+              <h2 id="pending-tasks-title" style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-0.3px' }}>
                 Tâches en attente
               </h2>
               <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--danger-dim)', color: 'var(--danger)', padding: '2px 8px', borderRadius: 99 }}>
@@ -335,7 +335,7 @@ export default function DashboardPage() {
               <div style={{ marginBottom: 18 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.55, marginBottom: 6 }}>Présence Apprenants</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontSize: 38, fontWeight: 900, fontFamily: 'Outfit, sans-serif', letterSpacing: '-2px' }}>94%</span>
+                  <span style={{ fontSize: 38, fontWeight: 900, fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-2px' }}>94%</span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#34d399' }}>↑ +2%</span>
                 </div>
                 <div style={{ marginTop: 10, height: 5, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.55, marginBottom: 6 }}>Recouvrement Mensuel</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <span style={{ fontSize: 28, fontWeight: 900, fontFamily: 'Outfit, sans-serif', letterSpacing: '-1px' }}>12.5M</span>
+                  <span style={{ fontSize: 28, fontWeight: 900, fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-1px' }}>12.5M</span>
                   <span style={{ fontSize: 13, opacity: 0.6, fontWeight: 600 }}>FCFA</span>
                 </div>
                 <div style={{ fontSize: 11, opacity: 0.5, marginTop: 4, fontWeight: 600 }}>85% des frais réglés</div>
@@ -371,7 +371,7 @@ export default function DashboardPage() {
                   <Shield size={18} color="white" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', fontFamily: 'Outfit, sans-serif' }}>CFP-PAS de Gao</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', fontFamily: 'var(--font-sans), sans-serif' }}>CFP-PAS de Gao</div>
                   <div style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Gao, Mali</div>
                 </div>
               </div>
