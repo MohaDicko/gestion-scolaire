@@ -150,19 +150,19 @@ export default function LandingPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
               </span>
-              Plateforme 100% Cloud pour Établissements d'Excellence
+              La gestion scolaire pensée pour les réalités maliennes
             </motion.div>
             
             <motion.h1 variants={fadeUp} className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1]">
-              L'Élite de la Gestion <br />
+              Pilotez votre établissement <br />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
-                Scolaire au Mali
+                avec clarté et performance
               </span>
             </motion.h1>
             
             <motion.p variants={fadeUp} className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 mb-10 leading-relaxed">
-              Digitalisez votre établissement avec la plateforme la plus avancée du marché. 
-              Pilotez les inscriptions, les notes, et la paie (ITS, INPS, AMO) depuis un espace unifié et sécurisé.
+              SahelEdu centralise les élèves, les inscriptions, les notes, les présences, les finances et le personnel dans une seule plateforme sécurisée.
+              Une solution adaptée aux écoles fondamentales, lycées, établissements techniques, écoles de santé, centres agro-pastoraux et universités.
             </motion.p>
             
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -170,10 +170,10 @@ export default function LandingPage() {
                 onClick={() => router.push('/login')}
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg shadow-xl shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95"
               >
-                Démarrer l'expérience <ArrowRight size={20} />
+                Découvrir la plateforme <ArrowRight size={20} />
               </button>
               <button className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white font-bold text-lg shadow-sm hover:shadow-md transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800">
-                <Play size={20} className="text-indigo-600 dark:text-indigo-400" /> Voir la démo
+                <Play size={20} className="text-indigo-600 dark:text-indigo-400" /> Demander une démonstration
               </button>
             </motion.div>
             
@@ -183,7 +183,7 @@ export default function LandingPage() {
                   <div key={i} className={`w-10 h-10 rounded-full border-2 border-white dark:border-zinc-950 bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-700 z-${4-i}`} />
                 ))}
               </div>
-              <p>Adopté par <strong className="text-zinc-900 dark:text-white">+150 établissements</strong> d'excellence</p>
+              <p>Une solution conçue pour les <strong className="text-zinc-900 dark:text-white">établissements maliens</strong></p>
             </motion.div>
           </motion.div>
 
@@ -284,7 +284,7 @@ export default function LandingPage() {
               Tout ce dont vous avez besoin, <br/><span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">réinventé.</span>
             </h2>
             <p className="text-xl text-zinc-600 dark:text-zinc-400">
-              Une architecture modulaire pensée pour les directeurs d'établissements exigeants. Fini les tableurs Excel dispersés et les erreurs de paie.
+              Une plateforme modulaire pour piloter votre établissement au même endroit : scolarité, pédagogie, finances et ressources humaines, avec des parcours adaptés à chaque type d'école.
             </p>
           </div>
 
