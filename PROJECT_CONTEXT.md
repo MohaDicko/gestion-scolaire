@@ -1,6 +1,8 @@
 # 📚 PROJECT_CONTEXT.md — School ERP
 > **LIRE CE FICHIER EN PREMIER.** Il contient toute l'information nécessaire pour travailler sur ce projet sans parcourir le code source.  
-> Dernière mise à jour : 2026-05-19
+> Dernière mise à jour : 2026-10-16
+>
+> **Source de vérité technique** : toute évolution de l'architecture, de la stack ou de la stratégie UI/UX doit être répercutée dans ce document.
 
 ---
 
@@ -22,13 +24,17 @@
 
 ## 2. 🏗️ Stack Technique
 
+### 2.1 Stack actuellement adoptée
+
 | Couche | Technologie |
 |---|---|
-| **Framework** | Next.js 15.1.9 (App Router) |
-| **Language** | TypeScript 5.4 |
-| **Runtime** | React 19.0.0 |
-| **Styling** | TailwindCSS 3.4 + CSS Variables (globals.css) |
-| **UI Components** | Shadcn/ui + Radix UI + Framer Motion |
+| **Framework web** | Next.js 15.5.20 (App Router) |
+| **Langage** | TypeScript 5.4 |
+| **Runtime UI** | React 19.0.0 |
+| **Styling** | TailwindCSS 3.4 + CSS Variables (`src/app/globals.css`) |
+| **Composants UI** | Shadcn/ui + Radix UI + composants internes |
+| **Icônes** | Lucide React |
+| **Animations** | Framer Motion |
 | **ORM** | Prisma 5.15 (PostgreSQL) |
 | **Base de données** | Supabase (PostgreSQL) — pgBouncer pooling |
 | **Auth** | JWT (jose) via cookie `refreshToken` httpOnly |
@@ -39,6 +45,35 @@
 | **Notifications Push** | Web Push API (VAPID) |
 | **IA (actuel)** | Simulation mots-clés (PAS un vrai LLM — à connecter) |
 | **Déploiement** | Vercel (standalone output) + Docker disponible |
+
+### 2.2 Principes de décision technique
+
+- **Le frontend web reste sur Next.js/React**. Il ne sera pas remplacé par React Native.
+- La priorité UI/UX est une **refonte progressive du design system existant**, et non une migration de framework.
+- Les composants doivent privilégier Shadcn/ui, Radix UI, TailwindCSS, Lucide React et Framer Motion afin de conserver une interface cohérente, accessible et personnalisable.
+- Les nouveaux composants réutilisables doivent être créés dans `src/components/ui/` ou dans le dossier de composants fonctionnels approprié, sans introduire une seconde bibliothèque UI sans justification.
+- Toute nouvelle dépendance frontend doit être évaluée selon son accessibilité, son poids, sa compatibilité avec Next.js et son intégration au design system existant.
+
+### 2.3 Stratégie web et mobile
+
+| Produit | Technologie | Rôle | Statut |
+|---|---|---|---|
+| **ERP web** | Next.js + React + TypeScript | Administration, RH, finance, paramétrage et opérations complètes | Production |
+| **Application mobile** | React Native avec Expo (projet séparé) | Usages mobiles des parents, élèves et enseignants | Prévue, non incluse dans le frontend web |
+| **Backend/API** | API REST Next.js existante | Service commun au web et à l'application mobile | Production |
+| **Données** | PostgreSQL via Supabase | Base partagée et isolation par `tenantId` | Production |
+
+L'application mobile sera développée en parallèle dans un projet séparé. Elle ne doit pas modifier le frontend web ni exposer les secrets du backend. Elle consommera uniquement l'API publique et utilisera une authentification adaptée aux applications mobiles (Bearer token et stockage sécurisé), tandis que le navigateur conservera son mécanisme de session par cookie HTTP-only.
+
+### 2.4 Variables d'environnement
+
+Les variables sensibles restent exclusivement côté serveur et dans les variables d'environnement de l'hébergement :
+
+- `DATABASE_URL`, `DIRECT_URL` : accès PostgreSQL ;
+- `JWT_SECRET` : signature des sessions ;
+- clés privées de services, VAPID et intégrations externes.
+
+Le frontend web et l'application mobile ne doivent jamais embarquer ces secrets. L'application mobile pourra utiliser une variable publique telle que `EXPO_PUBLIC_API_URL`, limitée à l'URL HTTPS de l'API. L'ajout de l'application mobile ne nécessite donc pas de modifier les variables sensibles déjà configurées sur Vercel.
 
 ---
 
@@ -305,13 +340,29 @@ GEMINI_API_KEY=<clé Google AI Studio>
 
 ## 11. 🎨 Design System
 
+- **Objectif** : interface ERP moderne, lisible, accessible et adaptée aux écrans desktop, tablette et mobile.
 - **Framework CSS** : TailwindCSS + variables CSS personnalisées dans `globals.css`
-- **Thème** : Light mode (Enterprise B2B, SAP-class aesthetics)
+- **Thème** : Light mode par défaut, avec possibilité d'évolution vers un dark mode cohérent
 - **Police** : Inter (Google Fonts)
 - **Couleur principale** : `var(--primary)` → bleu-slate (`#4f8ef7` par défaut, personnalisable par école)
-- **Composants UI** : `src/components/ui/` (button, card, table, Modal, etc.)
-- **Layout** : `AppLayout.tsx` — sidebar fixe + header + breadcrumbs + zone de contenu
-- **Animations** : Framer Motion pour les transitions de page
+- **Composants UI** : Shadcn/ui + Radix UI dans `src/components/ui/`
+- **Primitives partagées** : `PageHeader`, `StatCard`, `StatusBadge`, `EmptyState`
+- **Icônes** : Lucide React
+- **Layout** : `AppLayout.tsx` — sidebar repliable + header + breadcrumbs + zone de contenu
+- **Animations** : Framer Motion pour les transitions utiles, sans nuire aux performances
+- **États obligatoires** : chargement, vide, erreur, succès et confirmation pour les écrans et actions asynchrones
+- **Responsive** : les tableaux complexes doivent prévoir une présentation adaptée aux petits écrans (cartes, colonnes prioritaires ou défilement maîtrisé)
+- **Cohérence** : toute nouvelle page doit réutiliser les composants et tokens existants plutôt que définir son propre style isolé
+
+### Priorités de refonte UI/UX
+
+1. Layout global, navigation et responsive design.
+2. Tableau de bord et hiérarchie des indicateurs.
+3. Gestion des élèves et tableaux de données.
+4. Finance, notes et présences.
+5. Formulaires, notifications, états vides et messages d'erreur.
+
+Cette refonte concerne uniquement l'expérience du frontend web. Elle ne change ni les API, ni le schéma Prisma, ni l'hébergement Vercel.
 
 ---
 

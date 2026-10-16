@@ -11,6 +11,8 @@ import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const leaveTypes = [
@@ -112,7 +114,7 @@ export default function LeavesPage() {
             subtitle="Planification et dashboard des absences du personnel"
             breadcrumbs={[{ label: 'RH', href: '/hr/dashboard' }, { label: 'Congés' }]}
             actions={
-                <Button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm">
+                <Button type="button" onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm">
                     <Plus size={18} className="mr-2" /> Nouvelle Demande
                 </Button>
             }
@@ -192,23 +194,27 @@ export default function LeavesPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {l.status === 'PENDING' && <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-700">En attente</span>}
-                                                {l.status === 'APPROVED' && <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-700">Approuvé</span>}
-                                                {l.status === 'REJECTED' && <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-red-100 text-red-700">Refusé</span>}
+                                                {l.status === 'PENDING' && <StatusBadge tone="warning">En attente</StatusBadge>}
+                                                {l.status === 'APPROVED' && <StatusBadge tone="success">Approuvé</StatusBadge>}
+                                                {l.status === 'REJECTED' && <StatusBadge tone="danger">Refusé</StatusBadge>}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 {l.status === 'PENDING' && (
                                                     <div className="flex gap-2 justify-end">
                                                         <button 
+                                                            type="button"
                                                             className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center transition-colors" 
                                                             title="Approuver" 
+                                                            aria-label={`Approuver la demande de congé de ${l.employee?.firstName || ''} ${l.employee?.lastName || ''}`}
                                                             onClick={() => updateStatus(l.id, 'APPROVED')}
                                                         >
                                                             <Check size={16} strokeWidth={3} />
                                                         </button>
                                                         <button 
+                                                            type="button"
                                                             className="w-8 h-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-colors" 
                                                             title="Refuser" 
+                                                            aria-label={`Refuser la demande de congé de ${l.employee?.firstName || ''} ${l.employee?.lastName || ''}`}
                                                             onClick={() => updateStatus(l.id, 'REJECTED')}
                                                         >
                                                             <X size={16} strokeWidth={3} />
@@ -221,11 +227,16 @@ export default function LeavesPage() {
                                 </tbody>
                             </table>
                         ) : (
-                            <div className="py-24 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 m-6 rounded-3xl">
-                                <Plane size={64} className="opacity-20 mb-4" />
-                                <h3 className="text-lg font-bold text-slate-600 mb-1">Aucune demande de congé</h3>
-                                <p className="text-sm">Toutes les demandes de congés apparaîtront ici.</p>
-                            </div>
+                            <EmptyState
+                                icon={<Plane size={64} />}
+                                title="Aucune demande de congé"
+                                description="Toutes les demandes de congés apparaîtront ici."
+                                action={
+                                    <Button type="button" onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
+                                        <Plus size={16} className="mr-2" /> Nouvelle demande
+                                    </Button>
+                                }
+                            />
                         )}
                     </div>
                 </div>
@@ -234,13 +245,13 @@ export default function LeavesPage() {
             {/* Modal de Demande */}
             <AnimatePresence>
                 {showModal && (
-                    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-slate-800">
+                    <div role="presentation" className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+                        <motion.div role="dialog" aria-modal="true" aria-labelledby="leave-modal-title" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-slate-800">
                             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-                                <h2 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
+                                <h2 id="leave-modal-title" className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
                                     <Calendar className="text-blue-600" size={20} /> Nouvelle Demande
                                 </h2>
-                                <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500" onClick={() => setShowModal(false)}>
+                                <button type="button" aria-label="Fermer la fenêtre" className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500" onClick={() => setShowModal(false)}>
                                     <X size={18} />
                                 </button>
                             </div>

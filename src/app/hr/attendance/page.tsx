@@ -11,6 +11,7 @@ import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function StaffAttendancePage() {
     const router = useRouter();
@@ -145,6 +146,7 @@ export default function StaffAttendancePage() {
                         </div>
                     </div>
                     <Button 
+                        type="button"
                         onClick={handleSave} 
                         disabled={isSaving || records.length === 0} 
                         className="h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8 shadow-lg shadow-blue-600/20 w-full sm:w-auto"
@@ -226,11 +228,11 @@ export default function StaffAttendancePage() {
                                 </tbody>
                             </table>
                         ) : (
-                            <div className="py-24 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 m-6 rounded-3xl">
-                                <ClipboardCheck size={64} className="opacity-20 mb-4" />
-                                <h3 className="text-lg font-bold text-slate-600 mb-1">Aucun employé trouvé</h3>
-                                <p className="text-sm">Vérifiez que vous avez des employés actifs enregistrés.</p>
-                            </div>
+                            <EmptyState
+                                icon={<ClipboardCheck size={64} />}
+                                title="Aucun employé trouvé"
+                                description="Vérifiez que vous avez des employés actifs enregistrés ou modifiez votre recherche."
+                            />
                         )}
                     </div>
                 </div>

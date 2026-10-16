@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { exportToExcel } from '@/lib/excelExport';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 // La méthode de paiement par défaut sera chargée depuis /api/school/settings
 const buildEmptyForm = (paymentMethod = 'ESPECES') => ({
@@ -186,6 +188,7 @@ export default function InvoicesPage() {
             <Search size={15} />
             <input 
               type="text" 
+              aria-label="Rechercher une facture"
               placeholder="Rechercher un élève ou n° facture..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
@@ -229,9 +232,9 @@ export default function InvoicesPage() {
                     <td>{new Date(inv.dueDate).toLocaleDateString()}</td>
                     <td><span style={{fontSize: '11px', fontWeight: 600}}>{inv.paymentMethod || '—'}</span></td>
                     <td>
-                      <span className={`badge ${inv.status === 'PAID' ? 'badge-primary' : 'badge-danger'}`}>
-                        {inv.status === 'PAID' ? 'Payée' : 'IMPAYÉE'}
-                      </span>
+                      <StatusBadge tone={inv.status === 'PAID' ? 'success' : 'danger'} dot>
+                        {inv.status === 'PAID' ? 'Payée' : 'Impayée'}
+                      </StatusBadge>
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
@@ -250,11 +253,20 @@ export default function InvoicesPage() {
               </tbody>
             </table>
           ) : (
-            <div style={{ padding: '80px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <Receipt size={48} style={{ opacity: 0.2, margin: '0 auto 16px', display: 'block' }} />
-              <h3>Aucune facture trouvée</h3>
-              <p style={{ fontSize: '13px' }}>Toutes les mensualités sont à jour pour cette sélection.</p>
-            </div>
+            <EmptyState
+              icon={<Receipt size={48} />}
+              title="Aucune facture trouvée"
+              description={search ? 'Aucune facture ne correspond à votre recherche.' : 'Toutes les mensualités sont à jour pour cette sélection.'}
+              action={
+                search ? (
+                  <button className="btn-ghost" onClick={() => setSearch('')}>Effacer la recherche</button>
+                ) : (
+                  <button className="btn-primary" onClick={() => setShowModal(true)}>
+                    <Receipt size={15} /> Émettre une facture
+                  </button>
+                )
+              }
+            />
           )}
         </div>
       </div>

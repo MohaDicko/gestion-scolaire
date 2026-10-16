@@ -11,6 +11,10 @@
 - **Design System**: Vanilla CSS Premium + Lucide Icons + Recharts
 - **Authentification**: JWT (jose) via HTTPOnly Cookies & Middleware
 
+> **Document de référence** : consultez [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) pour la stack technique détaillée, la stratégie UI/UX, les règles d'évolution et la future application mobile.
+
+Le frontend web reste basé sur Next.js/React. Une application mobile React Native avec Expo sera développée séparément et consommera les API existantes ; elle ne remplace pas l'ERP web.
+
 ---
 
 ## 🚀 Installation & Démarrage

@@ -144,12 +144,15 @@ export default function DashboardPage() {
       <motion.div className="flex flex-col gap-8" initial="hidden" animate="visible" variants={stagger}>
 
         {/* ── KPI GRID ── */}
-        <motion.section variants={fadeUp}>
+        <motion.section variants={fadeUp} aria-labelledby="dashboard-kpis-title">
+          <h2 id="dashboard-kpis-title" className="sr-only">Indicateurs de l'établissement</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
             {kpis.map((kpi, i) => (
-              <motion.div
+              <motion.button
                 key={i}
+                type="button"
                 onClick={() => router.push(kpi.href)}
+                aria-label={`${kpi.label} : ${kpi.value}. Ouvrir le module correspondant`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06, duration: 0.4 }}
@@ -163,6 +166,9 @@ export default function DashboardPage() {
                   position: 'relative',
                   overflow: 'hidden',
                   transition: 'transform 0.2s, box-shadow 0.2s',
+                  border: 'none',
+                  textAlign: 'left',
+                  font: 'inherit',
                 }}
                 whileHover={{ y: -3, scale: 1.01 }}
                 whileTap={{ scale: 0.97 }}
@@ -188,24 +194,26 @@ export default function DashboardPage() {
                 <div style={{ fontSize: 'clamp(9px, 1.2vw, 11px)', opacity: 0.65, marginTop: 'clamp(4px, 1vw, 8px)', fontWeight: 600, position: 'relative' }}>
                   {kpi.sub}
                 </div>
-              </motion.div>
+              </motion.button>
             ))}
           </div>
         </motion.section>
 
         {/* ── QUICK ACTIONS ── */}
-        <motion.section variants={fadeUp}>
+        <motion.section variants={fadeUp} aria-labelledby="quick-actions-title">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <div style={{ width: 3, height: 20, borderRadius: 99, background: 'var(--primary-grad)' }} />
-            <h2 style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.3px' }}>
+            <h2 id="quick-actions-title" style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.3px' }}>
               Actions Rapides
             </h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
             {quickActions.map((a, i) => (
-              <motion.div
+              <motion.button
                 key={i}
+                type="button"
                 onClick={() => router.push(a.href)}
+                aria-label={`${a.label} : ${a.desc}`}
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.04 + 0.3 }}
@@ -220,6 +228,8 @@ export default function DashboardPage() {
                   position: 'relative',
                   overflow: 'hidden',
                   boxShadow: 'var(--shadow-sm)',
+                  textAlign: 'left',
+                  font: 'inherit',
                 }}
                 className="group"
               >
@@ -246,19 +256,19 @@ export default function DashboardPage() {
                 >
                   <ArrowRight size={16} />
                 </div>
-              </motion.div>
+              </motion.button>
             ))}
           </div>
         </motion.section>
 
         {/* ── BOTTOM ROW ── */}
-        <motion.div variants={fadeUp} className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4 xl:gap-5">
+        <motion.div variants={fadeUp} className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4 xl:gap-5" aria-label="Suivi opérationnel">
 
           {/* Tasks Panel */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <div style={{ width: 3, height: 20, borderRadius: 99, background: 'linear-gradient(180deg, #d97706, #f59e0b)' }} />
-              <h2 style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.3px' }}>
+              <h2 id="pending-tasks-title" style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.3px' }}>
                 Tâches en attente
               </h2>
               <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--danger-dim)', color: 'var(--danger)', padding: '2px 8px', borderRadius: 99 }}>
@@ -266,16 +276,20 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <div style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+            <div aria-labelledby="pending-tasks-title" style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
               {pendingTasks.map((task, i) => (
-                <div
+                <button
                   key={i}
+                  type="button"
                   onClick={() => router.push(task.href)}
+                  aria-label={`${task.title} : ${task.desc}`}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 14,
                     padding: '14px 18px',
                     borderBottom: i < pendingTasks.length - 1 ? '1px solid var(--border)' : 'none',
                     cursor: 'pointer', transition: 'background 0.15s',
+                    width: '100%', textAlign: 'left', background: 'transparent',
+                    border: 'none', color: 'inherit', font: 'inherit',
                   }}
                   className="hover-bg-surface"
                 >
@@ -285,13 +299,15 @@ export default function DashboardPage() {
                     <div style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 500 }}>{task.desc}</div>
                   </div>
                   <ChevronRight size={15} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
-                </div>
+                </button>
               ))}
-              <div style={{ padding: '12px 18px', textAlign: 'center' }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary)', cursor: 'pointer' }}>
-                  Voir toutes les tâches
-                </span>
-              </div>
+              <button
+                type="button"
+                onClick={() => router.push('/invoices')}
+                style={{ width: '100%', padding: '12px 18px', textAlign: 'center', fontSize: 12, fontWeight: 700, color: 'var(--primary)', cursor: 'pointer', background: 'transparent', border: 'none' }}
+              >
+                Voir les tâches financières
+              </button>
             </div>
           </div>
 

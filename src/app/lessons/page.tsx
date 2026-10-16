@@ -5,6 +5,7 @@ import { BookOpen, Plus, Search, Clock, User, FileText, Loader2, Save, X, Clipbo
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { EmptyState } from '@/components/ui/empty-state';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CLASS_COLORS: Record<string, string> = {
@@ -23,7 +24,7 @@ export default function LessonLogsPage() {
   const [employees, setEmployees]   = useState<any[]>([]);
   const [isLoading, setIsLoading]   = useState(true);
   const [schoolType, setSchoolType] = useState<string | null>(null);
-  const isAgroOrTech = schoolType === 'AGRO' || schoolType === 'TECHNIQUE';
+  const isAgro = schoolType === 'AGRO';
   const [showModal, setShowModal]   = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab]   = useState<'journal'|'synthese'>('journal');
@@ -125,7 +126,7 @@ export default function LessonLogsPage() {
       subtitle="Journal pédagogique officiel — CFP-PAS de Gao (2025-2026)"
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Cahier de Texte' }]}
       actions={
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
+        <button type="button" className="btn-primary" onClick={() => setShowModal(true)}>
           <Plus size={16} /> Saisir un Cours
         </button>
       }
@@ -156,13 +157,17 @@ export default function LessonLogsPage() {
         {/* ── Tabs ── */}
         <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl w-fit">
           <button
+            type="button"
             onClick={() => setActiveTab('journal')}
+            aria-pressed={activeTab === 'journal'}
             className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'journal' ? 'bg-white dark:bg-zinc-900 shadow text-indigo-600' : 'text-zinc-500 hover:text-zinc-700'}`}
           >
             📖 Journal de Classe
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('synthese')}
+            aria-pressed={activeTab === 'synthese'}
             className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'synthese' ? 'bg-white dark:bg-zinc-900 shadow text-indigo-600' : 'text-zinc-500 hover:text-zinc-700'}`}
           >
             📊 Synthèse par Professeur
@@ -181,7 +186,7 @@ export default function LessonLogsPage() {
               {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <select className="form-input" style={{ width: '200px' }} value={filters.subjectId} onChange={(e) => setFilters({ ...filters, subjectId: e.target.value })}>
-              <option value="">{isAgroOrTech ? 'Tous les modules' : 'Toutes les matières'}</option>
+              <option value="">{isAgro ? 'Tous les modules' : 'Toutes les matières'}</option>
               {subjects.slice(0, 30).map(s => <option key={s.id} value={s.id}>{s.name.slice(0, 40)}</option>)}
             </select>
           </div>
@@ -270,13 +275,17 @@ export default function LessonLogsPage() {
               })}
             </div>
           ) : (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-center p-20">
-              <FileText size={56} className="mx-auto mb-4 opacity-10" />
-              <h3 className="font-bold text-zinc-900 dark:text-white">Cahier vide</h3>
-              <p className="text-sm text-zinc-500 mt-2 max-w-xs mx-auto">Aucun cours n'a été enregistré. Cliquez sur "Saisir un Cours" pour commencer.</p>
-              <button className="btn-primary mt-6" onClick={() => setShowModal(true)}>
-                <Plus size={14} /> Premier cours du journal
-              </button>
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
+              <EmptyState
+                icon={<FileText size={56} />}
+                title="Cahier vide"
+                description="Aucun cours n'a été enregistré. Commencez par saisir la première séance."
+                action={
+                  <button type="button" className="btn-primary" onClick={() => setShowModal(true)}>
+                    <Plus size={14} /> Premier cours du journal
+                  </button>
+                }
+              />
             </div>
           )
         )}
@@ -285,9 +294,12 @@ export default function LessonLogsPage() {
         {activeTab === 'synthese' && (
           <div className="flex flex-col gap-4">
             {Object.values(teacherStats).length === 0 ? (
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-center p-16">
-                <TrendingUp size={48} className="mx-auto mb-3 opacity-10" />
-                <p className="text-sm text-zinc-500 font-medium">Aucune donnée disponible. Commencez par enregistrer des cours.</p>
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
+                <EmptyState
+                  icon={<TrendingUp size={48} />}
+                  title="Aucune donnée disponible"
+                  description="Commencez par enregistrer des cours pour afficher la synthèse."
+                />
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -347,7 +359,7 @@ export default function LessonLogsPage() {
                             <Award size={10} /> Estim. mensuelle : {salary.toLocaleString('fr-FR')} FCFA
                           </div>
                           <div className="text-[10px] text-zinc-400 font-bold">
-                            {teacher.subjects.size} module{teacher.subjects.size > 1 ? 's' : ''}
+                            {teacher.subjects.size} {isAgro ? 'module' : 'matière'}{teacher.subjects.size > 1 ? 's' : ''}
                           </div>
                         </div>
                       </motion.div>
@@ -363,8 +375,11 @@ export default function LessonLogsPage() {
       {/* ── Modal Ajout Cours ── */}
       <AnimatePresence>
         {showModal && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div role="presentation" style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="lesson-modal-title"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -373,10 +388,10 @@ export default function LessonLogsPage() {
             >
               <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h2 style={{ fontWeight: 800, fontSize: '17px' }}>📝 Saisie d'un Cours</h2>
+                  <h2 id="lesson-modal-title" style={{ fontWeight: 800, fontSize: '17px' }}>📝 Saisie d'un Cours</h2>
                   <p className="text-xs text-zinc-500 mt-0.5">Journal officiel du Cahier de Texte – CFP-PAS de Gao</p>
                 </div>
-                <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
+                <button type="button" className="btn-icon" aria-label="Fermer la fenêtre" onClick={() => setShowModal(false)}><X size={18} /></button>
               </div>
 
               <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -392,7 +407,7 @@ export default function LessonLogsPage() {
                   </div>
                   {/* Module / Matière */}
                   <div className="form-group" style={{ flex: '1 1 200px' }}>
-                    <label>{isAgroOrTech ? 'Module *' : 'Matière *'}</label>
+                    <label>{isAgro ? 'Module *' : 'Matière *'}</label>
                     <select className="form-input" value={formData.subjectId} onChange={e => setFormData({ ...formData, subjectId: e.target.value })} required>
                       <option value="">-- Sélectionnez --</option>
                       {subjects.slice(0, 50).map(s => <option key={s.id} value={s.id}>{s.name.slice(0, 50)}</option>)}

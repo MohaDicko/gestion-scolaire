@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
+import { EmptyState } from '@/components/ui/empty-state';
 import { TrendingUp, Users, DollarSign, BookOpen, Award, AlertCircle, Loader2, RefreshCw, BarChart2, PieChart, Target } from 'lucide-react';
 
 interface AnalyticsData {
@@ -80,7 +81,7 @@ export default function AnalyticsPage() {
       <div style={{ textAlign: 'center', padding: '80px', color: '#94a3b8' }}>
         <AlertCircle size={48} style={{ marginBottom: '16px' }} />
         <p>Impossible de charger les données.</p>
-        <button onClick={load} style={{ marginTop: '12px', padding: '10px 20px', background: '#4f8ef7', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600 }}>Réessayer</button>
+        <button type="button" onClick={load} style={{ marginTop: '12px', padding: '10px 20px', background: '#4f8ef7', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600 }}>Réessayer</button>
       </div>
     </AppLayout>
   );
@@ -95,7 +96,7 @@ export default function AnalyticsPage() {
       subtitle="Tableau de bord Intelligence d'Affaires — Vue Exécutive"
       breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Analytics' }]}
       actions={
-        <button onClick={load} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#475569' }}>
+        <button type="button" onClick={load} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#475569' }} aria-label="Actualiser les indicateurs">
           <RefreshCw size={14} /> Actualiser
         </button>
       }
@@ -242,7 +243,11 @@ export default function AnalyticsPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {academic.classroomStats.length === 0 ? (
-                <p style={{ color: '#94a3b8', textAlign: 'center', padding: '32px 0' }}>Aucune donnée disponible</p>
+                <EmptyState
+                  icon={<Users size={32} />}
+                  title="Aucune donnée disponible"
+                  description="Les statistiques d'occupation apparaîtront dès que des classes seront configurées."
+                />
               ) : academic.classroomStats.map((c, i) => (
                 <div key={i}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>

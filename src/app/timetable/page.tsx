@@ -5,6 +5,7 @@ import { CalendarDays, Plus, Clock, Trash2, Edit2, Loader2, X, AlertCircle, Prin
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { EmptyState } from '@/components/ui/empty-state';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -36,7 +37,7 @@ export default function TimetablePage() {
     const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [schoolType, setSchoolType] = useState<string | null>(null);
-    const isAgroOrTech = schoolType === 'AGRO' || schoolType === 'TECHNIQUE';
+    const isAgro = schoolType === 'AGRO';
     const [formData, setFormData] = useState({
         dayOfWeek: '1',
         startTime: '08:00',
@@ -289,14 +290,17 @@ export default function TimetablePage() {
             actions={
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <button 
+                        type="button"
                         className="btn-outline" 
                         onClick={generatePDF}
                         disabled={!selectedClassroom || schedule.length === 0 || isGenerating}
+                        aria-label="Imprimer l'emploi du temps de la classe sélectionnée au format PDF"
                     >
                         {isGenerating ? <Loader2 size={15} className="spin" /> : <Printer size={15} />}
                         {isGenerating ? 'Génération...' : 'Imprimer PDF'}
                     </button>
                     <button 
+                        type="button"
                         className="btn-primary" 
                         onClick={handleOpenNewModal}
                         disabled={!selectedClassroom}
@@ -311,13 +315,15 @@ export default function TimetablePage() {
                     
                     {/* Class Selector Tabs */}
                     <div className="space-y-1.5 flex-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-zinc-500">Sélectionner une Classe</label>
+                        <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Sélectionner une Classe</span>
                         <div className="flex items-center gap-2 overflow-x-auto pb-1">
                             {classrooms.map(c => (
                                 <button
                                     key={c.id}
                                     type="button"
                                     onClick={() => setSelectedClassroom(c.id)}
+                                    aria-pressed={selectedClassroom === c.id}
+                                    aria-label={`Afficher l'emploi du temps de la classe ${c.name}`}
                                     className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${
                                         selectedClassroom === c.id 
                                             ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 scale-[1.02]' 
@@ -333,9 +339,11 @@ export default function TimetablePage() {
                     {/* Action buttons */}
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', paddingTop: '16px' }}>
                         <button
+                            type="button"
                             className="btn-outline"
                             onClick={exportExcel}
                             disabled={isExporting}
+                            aria-label="Exporter les emplois du temps au format Excel"
                             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                         >
                             {isExporting ? <Loader2 size={15} className="spin" /> : <Download size={15} />}
@@ -528,8 +536,10 @@ export default function TimetablePage() {
                                                                         gap: '2px',
                                                                     }}>
                                                                         <button
+                                                                            type="button"
                                                                             onClick={() => handleEditSlot(entry)}
                                                                             title="Modifier"
+                                                                            aria-label={`Modifier le créneau ${entry.subject?.name || ''}`}
                                                                             style={{
                                                                                 background: 'none',
                                                                                 border: 'none',
@@ -545,8 +555,10 @@ export default function TimetablePage() {
                                                                             <Edit2 size={11} />
                                                                         </button>
                                                                         <button
+                                                                            type="button"
                                                                             onClick={() => handleDelete(entry.id)}
                                                                             title="Supprimer"
+                                                                            aria-label={`Supprimer le créneau ${entry.subject?.name || ''}`}
                                                                             style={{
                                                                                 background: 'none',
                                                                                 border: 'none',
@@ -589,16 +601,18 @@ export default function TimetablePage() {
                 </div>
 
             ) : (
-                <div className="card text-center" style={{ padding: '80px', color: 'var(--text-muted)', border: '1px dashed var(--border-md)' }}>
-                    <CalendarDays size={56} style={{ margin: '0 auto 20px', opacity: 0.15 }} />
-                    <h3 style={{ fontWeight: 700, marginBottom: '10px', color: 'var(--text)' }}>Planifiez votre semaine</h3>
-                    <p>Veuillez sélectionner une classe pour visualiser ou modifier son emploi du temps.</p>
+                <div className="card" style={{ padding: '48px 24px', border: '1px dashed var(--border-md)' }}>
+                    <EmptyState
+                        icon={<CalendarDays size={56} />}
+                        title="Sélectionnez une classe"
+                        description="Choisissez une classe pour visualiser ou modifier son emploi du temps."
+                    />
                 </div>
             )}
 
             {showModal && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ 
+                <div role="presentation" style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div role="dialog" aria-modal="true" aria-labelledby="timetable-modal-title" style={{
                         background: 'var(--bg-2)', 
                         border: '1px solid var(--border-md)', 
                         borderRadius: 'var(--radius-xl)', 
@@ -608,10 +622,10 @@ export default function TimetablePage() {
                         animation: 'fadeUp 0.3s var(--ease) both' 
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--border)' }}>
-                            <h2 style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '18px' }}>
+                            <h2 id="timetable-modal-title" style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '18px' }}>
                                 {editingSlotId ? 'Modifier le Créneau' : 'Nouveau Créneau'}
                             </h2>
-                            <button className="btn-icon" onClick={() => { setShowModal(false); setEditingSlotId(null); }}><X size={18} /></button>
+                            <button type="button" className="btn-icon" aria-label="Fermer la fenêtre" onClick={() => { setShowModal(false); setEditingSlotId(null); }}><X size={18} /></button>
                         </div>
                         <form onSubmit={handleSaveSlot} style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div className="form-group">
@@ -633,14 +647,14 @@ export default function TimetablePage() {
                             </div>
 
                             <div className="form-group" style={{ marginBottom: '15px' }}>
-                                <label>{isAgroOrTech ? 'Module *' : 'Matière *'}</label>
+                                <label>{isAgro ? 'Module *' : 'Matière *'}</label>
                                 <select 
                                     className="form-input" 
                                     value={formData.subjectId} 
                                     onChange={e => setFormData({...formData, subjectId: e.target.value})}
                                     required
                                 >
-                                    <option value="">{isAgroOrTech ? '-- Sélectionnez un module --' : '-- Sélectionnez une matière --'}</option>
+                                    <option value="">{isAgro ? '-- Sélectionnez un module --' : '-- Sélectionnez une matière --'}</option>
                                     {subjects.map(s => (<option key={s.id} value={s.id}>{s.name} ({s.code})</option>))}
                                 </select>
                             </div>

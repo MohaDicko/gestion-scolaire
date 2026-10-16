@@ -49,7 +49,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Cahier de Texte',    href: '/lessons',            icon: <BookOpen size={16}/> },
       { label: 'Saisie des Notes',   href: '/grades',             icon: <FileText size={16}/> },
       { label: 'Bulletins',          href: '/reports/bulletins',  icon: <Award size={16}/> },
-      // NB: 'Relevé Compétences' est injecté dynamiquement selon le schoolType (AGRO/TECHNIQUE uniquement)
+      // NB: 'Relevé Compétences' est réservé aux établissements agro-pastoraux (AGRO)
       { label: 'Bibliothèque',       href: '/library',            icon: <LibraryBig size={16}/> },
     ]
   },
@@ -122,8 +122,8 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   // Type d'école — conditionne l'affichage de certains modules (ex: Relevé de Compétences)
   const [schoolType, setSchoolType] = useState<string | null>(null);
 
-  // Types d'écoles ayant accès au Relevé de Compétences (formation pro agricole/technique)
-  const RELEVE_COMPETENCES_SCHOOL_TYPES = ['AGRO', 'TECHNIQUE'];
+  // Le système modulaire et le relevé de compétences concernent uniquement AGRO.
+  const RELEVE_COMPETENCES_SCHOOL_TYPES = ['AGRO'];
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -188,7 +188,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   const displayName = user ? `${user.firstName||''} ${user.lastName||''}`.trim() : 'Utilisateur';
   const roleLabel = user?.role ? (ROLE_LABELS[user.role] || user.role) : '';
 
-  // Injecter le lien "Relevé Compétences" uniquement pour les écoles AGRO/TECHNIQUE
+  // Injecter le lien "Relevé Compétences" uniquement pour les écoles AGRO
   const isReleveCompetencesVisible = schoolType !== null && RELEVE_COMPETENCES_SCHOOL_TYPES.includes(schoolType);
 
   const navSectionsWithSchoolType: NavSection[] = NAV_SECTIONS.map(section => {
@@ -255,7 +255,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <nav aria-label="Navigation principale" style={{ flex: 1, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
         {navSections.map(section => (
           <div key={section.title} style={{ marginBottom: 6 }}>
             <div style={{
@@ -344,7 +344,8 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
   );
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100%', background: 'var(--bg)', overflow: 'hidden' }}>
+    <div className="app-shell" style={{ display: 'flex', height: '100vh', width: '100%', background: 'var(--bg)', overflow: 'hidden' }}>
+      <a className="skip-link" href="#main-content">Aller au contenu principal</a>
 
       {/* ── Desktop Sidebar ── */}
       <aside style={{ width: 260, height: '100%', flexShrink: 0, padding: '10px 0 10px 10px' }} className="hidden lg:block">
@@ -381,7 +382,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
       </AnimatePresence>
 
       {/* ── Main Area ── */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', padding: 'clamp(6px, 1.5vw, 12px)', paddingLeft: 'clamp(4px, 1vw, 6px)', overflow: 'hidden', minWidth: 0 }}>
+      <main id="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', padding: 'clamp(6px, 1.5vw, 12px)', paddingLeft: 'clamp(4px, 1vw, 6px)', overflow: 'hidden', minWidth: 0 }}>
         <div style={{
           flex: 1, height: '100%', display: 'flex', flexDirection: 'column',
           background: 'var(--bg-2)', borderRadius: 'clamp(12px, 2vw, 18px)',
@@ -420,6 +421,8 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden"
+                aria-label="Ouvrir le menu de navigation"
+                title="Ouvrir le menu"
                 style={{ padding: 6, borderRadius: 9, color: 'var(--text-muted)', transition: 'all 0.15s', background: 'none', border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
               >
                 <Menu size={22} />
@@ -457,6 +460,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               <button
                 onClick={() => setIsCommandPaletteOpen(true)}
                 className="hidden md:flex items-center gap-2"
+                aria-label="Ouvrir la recherche globale"
                 style={{
                   padding: '7px 12px', borderRadius: 10, fontSize: 13, fontWeight: 500,
                   color: 'var(--text-muted)', background: 'var(--bg-4)',
@@ -485,7 +489,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               {actions}
 
               {/* Theme Toggle */}
-              <button onClick={toggleTheme} style={{
+              <button onClick={toggleTheme} aria-label={isDark ? 'Activer le thème clair' : 'Activer le thème sombre'} title={isDark ? 'Thème clair' : 'Thème sombre'} style={{
                 width: 36, height: 36, borderRadius: 9,
                 display: 'grid', placeItems: 'center',
                 color: 'var(--text-muted)', background: 'none',
@@ -502,6 +506,8 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                     display: 'grid', placeItems: 'center', color: 'var(--text-muted)',
                     background: 'none', border: 'none', cursor: 'pointer',
                   }}
+                    aria-label="Afficher les notifications"
+                    title="Notifications"
                     onClick={loadNotifications}
                   >
                     <Bell size={17} />
@@ -592,7 +598,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           </header>
 
           {/* ── PAGE CONTENT ── */}
-          <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg)' }}>
+          <div className="app-content-scroll" style={{ flex: 1, overflowY: 'auto', background: 'var(--bg)' }}>
             {/* Page title block */}
             {(title || subtitle) && (
               <div style={{
@@ -658,7 +664,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             )}
 
             {/* Children */}
-            <div style={{ padding: 'clamp(16px, 2.5vw, 24px) clamp(16px, 3vw, 28px)', minHeight: 'calc(100% - 200px)' }}>
+            <div className="app-page-content" style={{ padding: 'clamp(16px, 2.5vw, 24px) clamp(16px, 3vw, 28px)', minHeight: 'calc(100% - 200px)' }}>
               <motion.div
                 key={pathname}
                 initial={{ opacity: 0, y: 8 }}

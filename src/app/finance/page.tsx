@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { StatCard } from '@/components/ui/stat-card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import jsPDF from 'jspdf';
 
@@ -130,59 +131,51 @@ export default function FinanceOverviewPage() {
             }
         >
             {/* Top Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-                <div className="card shadow-md" style={{ padding: '24px', borderLeft: '4px solid var(--primary)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                        <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--primary-dim)' }}>
-                            <TrendingUp size={20} className="text-primary" />
-                        </div>
-                        <span style={{ fontSize: '12px', color: 'var(--success)', display: 'flex', alignItems: 'center' }}>
-                            <ArrowUpRight size={14} /> +12%
-                        </span>
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Recettes Encaissées</div>
-                    <div style={{ fontSize: '24px', fontWeight: 800 }}>{stats.totalRevenue.toLocaleString()} XOF</div>
-                </div>
-
-                <div className="card shadow-md" style={{ padding: '24px', borderLeft: '4px solid var(--danger)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                        <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--danger-dim)' }}>
-                            <TrendingDown size={20} className="text-danger" />
-                        </div>
-                        <span style={{ fontSize: '12px', color: 'var(--danger)', display: 'flex', alignItems: 'center' }}>
-                            <ArrowDownRight size={14} /> +5%
-                        </span>
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Dépenses Totales</div>
-                    <div style={{ fontSize: '24px', fontWeight: 800 }}>{stats.totalExpenses.toLocaleString()} XOF</div>
-                </div>
-
-                <div className="card shadow-md" style={{ padding: '24px', borderLeft: '4px solid var(--warning)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                        <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--warning-dim)' }}>
-                            <DollarSign size={20} className="text-warning" />
-                        </div>
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Reste à Recouvrer</div>
-                    <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--warning)' }}>{stats.totalPending.toLocaleString()} XOF</div>
-                </div>
-
-                <div className="card shadow-md" style={{ padding: '24px', borderLeft: '4px solid var(--success)', background: 'var(--bg-3)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                        <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--success-dim)' }}>
-                            <Landmark size={20} className="text-success" />
-                        </div>
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Résultat Net</div>
-                    <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--success)' }}>{stats.netBalance.toLocaleString()} XOF</div>
-                </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" style={{ marginBottom: '24px' }}>
+                <StatCard
+                    label="Recettes encaissées"
+                    value={`${stats.totalRevenue.toLocaleString()} XOF`}
+                    icon={<TrendingUp size={20} />}
+                    trend={<><ArrowUpRight size={14} /> +12%</>}
+                    tone="default"
+                />
+                <StatCard
+                    label="Dépenses totales"
+                    value={`${stats.totalExpenses.toLocaleString()} XOF`}
+                    icon={<TrendingDown size={20} />}
+                    trend={<><ArrowDownRight size={14} /> +5%</>}
+                    tone="danger"
+                />
+                <StatCard
+                    label="Reste à recouvrer"
+                    value={`${stats.totalPending.toLocaleString()} XOF`}
+                    icon={<DollarSign size={20} />}
+                    description="Factures non réglées"
+                    tone="warning"
+                />
+                <StatCard
+                    label="Résultat net"
+                    value={`${stats.netBalance.toLocaleString()} XOF`}
+                    icon={<Landmark size={20} />}
+                    description="Recettes moins dépenses"
+                    tone="success"
+                />
             </div>
 
             {/* Charts Section */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '24px' }}>
-                <div className="card shadow-sm" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '24px' }}>Flux de Trésorerie (7 derniers jours)</h3>
-                    <div style={{ height: '300px' }}>
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_1fr]" style={{ marginBottom: '24px' }}>
+                <section className="card shadow-sm" style={{ padding: '24px' }} aria-labelledby="cashflow-title">
+                    <div className="flex flex-wrap items-start justify-between gap-3" style={{ marginBottom: '24px' }}>
+                        <div>
+                            <h2 id="cashflow-title" style={{ fontSize: '16px', fontWeight: 700 }}>Flux de trésorerie</h2>
+                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Recettes et dépenses des 7 derniers jours</p>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs font-semibold text-text-muted" aria-label="Légende du graphique">
+                            <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-primary" />Recettes</span>
+                            <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-danger" />Dépenses</span>
+                        </div>
+                    </div>
+                    <div style={{ height: '300px' }} role="img" aria-label="Graphique des recettes et dépenses des sept derniers jours">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={stats.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
@@ -203,10 +196,13 @@ export default function FinanceOverviewPage() {
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
-                </div>
+                </section>
 
-                <div className="card shadow-sm" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '24px' }}>Répartition des Revenus</h3>
+                <section className="card shadow-sm" style={{ padding: '24px' }} aria-labelledby="revenue-title">
+                    <div style={{ marginBottom: '24px' }}>
+                        <h2 id="revenue-title" style={{ fontSize: '16px', fontWeight: 700 }}>Répartition des revenus</h2>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Principales sources d&apos;encaissement</p>
+                    </div>
                     <div style={{ height: '300px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={[
@@ -223,12 +219,12 @@ export default function FinanceOverviewPage() {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                </div>
+                </section>
             </div>
 
             {/* Bottom Actions */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                <div className="card shadow-sm" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <section className="card shadow-sm" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }} aria-label="Accès au grand livre">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <FileText size={18} className="text-primary" />
                         <span style={{ fontSize: '14px', fontWeight: 600 }}>Registre Complet (Grand Livre)</span>
@@ -236,8 +232,8 @@ export default function FinanceOverviewPage() {
                     <button className="btn-primary" onClick={() => router.push('/finance/ledger')}>
                         Consulter le Journal
                     </button>
-                </div>
-                <div className="card shadow-sm" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                </section>
+                <section className="card shadow-sm" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }} aria-label="Export du rapport financier">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <Download size={18} className="text-primary" />
                         <span style={{ fontSize: '14px', fontWeight: 600 }}>Rapport financier annuel</span>
@@ -245,7 +241,7 @@ export default function FinanceOverviewPage() {
                     <button className="btn-outline" onClick={generatePDF}>
                         Générer PDF
                     </button>
-                </div>
+                </section>
             </div>
         </AppLayout>
     );

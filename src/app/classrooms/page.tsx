@@ -5,6 +5,7 @@ import { Plus, Search, Loader2, X, Layers } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { useRouter } from 'next/navigation';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const emptyForm = { name: '', level: 'LYCEE', stream: '', series: '', maxCapacity: '35', campusId: '', academicYearId: '' };
 
@@ -79,7 +80,7 @@ export default function ClassroomsPage() {
       title="Gestion des Classes"
       subtitle="Organisation structurelle des cohortes et niveaux"
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Classes' }]}
-      actions={<button className="btn-primary" onClick={() => setShowModal(true)}><Plus size={15} /> Nouvelle Classe</button>}
+      actions={<button type="button" className="btn-primary" onClick={() => setShowModal(true)}><Plus size={15} /> Nouvelle Classe</button>}
     >
       {/* Modal */}
       {showModal && (
@@ -87,7 +88,7 @@ export default function ClassroomsPage() {
           <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border-md)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '580px', boxShadow: 'var(--shadow-lg)', animation: 'fadeUp 0.3s var(--ease) both' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 26px', borderBottom: '1px solid var(--border)' }}>
               <h2 style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '17px' }}>Créer une Nouvelle Classe</h2>
-              <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
+              <button type="button" aria-label="Fermer la fenêtre" className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit} style={{ padding: '26px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div className="form-grid">
@@ -149,7 +150,7 @@ export default function ClassroomsPage() {
             <div style={{ padding: '60px', textAlign: 'center', color: 'var(--danger)' }}>
               <X size={48} style={{ opacity: 0.2, margin: '0 auto 16px', display: 'block' }} />
               <h3 style={{ fontWeight: 600, marginBottom: '8px' }}>{errorStatus}</h3>
-              <button className="btn-ghost" onClick={fetch_} style={{ marginTop: '12px' }}>Réessayer</button>
+              <button type="button" className="btn-ghost" onClick={fetch_} style={{ marginTop: '12px' }}>Réessayer</button>
             </div>
           ) : filtered.length > 0 ? (
             <table className="data-table">
@@ -183,10 +184,12 @@ export default function ClassroomsPage() {
               </tbody>
             </table>
           ) : (
-            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <Layers size={48} style={{ opacity: 0.2, margin: '0 auto 16px', display: 'block' }} />
-              <h3 style={{ fontWeight: 600, marginBottom: '8px' }}>Aucune classe créée</h3>
-            </div>
+            <EmptyState
+              icon={<Layers size={48} />}
+              title="Aucune classe créée"
+              description="Commencez par créer votre première classe."
+              action={<button type="button" className="btn-primary" onClick={() => setShowModal(true)}><Plus size={15} /> Nouvelle classe</button>}
+            />
           )}
         </div>
       </div>

@@ -7,6 +7,8 @@ import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { exportToExcel } from '@/lib/excelExport';
 import * as XLSX from 'xlsx';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 export default function GradesPage() {
   const router = useRouter();
@@ -28,7 +30,7 @@ export default function GradesPage() {
 
   // Détection du type d'école
   const [schoolType, setSchoolType] = useState<string | null>(null);
-  const isAgroOrTech = schoolType === 'AGRO' || schoolType === 'TECHNIQUE';
+  const isAgro = schoolType === 'AGRO';
 
   useEffect(() => {
     Promise.all([
@@ -109,7 +111,7 @@ export default function GradesPage() {
 
   const handleSave = async () => {
     if (!form.classroomId) { toast.warning('Veuillez sélectionner une classe.'); return; }
-    if (!form.subjectId) { toast.warning(`Veuillez sélectionner un ${isAgroOrTech ? 'module' : 'matière'}.`); return; }
+    if (!form.subjectId) { toast.warning(`Veuillez sélectionner un ${isAgro ? 'module' : 'matière'}.`); return; }
     if (!form.academicYearId) { toast.warning('Veuillez sélectionner une année académique.'); return; }
     
     const payloadGrades = Object.entries(grades)
@@ -194,65 +196,87 @@ export default function GradesPage() {
     reader.readAsArrayBuffer(file);
   };
 
+  const selectedSubject = subjects.find(subject => subject.id === form.subjectId);
+  const enteredGrades = students.filter(student => grades[student.student.id]?.score !== '').length;
+  const missingGrades = Math.max(students.length - enteredGrades, 0);
+  const gradeLabel = isAgro ? 'module' : 'matière';
+
   return (
     <AppLayout
       title="Saisie des Notes"
-      subtitle="Enregistrez les évaluations et Devoirs Surveillés"
+      subtitle={isAgro
+        ? 'Évaluez les compétences acquises dans chaque module de formation'
+        : 'Enregistrez les évaluations et devoirs surveillés'}
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Saisie des Notes' }]}
     >
       <div className="card shadow-sm" style={{ padding: '24px', marginBottom: '8px' }}>
         <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px' }}>
           <div className="form-group">
-            <label>Année Académique</label>
-            <select value={form.academicYearId} onChange={e => setForm({...form, academicYearId: e.target.value})} className="form-input">
+            <label htmlFor="grade-academic-year">Année académique</label>
+            <select id="grade-academic-year" value={form.academicYearId} onChange={e => setForm({...form, academicYearId: e.target.value})} className="form-input">
               <option value="">-- Année --</option>
               {years.map(y => <option key={y.id} value={y.id}>{y.name} {y.isActive ? '(Active)' : ''}</option>)}
             </select>
           </div>
           <div className="form-group">
-            <label>Classe</label>
-            <select value={form.classroomId} onChange={e => setForm({...form, classroomId: e.target.value})} className="form-input">
+            <label htmlFor="grade-classroom">Classe / promotion</label>
+            <select id="grade-classroom" value={form.classroomId} onChange={e => setForm({...form, classroomId: e.target.value})} className="form-input">
               <option value="">-- Classe --</option>
               {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div className="form-group">
-            <label>{isAgroOrTech ? 'Module' : 'Matière'}</label>
-            <select value={form.subjectId} onChange={e => setForm({...form, subjectId: e.target.value})} className="form-input">
-              <option value="">{isAgroOrTech ? '-- Sélectionnez un module --' : '-- Matière --'}</option>
+            <label htmlFor="grade-subject">{isAgro ? 'Module de formation' : 'Matière'}</label>
+            <select id="grade-subject" value={form.subjectId} onChange={e => setForm({...form, subjectId: e.target.value})} className="form-input">
+              <option value="">{isAgro ? '-- Sélectionnez un module --' : '-- Matière --'}</option>
               {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
             </select>
           </div>
           <div className="form-group">
-            <label>Période (Trimestre)</label>
-            <select value={form.trimestre} onChange={e => setForm({...form, trimestre: e.target.value})} className="form-input">
+            <label htmlFor="grade-term">Période / trimestre</label>
+            <select id="grade-term" value={form.trimestre} onChange={e => setForm({...form, trimestre: e.target.value})} className="form-input">
               <option value="1">1er Trimestre</option>
               <option value="2">2ème Trimestre</option>
               <option value="3">3ème Trimestre</option>
             </select>
           </div>
           <div className="form-group">
-            <label>Type d'Évaluation</label>
-            <select value={form.examType} onChange={e => setForm({...form, examType: e.target.value})} className="form-input">
+            <label htmlFor="grade-assessment-type">Type d&apos;évaluation</label>
+            <select id="grade-assessment-type" value={form.examType} onChange={e => setForm({...form, examType: e.target.value})} className="form-input">
               <option value="CONTINUOUS">Note de Classe / Interro</option>
               <option value="MIDTERM">Devoir Surveillé / Compo</option>
               <option value="FINAL">Examen de Trimestre</option>
             </select>
           </div>
           <div className="form-group">
-            <label>Noté sur</label>
-            <input type="number" min="1" value={form.maxScore} onChange={e => setForm({...form, maxScore: e.target.value})} className="form-input" />
+            <label htmlFor="grade-max-score">Barème</label>
+            <input id="grade-max-score" type="number" min="1" value={form.maxScore} onChange={e => setForm({...form, maxScore: e.target.value})} className="form-input" />
           </div>
         </div>
+        {form.subjectId && (
+          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border/40 pt-4 text-xs text-text-muted">
+            <StatusBadge tone="info" dot>{isAgro ? 'Système modulaire agro-pastoral' : 'Évaluation académique'}</StatusBadge>
+            <span className="font-semibold text-text">{selectedSubject?.name}</span>
+            {selectedSubject?.code && <span>• {selectedSubject.code}</span>}
+            {selectedSubject?.coefficient !== undefined && <span>• Coefficient {selectedSubject.coefficient}</span>}
+            <span>• Noté sur {form.maxScore}</span>
+          </div>
+        )}
       </div>
 
       {students.length > 0 ? (
         <div className="card" style={{ padding: 0 }}>
           <div className="card-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div>
+              <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <BookOpen size={18} className="text-primary" />
-              Grille de Saisie ({students.length} élèves)
-            </h3>
+              Grille de saisie ({students.length} apprenants)
+              </h2>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <StatusBadge tone="success" dot>{enteredGrades} saisie{enteredGrades > 1 ? 's' : ''}</StatusBadge>
+                <StatusBadge tone={missingGrades > 0 ? 'warning' : 'success'} dot>{missingGrades} restante{missingGrades > 1 ? 's' : ''}</StatusBadge>
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button className="btn-ghost" onClick={handleExportTemplate}>
                 <FileDown size={14} /> Modèle Excel
@@ -288,7 +312,7 @@ export default function GradesPage() {
                       <td style={{ padding: '16px 24px' }}><span className="badge badge-primary">{e.student.studentNumber}</span></td>
                       <td><strong style={{ color: 'var(--text)' }}>{e.student.firstName} {e.student.lastName}</strong></td>
                       <td>
-                        <input 
+                        <input
                           type="number" 
                           step="0.25"
                           min="0"
@@ -296,16 +320,18 @@ export default function GradesPage() {
                           className="form-input" 
                           style={{ width: '100px', fontWeight: 600, background: 'var(--bg-3)' }}
                           placeholder="—"
+                          aria-label={`Note de ${e.student.firstName} ${e.student.lastName} sur ${form.maxScore}`}
                           value={grades[e.student.id]?.score || ''}
                           onChange={(ev) => handleGradeChange(e.student.id, 'score', ev.target.value)}
                         />
                       </td>
                       <td>
-                        <input 
+                        <input
                           type="text" 
                           className="form-input" 
                           style={{ width: '100%', background: 'var(--bg-3)' }} 
                           placeholder="Appréciation libre..." 
+                          aria-label={`Commentaire pour ${e.student.firstName} ${e.student.lastName}`}
                           value={grades[e.student.id]?.comment || ''}
                           onChange={(ev) => handleGradeChange(e.student.id, 'comment', ev.target.value)}
                         />
@@ -318,16 +344,17 @@ export default function GradesPage() {
           </div>
         </div>
       ) : form.classroomId ? (
-        <div className="card text-center" style={{ padding: '60px', color: 'var(--text-muted)' }}>
-           <AlertCircle size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-           <p>Aucun élève inscrit dans cette classe pour l'année sélectionnée.</p>
-        </div>
+        <EmptyState
+          icon={<AlertCircle size={48} />}
+          title="Aucun apprenant inscrit"
+          description="Aucun apprenant n'est inscrit dans cette classe pour l'année académique sélectionnée."
+        />
       ) : (
-        <div className="card text-center" style={{ padding: '60px', color: 'var(--text-muted)', border: '1px dashed var(--border-md)' }}>
-            <BookOpen size={48} style={{ margin: '0 auto 16px', opacity: 0.2 }} />
-            <h3 style={{ fontWeight: 600, marginBottom: '8px', color: 'var(--text)' }}>Prêt à saisir les notes ?</h3>
-            <p>Sélectionnez une année académique et une classe pour afficher la liste des élèves.</p>
-        </div>
+        <EmptyState
+          icon={<BookOpen size={48} />}
+          title={`Prêt à saisir les ${gradeLabel}s ?`}
+          description={`Sélectionnez une année académique et une classe pour afficher les apprenants et saisir les évaluations.`}
+        />
       )}
     </AppLayout>
   );

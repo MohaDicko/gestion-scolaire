@@ -10,6 +10,8 @@ import jsPDF from 'jspdf';
 import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 export default function FinancePaymentsPage() {
     const toast = useToast();
@@ -273,6 +275,7 @@ export default function FinancePaymentsPage() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                             <input 
                                 type="text"
+                                aria-label="Rechercher un élève pour enregistrer un paiement"
                                 className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 placeholder="Nom, matricule..."
                                 value={searchTerm}
@@ -281,13 +284,26 @@ export default function FinancePaymentsPage() {
                         </div>
 
                         {/* Search Results */}
+                        {isLoading && searchTerm.length >= 2 && (
+                            <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-slate-100 p-4 text-sm text-slate-500">
+                                <Loader2 size={16} className="animate-spin" />
+                                Recherche en cours...
+                            </div>
+                        )}
+                        {!isLoading && searchTerm.length >= 2 && students.length === 0 && (
+                            <div className="mt-4 rounded-xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-500">
+                                Aucun élève trouvé pour cette recherche.
+                            </div>
+                        )}
                         {students.length > 0 && (
                             <div className="mt-4 border border-slate-100 rounded-xl overflow-hidden shadow-xl">
                                 {students.map(s => (
-                                    <div 
+                                    <button
                                         key={s.id} 
+                                        type="button"
                                         onClick={() => selectStudent(s)}
-                                        className="p-4 hover:bg-blue-50 cursor-pointer flex items-center gap-3 border-b border-slate-50 last:border-0 transition-colors"
+                                        className="w-full p-4 text-left hover:bg-blue-50 cursor-pointer flex items-center gap-3 border-b border-slate-50 last:border-0 transition-colors"
+                                        aria-label={`Sélectionner ${s.firstName} ${s.lastName}`}
                                     >
                                         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
                                             {s.firstName[0]}{s.lastName[0]}
@@ -297,7 +313,7 @@ export default function FinancePaymentsPage() {
                                             <div className="text-[10px] text-slate-500">{s.studentNumber} — {s.classroom?.name}</div>
                                         </div>
                                         <ArrowRight className="ml-auto text-slate-300" size={14} />
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         )}
@@ -355,7 +371,7 @@ export default function FinancePaymentsPage() {
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {invoices.length === 0 ? (
-                                                <tr><td colSpan={5} className="p-12 text-center text-slate-400">Aucune facture émise</td></tr>
+                                                <tr><td colSpan={5} className="p-6"><EmptyState title="Aucune facture émise" description="Cet élève ne possède encore aucune facture." /></td></tr>
                                             ) : (
                                                 invoices.map(invoice => (
                                                     <tr key={invoice.id} className="hover:bg-slate-50 transition-colors">
@@ -363,12 +379,12 @@ export default function FinancePaymentsPage() {
                                                         <td className="p-4 text-sm font-semibold text-slate-700">{invoice.title}</td>
                                                         <td className="p-4 text-right font-black text-slate-900">{invoice.amount.toLocaleString()} XOF</td>
                                                         <td className="p-4">
-                                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                                                                invoice.status === 'PAID' ? 'bg-emerald-100 text-emerald-600' : 
-                                                                invoice.status === 'PARTIAL' ? 'bg-amber-100 text-amber-600' : 'bg-rose-100 text-rose-600'
-                                                            }`}>
-                                                                {invoice.status}
-                                                            </span>
+                                                            <StatusBadge
+                                                                tone={invoice.status === 'PAID' ? 'success' : invoice.status === 'PARTIAL' ? 'warning' : 'danger'}
+                                                                dot
+                                                            >
+                                                                {invoice.status === 'PAID' ? 'Payée' : invoice.status === 'PARTIAL' ? 'Partielle' : 'Impayée'}
+                                                            </StatusBadge>
                                                         </td>
                                                         <td className="p-4">
                                                             <div className="flex gap-3">
@@ -474,11 +490,12 @@ export default function FinancePaymentsPage() {
                             </div>
                         </>
                     ) : (
-                        <div className="h-full border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center p-12 text-center opacity-50">
-                            <Landmark size={64} className="text-slate-300 mb-6" />
-                            <h3 className="text-xl font-bold text-slate-400">Aucun élève sélectionné</h3>
-                            <p className="text-slate-500 max-w-sm mt-2">Veuillez rechercher et sélectionner un élève pour consulter ses factures et enregistrer un règlement.</p>
-                        </div>
+                        <EmptyState
+                            className="h-full min-h-[420px]"
+                            icon={<Landmark size={64} />}
+                            title="Aucun élève sélectionné"
+                            description="Recherchez puis sélectionnez un élève pour consulter ses factures et enregistrer un règlement."
+                        />
                     )}
                 </div>
             </div>

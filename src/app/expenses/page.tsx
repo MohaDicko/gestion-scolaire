@@ -9,6 +9,7 @@ import {
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const emptyForm = {
   description: '',
@@ -108,7 +109,7 @@ export default function ExpensesPage() {
             subtitle="Suivi des charges, salaires et factures fournisseurs"
             breadcrumbs={[{ label: 'Finance', href: '/invoices' }, { label: 'Dépenses' }]}
             actions={
-                <button className="btn-primary" onClick={() => setShowModal(true)}>
+                <button type="button" className="btn-primary" onClick={() => setShowModal(true)}>
                     <Plus size={15} /> Nouvelle Dépense
                 </button>
             }
@@ -183,8 +184,10 @@ export default function ExpensesPage() {
                                         </td>
                                         <td style={{ textAlign: 'right' }}>
                                             <button 
+                                                type="button"
                                                 className="btn-icon text-danger" 
                                                 title="Supprimer"
+                                                aria-label={`Supprimer la dépense ${e.description}`}
                                                 onClick={() => handleDelete(e.id, e.description)}
                                             >
                                                 <Trash2 size={14}/>
@@ -195,21 +198,22 @@ export default function ExpensesPage() {
                             </tbody>
                         </table>
                     ) : (
-                        <div style={{ padding: '80px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                            <BarChart3 size={48} style={{ opacity: 0.2, margin: '0 auto 16px', display: 'block' }} />
-                            <h3>Aucune dépense enregistrée</h3>
-                            <p style={{ fontSize: '13px' }}>Il n'y a eu aucune sortie de caisse pour cette période.</p>
-                        </div>
+                        <EmptyState
+                            icon={<BarChart3 size={48} />}
+                            title="Aucune dépense enregistrée"
+                            description="Il n'y a eu aucune sortie de caisse pour cette période."
+                            action={<button type="button" className="btn-primary" onClick={() => setShowModal(true)}><Plus size={15} /> Nouvelle dépense</button>}
+                        />
                     )}
                 </div>
             </div>
 
             {showModal && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border-md)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '480px', boxShadow: 'var(--shadow-lg)', animation: 'fadeUp 0.3s var(--ease) both' }}>
+                <div role="presentation" style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div role="dialog" aria-modal="true" aria-labelledby="expense-modal-title" style={{ background: 'var(--bg-2)', border: '1px solid var(--border-md)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '480px', boxShadow: 'var(--shadow-lg)', animation: 'fadeUp 0.3s var(--ease) both' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--border)' }}>
-                            <h2 style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '18px' }}>Enregistrer une Dépense</h2>
-                            <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
+                            <h2 id="expense-modal-title" style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '18px' }}>Enregistrer une Dépense</h2>
+                            <button type="button" aria-label="Fermer la fenêtre" className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
                         </div>
                         <form onSubmit={handleSubmit} style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
                             <div className="form-group">

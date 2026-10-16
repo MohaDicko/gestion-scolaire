@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Users, TrendingUp, AlertTriangle, Briefcase, ArrowUpRight, Loader2 } from 'lucide-react';
+import { Users, TrendingUp, AlertTriangle, Briefcase, ArrowUpRight } from 'lucide-react';
+import { StatCard } from '@/components/ui/stat-card';
 
 interface StatCardsProps {
   stats: {
@@ -61,22 +62,16 @@ export function StatCards({ stats, isLoading }: StatCardsProps) {
   return (
     <div className="stats-grid">
       {kpis.map((kpi, i) => (
-        <div key={i} className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: kpi.bg, color: kpi.color }}>
-            <kpi.icon size={22} />
-          </div>
-          <div className="stat-body">
-            <div className="stat-label">{kpi.label}</div>
-            <div className="stat-value">
-              {isLoading ? '...' : kpi.value}
-            </div>
-            <div className={`stat-change ${kpi.isDanger ? 'text-danger' : kpi.isSuccess ? 'text-success' : ''}`} 
-                 style={{ backgroundColor: kpi.isDanger ? 'var(--danger-dim)' : kpi.isSuccess ? 'var(--success-dim)' : 'var(--bg-4)' }}>
-              {kpi.trend} {kpi.change}
-            </div>
-          </div>
-          {isLoading && <Loader2 className="spin" size={14} style={{ position: 'absolute', top: '10px', right: '10px', opacity: 0.5 }} />}
-        </div>
+        <StatCard
+          key={i}
+          label={kpi.label}
+          value={kpi.value}
+          icon={<kpi.icon size={22} />}
+          description={kpi.change}
+          trend={kpi.trend ? 'Évolution' : undefined}
+          loading={isLoading}
+          tone={kpi.isDanger ? 'danger' : kpi.isSuccess ? 'success' : 'default'}
+        />
       ))}
     </div>
   );

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Book as BookIcon, Users, Loader2, Plus, Search, CheckCircle2, AlertTriangle, X, Bookmark } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function LibraryPage() {
   const [activeTab, setActiveTab] = useState<'inventory' | 'loans'>('inventory');
@@ -153,13 +154,17 @@ export default function LibraryPage() {
         {/* TABS */}
         <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
           <button 
+            type="button"
             onClick={() => setActiveTab('inventory')}
+            aria-pressed={activeTab === 'inventory'}
             className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === 'inventory' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800'}`}
           >
             <BookIcon className="w-4 h-4" /> Inventaire
           </button>
           <button 
+            type="button"
             onClick={() => setActiveTab('loans')}
+            aria-pressed={activeTab === 'loans'}
             className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === 'loans' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800'}`}
           >
             <Users className="w-4 h-4" /> Prêts en cours
@@ -188,7 +193,7 @@ export default function LibraryPage() {
                       className="pl-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus-visible:ring-blue-500 rounded-xl"
                     />
                   </div>
-                  <Button onClick={() => setIsAddBookModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm rounded-xl px-6">
+                  <Button type="button" onClick={() => setIsAddBookModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm rounded-xl px-6">
                     <Plus className="w-4 h-4 mr-2" /> Ajouter un livre
                   </Button>
                 </div>
@@ -239,9 +244,13 @@ export default function LibraryPage() {
                     </motion.div>
                   ))}
                   {filteredBooks.length === 0 && (
-                    <div className="col-span-full text-center py-24 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                      <BookIcon className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-                      <h3 className="text-lg font-bold text-slate-500">Aucun livre trouvé</h3>
+                    <div className="col-span-full">
+                      <EmptyState
+                        icon={<BookIcon className="w-12 h-12" />}
+                        title="Aucun livre trouvé"
+                        description="Ajoutez un ouvrage ou modifiez votre recherche."
+                        action={<Button type="button" onClick={() => setIsAddBookModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl"><Plus className="w-4 h-4 mr-2" /> Ajouter un livre</Button>}
+                      />
                     </div>
                   )}
                 </div>
@@ -326,7 +335,7 @@ export default function LibraryPage() {
                 <h3 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
                   <BookIcon className="text-blue-600" size={20} /> Nouvel Ouvrage
                 </h3>
-                <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500" onClick={() => setIsAddBookModalOpen(false)}>
+                <button type="button" aria-label="Fermer la fenêtre" className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500" onClick={() => setIsAddBookModalOpen(false)}>
                   <X size={18} />
                 </button>
               </div>
@@ -387,7 +396,7 @@ export default function LibraryPage() {
                 <h3 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
                   <Bookmark className="text-blue-600" size={20} /> Prêt : {selectedBook.title}
                 </h3>
-                <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500" onClick={() => setIsNewLoanModalOpen(false)}>
+                <button type="button" aria-label="Fermer la fenêtre" className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500" onClick={() => setIsNewLoanModalOpen(false)}>
                   <X size={18} />
                 </button>
               </div>

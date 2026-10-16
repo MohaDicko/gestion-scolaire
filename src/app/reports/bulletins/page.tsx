@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AppLayout from '@/components/AppLayout';
+import { EmptyState } from '@/components/ui/empty-state';
 import { FileText, Search, Printer, Loader2, Award, BookOpen, AlertCircle, TrendingUp, CheckCircle2, Download, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
@@ -439,14 +440,16 @@ export default function BulletinsPage() {
                 {showDropdown && students.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/50 z-50 max-h-64 overflow-y-auto py-1">
                     {students.map(s => (
-                      <div 
+                      <button
                         key={s.id} 
+                        type="button"
                         onClick={() => { 
                           setSelectedStudentId(s.id); 
                           setSearch(`${s.firstName} ${s.lastName}`); 
                           setShowDropdown(false); 
                         }}
                         className="px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-center justify-between group transition-colors"
+                        aria-label={`Sélectionner ${s.firstName} ${s.lastName}`}
                       >
                         <span className="font-semibold text-sm text-slate-700 group-hover:text-indigo-600">
                           {s.firstName} {s.lastName}
@@ -454,7 +457,7 @@ export default function BulletinsPage() {
                         <span className="text-xs text-slate-400 font-mono">
                           {s.studentNumber}
                         </span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -495,8 +498,10 @@ export default function BulletinsPage() {
                 </select>
               </div>
               <button 
+                type="button"
                 onClick={loadBulletin} 
                 disabled={!selectedStudentId || !selectedYearId || loading}
+                aria-label="Générer le bulletin de l'élève sélectionné"
                 className="mt-6 flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center justify-center shadow-sm"
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <TrendingUp size={18} />}
@@ -564,6 +569,7 @@ export default function BulletinsPage() {
                   {/* Actions Imprimer / Télécharger / Aperçu */}
                   <div className="flex flex-col gap-2 flex-1 sm:flex-initial min-w-[170px] print:hidden">
                     <button 
+                      type="button"
                       onClick={generatePDF} 
                       disabled={generating}
                       className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md cursor-pointer"
@@ -575,6 +581,7 @@ export default function BulletinsPage() {
 
                     <div className="flex gap-2">
                       <button 
+                        type="button"
                         onClick={printBulletin} 
                         disabled={generating}
                         className="flex-1 px-3 py-2 bg-white text-slate-900 hover:bg-slate-100 disabled:opacity-50 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
@@ -585,6 +592,7 @@ export default function BulletinsPage() {
                       </button>
 
                       <button 
+                        type="button"
                         onClick={viewPDF} 
                         disabled={generating}
                         className="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-50 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
@@ -602,6 +610,7 @@ export default function BulletinsPage() {
             {/* Barre d'action mobile sous l'en-tête */}
             <div className="p-3 bg-slate-100 border-b border-slate-200 flex sm:hidden gap-2 print:hidden">
               <button 
+                type="button"
                 onClick={generatePDF} 
                 disabled={generating}
                 className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
@@ -610,6 +619,7 @@ export default function BulletinsPage() {
                 Télécharger PDF
               </button>
               <button 
+                type="button"
                 onClick={printBulletin} 
                 disabled={generating}
                 className="flex-1 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
@@ -618,6 +628,7 @@ export default function BulletinsPage() {
                 Imprimer
               </button>
               <button 
+                type="button"
                 onClick={viewPDF} 
                 disabled={generating}
                 className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
@@ -688,14 +699,12 @@ export default function BulletinsPage() {
 
         {/* ── Empty State ── */}
         {!loading && !bulletin && (
-          <div className="bg-slate-50 border border-slate-200 border-dashed rounded-2xl p-16 flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-center mb-4">
-              <BookOpen size={24} className="text-slate-400" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-700 mb-2">Sélectionnez un élève</h3>
-            <p className="text-sm text-slate-500 max-w-md">
-              Recherchez un profil dans la barre de recherche et sélectionnez l'année et le trimestre pour générer un bulletin officiel.
-            </p>
+          <div className="bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
+            <EmptyState
+              icon={<BookOpen size={24} />}
+              title="Sélectionnez un élève"
+              description="Recherchez un profil, puis choisissez l'année et le trimestre pour générer un bulletin officiel."
+            />
           </div>
         )}
 

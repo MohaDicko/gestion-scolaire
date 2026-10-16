@@ -41,7 +41,7 @@ export default function ReleveCompetencesPage() {
   const toast = useToast();
 
   // Guard : vérification du type d'école
-  const ALLOWED_SCHOOL_TYPES = ['AGRO', 'TECHNIQUE'];
+  const ALLOWED_SCHOOL_TYPES = ['AGRO'];
   const [schoolType, setSchoolType] = useState<string | null>(null);
   const [schoolTypeLoading, setSchoolTypeLoading] = useState(true);
 
@@ -359,7 +359,7 @@ export default function ReleveCompetencesPage() {
               </h2>
               <p style={{ margin: "0 0 12px", fontSize: "14px", color: "#64748b", maxWidth: "500px", lineHeight: "1.6" }}>
                 Le <strong>Relevé de Compétences</strong> est un document officiel spécifique aux centres
-                de <strong>formation professionnelle agro-pastorale</strong> (type AGRO / TECHNIQUE),
+                de <strong>formation professionnelle agro-pastorale</strong> (type AGRO),
                 comme le <strong>CFPPAS GAO</strong>.
               </p>
               <p style={{ margin: 0, fontSize: "13px", color: "#94a3b8" }}>

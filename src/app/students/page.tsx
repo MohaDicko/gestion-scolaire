@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, FileDown, Users, Eye, Loader2, X, Upload, Briefcase } from 'lucide-react';
+import { Plus, Search, FileDown, Users, Eye, Loader2, Upload, Briefcase } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
@@ -15,6 +15,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 const GENDER_LABELS: Record<string, string> = { MALE: 'Masculin', FEMALE: 'Féminin', OTHER: 'Autre' };
 const RELATION_OPTIONS = ['FATHER', 'MOTHER', 'GUARDIAN', 'OTHER'];
@@ -430,6 +432,7 @@ export default function StudentsPage() {
             <Search size={15} />
             <input
               type="text"
+              aria-label="Rechercher un élève"
               placeholder="Rechercher par nom, matricule..."
               value={searchTerm}
               onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
@@ -475,19 +478,14 @@ export default function StudentsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
-                        🎓 {assignedClass}
-                      </Badge>
+                      <StatusBadge tone={assignedClass === 'Non-inscrit' ? 'warning' : 'success'}>
+                        {assignedClass}
+                      </StatusBadge>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={s.gender === 'FEMALE'
-                          ? 'bg-purple-500/10 text-purple-400 border-none font-medium'
-                          : 'bg-blue-500/10 text-blue-400 border-none font-medium'}
-                      >
+                      <StatusBadge tone={s.gender === 'FEMALE' ? 'info' : 'neutral'}>
                         {GENDER_LABELS[s.gender] || s.gender}
-                      </Badge>
+                      </StatusBadge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
@@ -510,11 +508,22 @@ export default function StudentsPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className="py-20 text-center text-text-muted">
-              <Users size={48} className="opacity-10 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-text mb-2">Aucun élève trouvé</h3>
-              <p className="text-sm">Aucun résultat pour cette recherche ou la liste est vide.</p>
-            </div>
+            <EmptyState
+              icon={<Users size={48} />}
+              title="Aucun élève trouvé"
+              description="Aucun résultat pour cette recherche ou la liste est vide."
+              action={
+                searchTerm ? (
+                  <Button variant="outline" size="sm" onClick={() => { setSearchTerm(''); setPage(1); }}>
+                    Effacer la recherche
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={() => setShowModal(true)}>
+                    <Plus size={14} /> Inscrire un élève
+                  </Button>
+                )
+              }
+            />
           )}
         </div>
 

@@ -7,6 +7,7 @@ import { useToast } from '@/components/Toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function InventoryPage() {
   const toast = useToast();
@@ -96,7 +97,7 @@ export default function InventoryPage() {
       subtitle="Uniformes, fournitures, manuels et équipements scolaires"
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Inventaire' }]}
       actions={
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm" onClick={() => setShowItemModal(true)}>
+        <Button type="button" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm" onClick={() => setShowItemModal(true)}>
           <Plus size={18} className="mr-2" /> Nouvel Article
         </Button>
       }
@@ -230,13 +231,15 @@ export default function InventoryPage() {
                       <td className="px-6 py-4 text-right">
                         <div className="flex gap-2 justify-end">
                           <button 
+                            type="button"
                             className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 flex items-center justify-center transition-colors" 
                             title="Entrée/Sortie"
+                            aria-label={`Enregistrer un mouvement pour ${item.name}`}
                             onClick={() => { setSelectedItem(item); setShowMoveModal(true); }}
                           >
                             <ArrowUpRight size={16} strokeWidth={2.5} />
                           </button>
-                          <button className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors" title="Historique">
+                          <button type="button" className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors" title="Historique" aria-label={`Afficher l'historique de ${item.name}`}>
                             <History size={16} />
                           </button>
                         </div>
@@ -246,11 +249,12 @@ export default function InventoryPage() {
                 </tbody>
               </table>
             ) : (
-              <div className="py-24 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 m-6 rounded-3xl">
-                <Package size={64} className="opacity-20 mb-4" />
-                <h3 className="text-lg font-bold text-slate-600 mb-1">Aucun article trouvé</h3>
-                <p className="text-sm">Votre inventaire est vide ou ne correspond pas à la recherche.</p>
-              </div>
+              <EmptyState
+                icon={<Package size={64} />}
+                title="Aucun article trouvé"
+                description="Votre inventaire est vide ou ne correspond pas à la recherche."
+                action={<Button type="button" onClick={() => setShowItemModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl"><Plus size={16} className="mr-2" /> Nouvel article</Button>}
+              />
             )}
           </div>
         </div>
@@ -266,7 +270,7 @@ export default function InventoryPage() {
                 <h3 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
                     <Tag className="text-blue-600" size={20} /> Nouvel Article
                 </h3>
-                <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500" onClick={() => setShowItemModal(false)}>
+                <button type="button" aria-label="Fermer la fenêtre" className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500" onClick={() => setShowItemModal(false)}>
                     <X size={18} />
                 </button>
               </div>
@@ -328,7 +332,7 @@ export default function InventoryPage() {
                 <h3 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
                     <ArrowUpRight className="text-blue-600" size={20} /> Mouvement
                 </h3>
-                <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500" onClick={() => setShowMoveModal(false)}>
+                <button type="button" aria-label="Fermer la fenêtre" className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500" onClick={() => setShowMoveModal(false)}>
                     <X size={18} />
                 </button>
               </div>

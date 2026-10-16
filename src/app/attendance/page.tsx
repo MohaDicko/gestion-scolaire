@@ -1,13 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { CalendarCheck, Save, AlertCircle, Loader2, CheckCircle, Users } from 'lucide-react';
+import { CalendarCheck, Save, AlertCircle, Loader2, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusBadge } from '@/components/ui/status-badge';
+
+const ATTENDANCE_STATUSES = [
+  { value: 'PRESENT', label: 'Présent', tone: 'success' as const, shortLabel: 'P' },
+  { value: 'ABSENT', label: 'Absent', tone: 'danger' as const, shortLabel: 'A' },
+  { value: 'LATE', label: 'Retard', tone: 'warning' as const, shortLabel: 'R' },
+  { value: 'EXCUSED', label: 'Excusé', tone: 'info' as const, shortLabel: 'E' },
+];
 
 export default function AttendancePage() {
   const router = useRouter();
@@ -74,6 +83,11 @@ export default function AttendancePage() {
     }
   };
 
+  const attendanceSummary = ATTENDANCE_STATUSES.map(status => ({
+    ...status,
+    count: students.filter(student => student.status === status.value).length,
+  }));
+
   return (
     <AppLayout
       title="Registre d'Appel"
@@ -134,7 +148,15 @@ export default function AttendancePage() {
                 <p className="text-sm font-bold">Synchronisation...</p>
               </div>
             ) : students.length > 0 ? (
-              <div className="overflow-x-auto">
+              <>
+                <div className="flex flex-wrap gap-2 border-b border-slate-100 p-4 dark:border-slate-800" aria-label="Résumé des présences">
+                  {attendanceSummary.map(status => (
+                    <StatusBadge key={status.value} tone={status.tone} dot>
+                      {status.label} : {status.count}
+                    </StatusBadge>
+                  ))}
+                </div>
+                <div className="overflow-x-auto">
                 <table className="w-full border-collapse min-w-[500px]">
                   <thead>
                     <tr className="text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 dark:border-slate-800/50">
@@ -156,21 +178,25 @@ export default function AttendancePage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 flex justify-center">
+                        <td className="px-6 py-4">
                           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1">
-                            {['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'].map((status) => (
+                            {ATTENDANCE_STATUSES.map((status) => (
                               <button
-                                key={status}
-                                onClick={() => handleStatusChange(s.studentId, status)}
+                                key={status.value}
+                                type="button"
+                                onClick={() => handleStatusChange(s.studentId, status.value)}
+                                aria-label={`${s.studentName} : ${status.label}`}
+                                aria-pressed={s.status === status.value}
                                 className={`px-3 py-1.5 rounded-lg text-[9px] font-black transition-all ${
-                                  s.status === status 
-                                    ? (status === 'PRESENT' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 
-                                       status === 'ABSENT' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 
+                                  s.status === status.value
+                                    ? (status.value === 'PRESENT' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' :
+                                       status.value === 'ABSENT' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' :
                                        'bg-amber-500 text-white shadow-lg shadow-amber-500/20')
                                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                 }`}
                               >
-                                {status === 'PRESENT' ? 'P' : status === 'ABSENT' ? 'A' : status === 'LATE' ? 'R' : 'E'}
+                                <span className="sm:hidden">{status.shortLabel}</span>
+                                <span className="hidden sm:inline">{status.label}</span>
                               </button>
                             ))}
                           </div>
@@ -179,20 +205,23 @@ export default function AttendancePage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             ) : (
-              <div className="py-20 flex flex-col items-center justify-center text-slate-400 opacity-30 text-center px-10">
-                <AlertCircle size={48} className="mb-4" />
-                <h3 className="text-lg font-black uppercase tracking-widest">Effectif vide</h3>
-                <p className="text-xs max-w-xs mt-2">Vérifiez les inscriptions dans cette classe pour la période sélectionnée.</p>
-              </div>
+              <EmptyState
+                icon={<AlertCircle size={48} />}
+                title="Effectif vide"
+                description="Vérifiez les inscriptions dans cette classe pour la période sélectionnée."
+              />
             )}
           </Card>
         ) : (
-          <div className="py-24 flex flex-col items-center justify-center text-slate-400/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl">
-            <Users size={64} className="mb-4 opacity-10" />
-            <h3 className="text-sm font-black uppercase tracking-[0.2em]">Sélectionnez une classe</h3>
-          </div>
+          <EmptyState
+            className="min-h-60"
+            icon={<Users size={64} />}
+            title="Sélectionnez une classe"
+            description="Choisissez une classe et une date pour afficher le registre d'appel."
+          />
         )}
 
       </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, Plus, Search, Loader2, X, Trash2, Edit } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const emptyForm = { name: '', code: '', coefficient: '1.0' };
 
@@ -18,7 +19,7 @@ export default function SubjectsPage() {
     
     // Détection du type d'école
     const [schoolType, setSchoolType] = useState<string | null>(null);
-    const isAgroOrTech = schoolType === 'AGRO' || schoolType === 'TECHNIQUE';
+    const isAgro = schoolType === 'AGRO';
 
     useEffect(() => {
         fetch('/api/school/config')
@@ -75,12 +76,12 @@ export default function SubjectsPage() {
 
     return (
         <AppLayout
-            title={isAgroOrTech ? "Gestion des Modules" : "Gestion des Matières"}
-            subtitle={isAgroOrTech ? "Catalogue des modules, durées et seuils de réussite" : "Définition du catalogue des enseignements et coefficients"}
-            breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: isAgroOrTech ? 'Modules' : 'Matières' }]}
+            title={isAgro ? "Gestion des Modules" : "Gestion des Matières"}
+            subtitle={isAgro ? "Catalogue des modules, durées et seuils de réussite" : "Définition du catalogue des enseignements et coefficients"}
+            breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: isAgro ? 'Modules' : 'Matières' }]}
             actions={
-                <button className="btn-primary" onClick={() => setShowModal(true)}>
-                    <Plus size={15} /> {isAgroOrTech ? 'Nouveau Module' : 'Nouvelle Matière'}
+                <button type="button" className="btn-primary" onClick={() => setShowModal(true)}>
+                    <Plus size={15} /> {isAgro ? 'Nouveau Module' : 'Nouvelle Matière'}
                 </button>
             }
         >
@@ -107,9 +108,9 @@ export default function SubjectsPage() {
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th>{isAgroOrTech ? 'Code / Durée' : 'Code'}</th>
-                                    <th>{isAgroOrTech ? 'Nom du Module' : 'Nom de la Matière'}</th>
-                                    <th>{isAgroOrTech ? 'Seuil (%)' : 'Coefficient'}</th>
+                                    <th>{isAgro ? 'Code / Durée' : 'Code'}</th>
+                                    <th>{isAgro ? 'Nom du Module' : 'Nom de la Matière'}</th>
+                                    <th>{isAgro ? 'Seuil (%)' : 'Coefficient'}</th>
                                     <th>Date de Création</th>
                                     <th style={{ textAlign: 'right' }}>Actions</th>
                                 </tr>
@@ -119,7 +120,7 @@ export default function SubjectsPage() {
                                     <tr key={s.id}>
                                         <td>
                                             <span className="badge badge-info">{s.code}</span>
-                                            {isAgroOrTech && s.code.match(/(\d+)/) && (
+                                            {isAgro && s.code.match(/(\d+)/) && (
                                                 <span style={{ fontSize: '11px', color: '#64748b', marginLeft: '6px' }}>
                                                     {s.code.match(/(\d+)/)?.[1]} H
                                                 </span>
@@ -128,7 +129,7 @@ export default function SubjectsPage() {
                                         <td><strong style={{ color: 'var(--text)' }}>{s.name}</strong></td>
                                         <td>
                                             <strong>{s.coefficient}</strong>
-                                            {isAgroOrTech && <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: '4px' }}>%</span>}
+                                            {isAgro && <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: '4px' }}>%</span>}
                                         </td>
                                         <td>{new Date(s.createdAt).toLocaleDateString()}</td>
                                         <td style={{ textAlign: 'right' }}>
@@ -142,11 +143,12 @@ export default function SubjectsPage() {
                             </tbody>
                         </table>
                     ) : (
-                        <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                            <BookOpen size={48} style={{ opacity: 0.2, margin: '0 auto 16px', display: 'block' }} />
-                            <h3 style={{ fontWeight: 600, marginBottom: '8px' }}>Aucune matière trouvée</h3>
-                            <p style={{ fontSize: '13px' }}>Commencez par ajouter des matières à votre cycle d'études.</p>
-                        </div>
+                        <EmptyState
+                            icon={<BookOpen size={48} />}
+                            title={isAgro ? 'Aucun module trouvé' : 'Aucune matière trouvée'}
+                            description={isAgro ? 'Commencez par ajouter des modules à votre cycle de formation.' : 'Commencez par ajouter des matières à votre cycle d’études.'}
+                            action={<button type="button" className="btn-primary" onClick={() => setShowModal(true)}><Plus size={15} /> {isAgro ? 'Nouveau module' : 'Nouvelle matière'}</button>}
+                        />
                     )}
                 </div>
             </div>
@@ -156,41 +158,41 @@ export default function SubjectsPage() {
                     <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border-md)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '450px', boxShadow: 'var(--shadow-lg)', animation: 'fadeUp 0.3s var(--ease) both' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--border)' }}>
                             <h2 style={{ fontFamily: 'Plus Jakarta Sans', fontWeight: 700, fontSize: '18px' }}>
-                                {isAgroOrTech ? 'Nouveau Module' : 'Nouvelle Matière'}
+                                {isAgro ? 'Nouveau Module' : 'Nouvelle Matière'}
                             </h2>
-                            <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
+                            <button type="button" aria-label="Fermer la fenêtre" className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
                         </div>
                         <form onSubmit={handleSubmit} style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div className="form-group">
-                                <label>{isAgroOrTech ? 'Nom du Module *' : 'Nom de la Matière *'}</label>
+                                <label>{isAgro ? 'Nom du Module *' : 'Nom de la Matière *'}</label>
                                 <input 
                                     required 
                                     value={formData.name} 
                                     onChange={e => setFormData({...formData, name: e.target.value})} 
-                                    placeholder={isAgroOrTech ? "Ex: Production Animale" : "Ex: Mathématiques, Anatomie..."}
+                                    placeholder={isAgro ? "Ex: Production Animale" : "Ex: Mathématiques, Anatomie..."}
                                 />
                             </div>
                             <div className="form-group">
-                                <label>{isAgroOrTech ? 'Code & Durée (Ex: M1-135 pour 135 H) *' : 'Code Matière *'}</label>
+                                <label>{isAgro ? 'Code & Durée (Ex: M1-135 pour 135 H) *' : 'Code Matière *'}</label>
                                 <input 
                                     required 
                                     value={formData.code} 
                                     onChange={e => setFormData({...formData, code: e.target.value})} 
-                                    placeholder={isAgroOrTech ? "Ex: MOD-135" : "Ex: MATH01, BIO-101..."}
+                                    placeholder={isAgro ? "Ex: MOD-135" : "Ex: MATH01, BIO-101..."}
                                 />
                             </div>
                             <div className="form-group">
-                                <label>{isAgroOrTech ? 'Seuil de Réussite (%) *' : 'Coefficient *'}</label>
+                                <label>{isAgro ? 'Seuil de Réussite (%) *' : 'Coefficient *'}</label>
                                 <input 
                                     type="number" 
-                                    step={isAgroOrTech ? "1" : "0.5"} 
-                                    min={isAgroOrTech ? "1" : "0.5"} 
-                                    max={isAgroOrTech ? "100" : undefined}
+                                    step={isAgro ? "1" : "0.5"}
+                                    min={isAgro ? "1" : "0.5"}
+                                    max={isAgro ? "100" : undefined}
                                     required 
                                     value={formData.coefficient} 
                                     onChange={e => setFormData({...formData, coefficient: e.target.value})} 
                                 />
-                                {isAgroOrTech && <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>Note: Ce seuil sera utilisé pour valider le module sur 100.</span>}
+                                {isAgro && <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>Note: Ce seuil sera utilisé pour valider le module sur 100.</span>}
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
                                 <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
