@@ -117,7 +117,7 @@ export default function DashboardPage() {
     : 85;
   const resteARecouvrer = Math.max(0, stats.invoicesTotal - stats.invoicesPaid);
 
-  // Tuiles Numériques SAP Fiori Horizon (Launchpad KPI Tiles)
+  // Tuiles Numériques SAP Fiori Horizon (Launchpad KPI Tiles enrichies)
   const fioriTiles = [
     {
       category: 'Scolarité • Effectifs',
@@ -129,7 +129,10 @@ export default function DashboardPage() {
       subtext: '3 filières actives (TE, EA1, EA2)',
       href: '/students',
       icon: GraduationCap,
-      accentColor: '#0070F2', // Fiori Horizon Blue
+      accentColor: '#1d4ed8',
+      gradient: 'from-blue-600 to-indigo-600',
+      iconGradient: 'from-blue-500 to-indigo-600',
+      progress: 88,
       statusLabel: 'Conforme',
       statusType: 'success' as const,
     },
@@ -143,7 +146,10 @@ export default function DashboardPage() {
       subtext: '12 dossiers d\'impayés à relancer',
       href: '/invoices',
       icon: BadgePercent,
-      accentColor: '#107E3E', // Fiori Positive Green
+      accentColor: '#059669',
+      gradient: 'from-emerald-600 to-teal-600',
+      iconGradient: 'from-emerald-500 to-teal-600',
+      progress: recouvrementRate,
       statusLabel: recouvrementRate >= 80 ? 'Objectif Atteint' : 'Sous Vigilance',
       statusType: recouvrementRate >= 80 ? 'success' as const : 'warning' as const,
     },
@@ -157,7 +163,10 @@ export default function DashboardPage() {
       subtext: '4 absences non justifiées à Gao',
       href: '/attendance',
       icon: CalendarCheck2,
-      accentColor: '#0284c7', // Cyan Horizon
+      accentColor: '#0284c7',
+      gradient: 'from-cyan-600 to-blue-600',
+      iconGradient: 'from-cyan-500 to-sky-600',
+      progress: 94,
       statusLabel: 'Régulier',
       statusType: 'info' as const,
     },
@@ -166,12 +175,15 @@ export default function DashboardPage() {
       title: 'Corps Formateurs',
       value: stats.employeesCount || 21,
       unit: 'vacataires & perm.',
-      trend: '1 750 FCFA/h conventionné',
+      trend: '1 750 FCFA/h conv.',
       trendPositive: true,
       subtext: `${stats.pendingLeaves || 3} demandes de congé à valider`,
       href: '/employees',
       icon: Briefcase,
-      accentColor: '#5c35cc', // Fiori Purple
+      accentColor: '#7c3aed',
+      gradient: 'from-violet-600 to-purple-600',
+      iconGradient: 'from-violet-500 to-purple-600',
+      progress: 75,
       statusLabel: '3 En Attente',
       statusType: 'warning' as const,
     },
@@ -185,7 +197,10 @@ export default function DashboardPage() {
       subtext: 'Grille horaire 100% planifiée',
       href: '/classrooms',
       icon: Layers,
-      accentColor: '#c55305', // Fiori Orange
+      accentColor: '#d97706',
+      gradient: 'from-amber-500 to-orange-600',
+      iconGradient: 'from-amber-500 to-yellow-600',
+      progress: 100,
       statusLabel: 'Planifié',
       statusType: 'neutral' as const,
     },
@@ -341,55 +356,58 @@ export default function DashboardPage() {
         variants={stagger}
       >
 
-        {/* ── 1. FIORI SHELL CONTEXT BANNER (En-tête Institutionnel Fiori Horizon) ── */}
+        {/* ── 1. CONTEXT BANNER INSTITUTIONNEL & ÉTAT (Deep Sapphire & Gold Prestige) ── */}
         <motion.section
           variants={fadeUp}
-          className="relative overflow-hidden rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-[#0A2558] to-[#123668] text-white p-5 sm:p-6 shadow-xl shadow-blue-950/20 border border-blue-900/40"
         >
-          {/* Accent Fiori Horizon discret */}
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0070F2] via-[#0284c7] to-[#107E3E]" />
+          {/* Liseré Tricolore National de la République du Mali */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#14B866] via-[#FCD116] to-[#CE1126]" />
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Sphères d'ambiance lumineuse discrète */}
+          <div className="pointer-events-none absolute -right-8 -bottom-12 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl" />
+          <div className="pointer-events-none absolute right-48 -top-12 w-48 h-48 rounded-full bg-amber-500/10 blur-2xl" />
+
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div className="flex items-start sm:items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 flex items-center justify-center shrink-0 text-[#0070F2] dark:text-blue-400 font-black shadow-xs">
-                <Landmark size={24} strokeWidth={1.75} />
+              <div className="w-13 h-13 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 text-slate-950 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30">
+                <Landmark size={26} strokeWidth={2.2} />
               </div>
               <div>
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
                     CFP-PAS de Gao
                   </h1>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#0070F2]/10 text-[#0070F2] dark:text-blue-400 uppercase tracking-wider border border-[#0070F2]/20">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase tracking-wider">
                     Exercice 2025 - 2026
                   </span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                    Référentiel APC
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1">
+                    <CheckCircle2 size={12} strokeWidth={2.5} />
+                    Référentiel APC Homologué
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
-                  {greeting}{user?.firstName ? `, ${user.firstName}` : ''} • Que souhaitez-vous faire aujourd'hui ?
+                <p className="text-xs sm:text-sm text-blue-100/80 font-medium">
+                  {greeting}{user?.firstName ? `, ${user.firstName}` : ''} • Plateforme Nationale de Gestion & de Pilotage de l'Établissement
                 </p>
               </div>
             </div>
 
-            {/* Fiori Context Data Points */}
-            <div className="flex items-center gap-4 border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-100 dark:border-slate-800 text-xs">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Territoire</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">Gao, République du Mali</span>
+            {/* Context Data Points en Verre Dépoli */}
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-3 text-xs">
+              <div className="flex flex-col px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200/70">Territoire</span>
+                <span className="font-bold text-white text-xs mt-0.5">Gao (Région VII)</span>
               </div>
-              <div className="w-px h-7 bg-slate-200 dark:bg-slate-800" />
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Rôle Opérateur</span>
-                <span className="font-bold text-[#0070F2] dark:text-blue-400">
-                  {user?.role === 'SUPER_ADMIN' ? 'Superviseur National' : 'Direction Établissement'}
+              <div className="flex flex-col px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200/70">Rôle Opérateur</span>
+                <span className="font-bold text-amber-300 text-xs mt-0.5">
+                  {user?.role === 'SUPER_ADMIN' ? 'Superviseur National' : 'Direction École'}
                 </span>
               </div>
-              <div className="w-px h-7 bg-slate-200 dark:bg-slate-800" />
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Caisse & Dépenses</span>
-                <span className="font-bold text-[#107E3E] dark:text-emerald-400 flex items-center gap-1">
-                  <CheckCheck size={13} strokeWidth={2} />
+              <div className="flex flex-col px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200/70">Caisse & Trésor</span>
+                <span className="font-bold text-emerald-300 text-xs mt-0.5 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Équilibré
                 </span>
               </div>
@@ -397,22 +415,80 @@ export default function DashboardPage() {
           </div>
         </motion.section>
 
-        {/* ── 1b. ACTIONS COURANTES (accueil simplifié : 6 gros boutons) ── */}
+        {/* ── 1b. ACTIONS COURANTES (6 Cartes Colorées Dynamiques & Intuitives) ── */}
         <motion.section variants={fadeUp} aria-labelledby="quick-actions-title">
-          <div className="flex items-center justify-between mb-3">
-            <h2 id="quick-actions-title" className="text-base font-bold text-slate-900 dark:text-white">
-              Que voulez-vous faire ?
-            </h2>
-            <span className="text-[11px] font-medium text-slate-400">Cliquez sur une action pour commencer</span>
+          <div className="flex items-center justify-between mb-3.5">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-5 rounded-full bg-gradient-to-b from-blue-600 to-indigo-600" />
+              <h2 id="quick-actions-title" className="text-base font-extrabold text-slate-900 dark:text-white">
+                Que voulez-vous faire ?
+              </h2>
+            </div>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Accès direct aux opérations courantes</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-3.5">
             {[
-              { label: 'Inscrire un élève', hint: 'Nouvelle inscription', href: '/students/enroll', icon: UserPlus, color: '#0070F2' },
-              { label: 'Encaisser un paiement', hint: 'Scolarité, frais', href: '/finance/payments', icon: Wallet, color: '#107E3E' },
-              { label: 'Faire l\'appel', hint: 'Présences du jour', href: '/attendance', icon: CalendarCheck2, color: '#0284c7' },
-              { label: 'Saisir les notes', hint: 'Évaluations', href: '/grades', icon: FileSpreadsheet, color: '#c55305' },
-              { label: 'Imprimer un bulletin', hint: 'Bulletins & certificats', href: '/reports/bulletins', icon: FileCheck2, color: '#5c35cc' },
-              { label: 'Emploi du temps', hint: 'Cours de la semaine', href: '/timetable', icon: Calendar, color: '#0A3B7B' },
+              {
+                label: 'Inscrire un élève',
+                hint: 'Nouvelle admission',
+                href: '/students/enroll',
+                icon: UserPlus,
+                accent: '#2563eb',
+                bgGradient: 'from-blue-600 to-indigo-600',
+                glow: 'hover:shadow-blue-500/20 hover:border-blue-400',
+                softBg: 'group-hover:bg-blue-50/50 dark:group-hover:bg-blue-950/20',
+              },
+              {
+                label: 'Encaisser paiement',
+                hint: 'Scolarité & reçus',
+                href: '/finance/payments',
+                icon: Wallet,
+                accent: '#059669',
+                bgGradient: 'from-emerald-600 to-teal-600',
+                glow: 'hover:shadow-emerald-500/20 hover:border-emerald-400',
+                softBg: 'group-hover:bg-emerald-50/50 dark:group-hover:bg-emerald-950/20',
+              },
+              {
+                label: 'Faire l\'appel',
+                hint: 'Présences du jour',
+                href: '/attendance',
+                icon: CalendarCheck2,
+                accent: '#0284c7',
+                bgGradient: 'from-cyan-600 to-sky-600',
+                glow: 'hover:shadow-cyan-500/20 hover:border-cyan-400',
+                softBg: 'group-hover:bg-cyan-50/50 dark:group-hover:bg-cyan-950/20',
+              },
+              {
+                label: 'Saisir les notes',
+                hint: 'Évaluations APC',
+                href: '/grades',
+                icon: FileSpreadsheet,
+                accent: '#ea580c',
+                bgGradient: 'from-amber-500 to-orange-600',
+                glow: 'hover:shadow-orange-500/20 hover:border-orange-400',
+                softBg: 'group-hover:bg-amber-50/50 dark:group-hover:bg-amber-950/20',
+              },
+              {
+                label: 'Imprimer bulletin',
+                hint: 'Bulletins & certificats',
+                href: '/reports/bulletins',
+                icon: FileCheck2,
+                accent: '#7c3aed',
+                bgGradient: 'from-purple-600 to-violet-700',
+                glow: 'hover:shadow-purple-500/20 hover:border-purple-400',
+                softBg: 'group-hover:bg-purple-50/50 dark:group-hover:bg-purple-950/20',
+              },
+              {
+                label: 'Emploi du temps',
+                hint: 'Planning des salles',
+                href: '/timetable',
+                icon: Calendar,
+                accent: '#e11d48',
+                bgGradient: 'from-rose-500 to-pink-600',
+                glow: 'hover:shadow-rose-500/20 hover:border-rose-400',
+                softBg: 'group-hover:bg-rose-50/50 dark:group-hover:bg-rose-950/20',
+              },
             ].map((a) => {
               const QIcon = a.icon;
               return (
@@ -420,30 +496,48 @@ export default function DashboardPage() {
                   key={a.href}
                   id={`quick-action-${a.href.replace(/\W+/g, '-')}`}
                   onClick={() => router.push(a.href)}
-                  className="group text-left bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 hover:shadow-md hover:border-blue-300 transition-all focus:outline-none focus:ring-2 focus:ring-[#0070F2]"
-                  style={{ borderTop: `3px solid ${a.color}` }}
+                  className={`group relative text-left bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${a.glow} ${a.softBg} focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer overflow-hidden flex flex-col justify-between`}
+                  style={{ borderTop: `3.5px solid ${a.accent}` }}
                 >
-                  <span className="w-11 h-11 rounded-lg flex items-center justify-center mb-3" style={{ background: `${a.color}14`, color: a.color }}>
-                    <QIcon size={24} strokeWidth={1.75} />
-                  </span>
-                  <span className="block text-sm font-bold text-slate-900 dark:text-white leading-snug">{a.label}</span>
-                  <span className="block text-[11px] text-slate-500 mt-0.5">{a.hint}</span>
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        className={`w-11 h-11 rounded-xl flex items-center justify-center text-white bg-gradient-to-br ${a.bgGradient} shadow-md shadow-black/10 group-hover:scale-105 transition-transform duration-200`}
+                      >
+                        <QIcon size={22} strokeWidth={2} />
+                      </span>
+                      <ArrowRight
+                        size={15}
+                        strokeWidth={2.2}
+                        className="text-slate-300 dark:text-slate-600 group-hover:text-slate-700 dark:group-hover:text-slate-200 group-hover:translate-x-1 transition-all"
+                      />
+                    </div>
+                    <span className="block text-sm font-extrabold text-slate-900 dark:text-white leading-snug">
+                      {a.label}
+                    </span>
+                    <span className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
+                      {a.hint}
+                    </span>
+                  </div>
                 </button>
               );
             })}
           </div>
         </motion.section>
 
-        {/* ── 2. FIORI HORIZON KPI LAUNCHPAD TILES (Numeric Cards) ── */}
+        {/* ── 2. CHIFFRES CLÉS ENRICHIS (KPI Launchpad Tiles avec Barres Visuelles) ── */}
         <motion.section variants={fadeUp} aria-labelledby="fiori-tiles-title">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3.5">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-xs bg-[#0070F2]" />
-              <h2 id="fiori-tiles-title" className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Chiffres clés de l'école
+              <div className="w-2 h-5 rounded-full bg-gradient-to-b from-emerald-600 to-teal-600" />
+              <h2 id="fiori-tiles-title" className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                Chiffres clés & Performances de l'école
               </h2>
             </div>
-            <span className="text-[11px] font-medium text-slate-400">Mis à jour en direct</span>
+            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Synchronisation direct État
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
@@ -452,66 +546,73 @@ export default function DashboardPage() {
               return (
                 <motion.div
                   key={i}
-                  whileHover={{ y: -2 }}
+                  whileHover={{ y: -3 }}
                   transition={{ duration: 0.15 }}
                   onClick={() => router.push(tile.href)}
-                  className="group relative cursor-pointer rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(0,112,242,0.08)] hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between"
-                  style={{ borderTopWidth: '3px', borderTopColor: tile.accentColor }}
+                  className="group relative cursor-pointer rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4.5 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between overflow-hidden"
+                  style={{ borderTop: `4px solid ${tile.accentColor}` }}
                 >
                   <div>
-                    {/* Header: Catégorie + Icône Fiori encadrée */}
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">
+                    {/* Header: Catégorie + Icône en Dégradé Vibrant */}
+                    <div className="flex items-center justify-between gap-2 mb-2.5">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">
                         {tile.category}
                       </span>
                       <div
-                        className="w-7 h-7 rounded-md flex items-center justify-center transition-colors"
-                        style={{ backgroundColor: `${tile.accentColor}14`, color: tile.accentColor }}
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-white bg-gradient-to-br ${tile.iconGradient} shadow-sm group-hover:scale-110 transition-transform`}
                       >
-                        <Icon size={16} strokeWidth={1.75} />
+                        <Icon size={17} strokeWidth={2} />
                       </div>
                     </div>
 
                     {/* Intitulé Métier */}
-                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                       {tile.title}
                     </h3>
 
                     {/* Valeur Chiffrée Géante (Tabular Nums) */}
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight tabular-nums">
+                    <div className="flex items-baseline gap-2 mb-2.5">
+                      <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
                         {isLoading ? (
                           <span className="inline-block h-7 w-16 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
                         ) : (
                           tile.value
                         )}
                       </span>
-                      <span className="text-[11px] font-medium text-slate-400 truncate">
+                      <span className="text-[11px] font-semibold text-slate-400 truncate">
                         {tile.unit}
                       </span>
                     </div>
+
+                    {/* Mini-jauge de progression visuelle */}
+                    <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden mb-3">
+                      <div
+                        className={`h-full rounded-full bg-gradient-to-r ${tile.gradient} transition-all duration-500`}
+                        style={{ width: `${Math.min(100, tile.progress)}%` }}
+                      />
+                    </div>
                   </div>
 
-                  {/* Footer de la tuile Fiori : Tendance & Badge sémantique */}
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+                  {/* Footer de la tuile : Tendance & Badge sémantique */}
+                  <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
                     <span
-                      className={`font-bold tabular-nums flex items-center gap-0.5 ${
+                      className={`font-extrabold tabular-nums flex items-center gap-0.5 ${
                         tile.trendPositive
-                          ? 'text-[#107E3E] dark:text-emerald-400'
-                          : 'text-[#C55305] dark:text-amber-400'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-amber-600 dark:text-amber-400'
                       }`}
                     >
                       {tile.trend}
                     </span>
                     <span
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wide ${
                         tile.statusType === 'success'
-                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60'
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                           : tile.statusType === 'warning'
-                          ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/60'
+                          ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
                           : tile.statusType === 'info'
-                          ? 'bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200/60'
-                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/60'
+                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                          : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
                       }`}
                     >
                       {tile.statusLabel}
@@ -527,34 +628,36 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
           {/* COLONNE GAUCHE (2 tiers) : WORKLIST "DOSSIERS EN ARBITRAGE" */}
-          <motion.div variants={fadeUp} className="xl:col-span-2 flex flex-col gap-4">
-            <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden">
+          <motion.div variants={fadeUp} className="xl:col-span-2 flex flex-col gap-5">
+            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden">
               
               {/* Header de la Worklist Fiori */}
-              <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-slate-50/70 via-blue-50/30 to-transparent dark:from-slate-850 dark:to-transparent">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <FolderCheck size={18} strokeWidth={1.75} className="text-[#0070F2] dark:text-blue-400" />
-                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                      Dossiers à traiter
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm">
+                      <FolderCheck size={18} strokeWidth={2} />
+                    </div>
+                    <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                      Dossiers prioritaires à traiter
                     </h2>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#0070F2]/10 text-[#0070F2] dark:text-blue-400">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
                       {dossiersList.length} actifs
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Impayés, demandes de congé et bulletins à valider
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 pl-10.5">
+                    Régularisations financières, approbations RH et visas de bulletins
                   </p>
                 </div>
 
                 {/* Filtres d'état (Fiori Segmented Buttons) */}
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg text-xs self-start sm:self-auto font-semibold">
+                <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-slate-800 p-1 rounded-xl text-xs self-start sm:self-auto font-bold border border-slate-200/70 dark:border-slate-700/60">
                   <button
                     type="button"
                     onClick={() => setActiveTab('all')}
-                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                       activeTab === 'all'
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                     }`}
                   >
@@ -563,10 +666,10 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('critical')}
-                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                       activeTab === 'critical'
-                        ? 'bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-red-600'
+                        ? 'bg-rose-600 text-white shadow-sm shadow-rose-500/20'
+                        : 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
                     }`}
                   >
                     Critiques (1)
@@ -574,10 +677,10 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('pending')}
-                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                       activeTab === 'pending'
-                        ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-amber-600'
+                        ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
+                        : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'
                     }`}
                   >
                     En Attente (2)
@@ -585,17 +688,17 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Tableau épuré des Dossiers Fiori (High Density Table) */}
+              {/* Tableau épuré des Dossiers (High Density Table) */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      <th className="py-3 px-4">N° dossier</th>
-                      <th className="py-3 px-4">Ce qu'il faut faire</th>
-                      <th className="py-3 px-4">Personne concernée</th>
-                      <th className="py-3 px-4">Montant / Volume</th>
-                      <th className="py-3 px-4">État</th>
-                      <th className="py-3 px-4 text-right">Action</th>
+                    <tr className="bg-slate-50/90 dark:bg-slate-800/50 border-b border-slate-200/70 dark:border-slate-800 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                      <th className="py-3.5 px-4">N° dossier</th>
+                      <th className="py-3.5 px-4">Ce qu'il faut faire</th>
+                      <th className="py-3.5 px-4">Personne concernée</th>
+                      <th className="py-3.5 px-4">Montant / Volume</th>
+                      <th className="py-3.5 px-4">État</th>
+                      <th className="py-3.5 px-4 text-right">Action directe</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
@@ -604,22 +707,22 @@ export default function DashboardPage() {
                       return (
                         <tr
                           key={item.id}
-                          className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
+                          className="hover:bg-blue-50/30 dark:hover:bg-slate-800/40 transition-colors"
                         >
                           {/* Réf Dossier */}
                           <td className="py-3.5 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">
                             <div className="flex items-center gap-1.5">
-                              <ItemIcon size={14} strokeWidth={1.75} className="text-slate-400" />
+                              <ItemIcon size={14} strokeWidth={2} className="text-blue-600 dark:text-blue-400" />
                               <span>{item.refCode}</span>
                             </div>
                           </td>
 
                           {/* Objet & Nature */}
                           <td className="py-3.5 px-4">
-                            <div className="font-bold text-slate-900 dark:text-white">
+                            <div className="font-extrabold text-slate-900 dark:text-white">
                               {item.title}
                             </div>
-                            <div className="text-[11px] text-slate-400">
+                            <div className="text-[11px] font-semibold text-slate-400 mt-0.5">
                               {item.dueDate}
                             </div>
                           </td>
@@ -630,25 +733,25 @@ export default function DashboardPage() {
                           </td>
 
                           {/* Impact / Montant */}
-                          <td className="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                          <td className="py-3.5 px-4 font-black text-slate-900 dark:text-white tabular-nums">
                             {item.impact}
                           </td>
 
                           {/* Statut Fiori */}
                           <td className="py-3.5 px-4">
                             <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wide ${
                                 item.status === 'CRITICAL'
-                                  ? 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border border-red-200'
+                                  ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
                                   : item.status === 'PENDING'
-                                  ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200'
-                                  : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200'
+                                  ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                                  : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                               }`}
                             >
                               <span
-                                className={`w-1.5 h-1.5 rounded-full ${
+                                className={`w-2 h-2 rounded-full ${
                                   item.status === 'CRITICAL'
-                                    ? 'bg-red-600'
+                                    ? 'bg-rose-600 animate-ping'
                                     : item.status === 'PENDING'
                                     ? 'bg-amber-500'
                                     : 'bg-emerald-500'
@@ -658,15 +761,21 @@ export default function DashboardPage() {
                             </span>
                           </td>
 
-                          {/* Bouton d'action directe */}
+                          {/* Bouton d'action directe coloré */}
                           <td className="py-3.5 px-4 text-right">
                             <button
                               type="button"
                               onClick={() => router.push(item.href)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0070F2] dark:bg-blue-950/50 dark:hover:bg-blue-900/50 dark:text-blue-300 font-bold text-xs transition-colors cursor-pointer"
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white font-extrabold text-xs transition-all shadow-sm cursor-pointer ${
+                                item.status === 'CRITICAL'
+                                  ? 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-rose-500/20 hover:shadow-md'
+                                  : item.status === 'PENDING'
+                                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-amber-500/20 hover:shadow-md'
+                                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20 hover:shadow-md'
+                              }`}
                             >
                               <span>{item.actionText}</span>
-                              <ChevronRight size={13} strokeWidth={2} />
+                              <ChevronRight size={13} strokeWidth={2.5} />
                             </button>
                           </td>
                         </tr>
@@ -677,33 +786,40 @@ export default function DashboardPage() {
               </div>
 
               {/* Pied de tableau */}
-              <div className="p-3 bg-slate-50/60 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+              <div className="p-3.5 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
                 <span>Régularisations prioritaires soumises au visa du chef d'établissement</span>
                 <button
                   type="button"
                   onClick={() => router.push('/invoices')}
-                  className="font-bold text-[#0070F2] dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   Ouvrir le registre complet des factures & impayés
-                  <ArrowRight size={13} strokeWidth={2} />
+                  <ArrowRight size={13} strokeWidth={2.2} />
                 </button>
               </div>
             </div>
 
-            {/* ── 4. CATALOGUE DES SERVICES MÉTIERS (Fiori Action Tiles) ── */}
-            <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+            {/* ── 4. CATALOGUE DES SERVICES MÉTIERS (Action Tiles Colorées) ── */}
+            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#107E3E]" />
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    Tous les services de l'école
+                  <div className="w-2 h-5 rounded-full bg-gradient-to-b from-emerald-600 to-teal-600" />
+                  <h2 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Tous les services & registres de l'école
                   </h2>
                 </div>
-                <span className="text-xs text-slate-400">Cliquez pour ouvrir</span>
+                <span className="text-xs font-semibold text-slate-400">Accès rapide</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {fioriServices.map((srv) => {
+                {[
+                  { id: 'enroll', title: 'Nouvelle Admission', desc: 'Dossier apprenant & pièces', code: 'ADM-01', href: '/students/enroll', icon: UserPlus, gradient: 'from-blue-600 to-indigo-600', borderHover: 'hover:border-blue-400' },
+                  { id: 'payments', title: 'Encaissement Guichet', desc: 'Quittance & caisse', code: 'ENC-02', href: '/finance/payments', icon: CreditCard, gradient: 'from-emerald-600 to-teal-600', borderHover: 'hover:border-emerald-400' },
+                  { id: 'attendance', title: 'Registre d\'Appel', desc: 'Présences par filière', code: 'APP-03', href: '/attendance', icon: CalendarCheck2, gradient: 'from-cyan-600 to-sky-600', borderHover: 'hover:border-cyan-400' },
+                  { id: 'grades', title: 'Saisie Évaluations', desc: 'Notes semestrielles APC', code: 'NOT-04', href: '/grades', icon: FileSpreadsheet, gradient: 'from-amber-500 to-orange-600', borderHover: 'hover:border-orange-400' },
+                  { id: 'bulletins', title: 'Bulletins & Relevés', desc: 'Génération certifiée', code: 'DOC-05', href: '/reports/bulletins', icon: FileCheck2, gradient: 'from-purple-600 to-violet-700', borderHover: 'hover:border-purple-400' },
+                  { id: 'expenses', title: 'Ordres de Dépense', desc: 'Bons de décaissement', code: 'DEP-06', href: '/expenses', icon: ReceiptText, gradient: 'from-rose-500 to-pink-600', borderHover: 'hover:border-rose-400' },
+                ].map((srv) => {
                   const SrvIcon = srv.icon;
                   return (
                     <motion.button
@@ -712,24 +828,23 @@ export default function DashboardPage() {
                       whileHover={{ y: -2 }}
                       transition={{ duration: 0.15 }}
                       onClick={() => router.push(srv.href)}
-                      className="group flex flex-col justify-between p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-850 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs text-left transition-all cursor-pointer"
+                      className={`group flex flex-col justify-between p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 hover:bg-white dark:hover:bg-slate-800 ${srv.borderHover} hover:shadow-md text-left transition-all cursor-pointer`}
                     >
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center justify-between mb-2.5">
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center font-black"
-                          style={{ backgroundColor: `${srv.color}14`, color: srv.color }}
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center text-white bg-gradient-to-br ${srv.gradient} shadow-sm group-hover:scale-105 transition-transform`}
                         >
-                          <SrvIcon size={16} strokeWidth={1.75} />
+                          <SrvIcon size={17} strokeWidth={2} />
                         </div>
-                        <span className="font-mono text-[10px] font-bold text-slate-400 group-hover:text-[#0070F2] transition-colors">
+                        <span className="font-mono text-[10px] font-black text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {srv.code}
                         </span>
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-[#0070F2] dark:group-hover:text-blue-400 transition-colors">
+                        <div className="text-xs font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {srv.title}
                         </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+                        <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
                           {srv.desc}
                         </div>
                       </div>
@@ -743,100 +858,105 @@ export default function DashboardPage() {
           {/* COLONNE DROITE (1 tiers) : SYNTHÈSE ANALYTIQUE & SÉCURITÉ INSTITUTIONNELLE */}
           <motion.div variants={fadeUp} className="flex flex-col gap-5">
 
-            {/* Widget Recouvrement par Filière (Fiori Analytical Card) */}
-            <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+            {/* Widget Recouvrement par Filière (Analytical Card aux Couleurs Vives) */}
+            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-md bg-emerald-50 text-[#107E3E] dark:bg-emerald-950/40 dark:text-emerald-400">
-                    <TrendingUp size={16} strokeWidth={1.75} />
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center font-bold">
+                    <TrendingUp size={18} strokeWidth={2.2} />
                   </div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Recouvrement par Filière
-                  </h3>
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                      Recouvrement par Filière
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Progression des frais de scolarité</p>
+                  </div>
                 </div>
-                <span className="text-xs font-black text-[#107E3E] dark:text-emerald-400 tabular-nums">
-                  Global : 85%
+                <span className="px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 tabular-nums">
+                  85% global
                 </span>
               </div>
 
               <div className="space-y-4">
                 {[
-                  { name: '1ère Année TE (Transformation)', current: 48, total: 52, pct: 92, color: 'bg-emerald-600' },
-                  { name: '1ère Année EA (Élevage & Agri)', current: 37, total: 44, pct: 84, color: 'bg-blue-600' },
-                  { name: '2ème Année EA (Spécialisation)', current: 28, total: 35, pct: 79, color: 'bg-amber-500' },
+                  { name: '1ère Année TE (Transformation)', current: 48, total: 52, pct: 92, gradient: 'from-emerald-500 via-teal-400 to-emerald-400' },
+                  { name: '1ère Année EA (Élevage & Agri)', current: 37, total: 44, pct: 84, gradient: 'from-blue-500 via-indigo-400 to-cyan-400' },
+                  { name: '2ème Année EA (Spécialisation)', current: 28, total: 35, pct: 79, gradient: 'from-amber-500 via-orange-400 to-yellow-400' },
                 ].map((row, idx) => (
                   <div key={idx} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                      <span className="font-extrabold text-slate-800 dark:text-slate-200 truncate">
                         {row.name}
                       </span>
-                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                      <span className="font-black text-slate-900 dark:text-white tabular-nums">
                         {row.pct}%
                       </span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${row.color}`}
+                        className={`h-full rounded-full bg-gradient-to-r ${row.gradient}`}
                         style={{ width: `${row.pct}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 tabular-nums">
+                    <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400 tabular-nums">
                       <span>{row.current} apprenants en règle</span>
-                      <span>{row.total - row.current} relances en cours</span>
+                      <span className="text-amber-600 dark:text-amber-400">{row.total - row.current} relances en cours</span>
                     </div>
                   </div>
                 ))}
               </div>
 
               <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">Recettes Encaissées</span>
-                <span className="font-mono font-black text-slate-900 dark:text-white tabular-nums">
+                <span className="text-slate-500 dark:text-slate-400 font-semibold">Recettes Encaissées</span>
+                <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
                   12 500 000 FCFA
                 </span>
               </div>
             </div>
 
-            {/* Fiche d'Accréditation Institutionnelle (CFP-PAS de Gao) */}
-            <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] relative overflow-hidden">
+            {/* Fiche d'Accréditation Institutionnelle (Sceau Souverain de l'État) */}
+            <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 text-white p-5 border border-blue-900/40 shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600" />
+              
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-lg bg-[#0070F2] text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
-                  <Shield size={18} strokeWidth={1.75} />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 text-slate-950 flex items-center justify-center font-black shrink-0 shadow-md shadow-amber-500/20">
+                  <Shield size={20} strokeWidth={2.2} />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-amber-300">
                     Conformité Institutionnelle
                   </h3>
-                  <p className="text-[11px] text-slate-400">
-                    Agrément Ministériel • Enseignement Technique
+                  <p className="text-[11px] text-blue-200/70">
+                    Ministère de l'Éducation Nationale • Mali
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-2.5 text-xs">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-slate-500">Statut Établissement</span>
-                  <span className="font-bold text-[#107E3E] dark:text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 size={13} strokeWidth={2} />
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <span className="text-blue-200/80">Statut Établissement</span>
+                  <span className="font-extrabold text-emerald-400 flex items-center gap-1.5">
+                    <CheckCircle2 size={13} strokeWidth={2.5} />
                     Agréé & Conforme
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-slate-500">Mode Pédagogique</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">APC Modulaire</span>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <span className="text-blue-200/80">Mode Pédagogique</span>
+                  <span className="font-extrabold text-amber-300">APC Modulaire</span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-slate-500">Grille Formateurs</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200 tabular-nums">1 750 FCFA / h</span>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <span className="text-blue-200/80">Convention Formateurs</span>
+                  <span className="font-extrabold text-white tabular-nums">1 750 FCFA / h</span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-slate-500">Isolation Multi-Tenant</span>
-                  <span className="font-bold text-[#0070F2] dark:text-blue-400">Active (Partition 100%)</span>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <span className="text-blue-200/80">Partitionnement Données</span>
+                  <span className="font-extrabold text-blue-300">100% Isolé Multi-Tenant</span>
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-blue-200/60 font-semibold">
                 <span>Région de Gao (Mali)</span>
-                <span className="font-mono">ERP v1.1.0 Fiori</span>
+                <span className="text-amber-400 font-mono">ERP v1.1.0 Homologué</span>
               </div>
             </div>
 
