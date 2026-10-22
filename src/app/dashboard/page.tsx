@@ -168,7 +168,7 @@ export default function DashboardPage() {
       unit: 'vacataires & perm.',
       trend: '1 750 FCFA/h conventionné',
       trendPositive: true,
-      subtext: `${stats.pendingLeaves || 3} demandes d'arbitrage congé`,
+      subtext: `${stats.pendingLeaves || 3} demandes de congé à valider`,
       href: '/employees',
       icon: Briefcase,
       accentColor: '#5c35cc', // Fiori Purple
@@ -202,7 +202,7 @@ export default function DashboardPage() {
       dueDate: 'Échu depuis 5 jours',
       impact: '900 000 FCFA',
       status: 'CRITICAL',
-      statusLabel: 'Contentieux / Relance',
+      statusLabel: 'Impayé / À relancer',
       href: '/invoices',
       actionText: 'Émettre Relances',
       icon: AlertOctagon,
@@ -216,7 +216,7 @@ export default function DashboardPage() {
       dueDate: 'Période : 24 au 27 Oct.',
       impact: '3 jours ouvrés',
       status: 'PENDING',
-      statusLabel: 'Arbitrage Requis',
+      statusLabel: 'À valider',
       href: '/hr/leaves',
       actionText: 'Arbitrer la demande',
       icon: Clock4,
@@ -367,7 +367,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
-                  {greeting}{user?.firstName ? `, ${user.firstName}` : ''} • Console d'arbitrage administratif, financier et de conformité académique.
+                  {greeting}{user?.firstName ? `, ${user.firstName}` : ''} • Que souhaitez-vous faire aujourd'hui ?
                 </p>
               </div>
             </div>
@@ -397,16 +397,53 @@ export default function DashboardPage() {
           </div>
         </motion.section>
 
+        {/* ── 1b. ACTIONS COURANTES (accueil simplifié : 6 gros boutons) ── */}
+        <motion.section variants={fadeUp} aria-labelledby="quick-actions-title">
+          <div className="flex items-center justify-between mb-3">
+            <h2 id="quick-actions-title" className="text-base font-bold text-slate-900 dark:text-white">
+              Que voulez-vous faire ?
+            </h2>
+            <span className="text-[11px] font-medium text-slate-400">Cliquez sur une action pour commencer</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+            {[
+              { label: 'Inscrire un élève', hint: 'Nouvelle inscription', href: '/students/enroll', icon: UserPlus, color: '#0070F2' },
+              { label: 'Encaisser un paiement', hint: 'Scolarité, frais', href: '/finance/payments', icon: Wallet, color: '#107E3E' },
+              { label: 'Faire l\'appel', hint: 'Présences du jour', href: '/attendance', icon: CalendarCheck2, color: '#0284c7' },
+              { label: 'Saisir les notes', hint: 'Évaluations', href: '/grades', icon: FileSpreadsheet, color: '#c55305' },
+              { label: 'Imprimer un bulletin', hint: 'Bulletins & certificats', href: '/reports/bulletins', icon: FileCheck2, color: '#5c35cc' },
+              { label: 'Emploi du temps', hint: 'Cours de la semaine', href: '/timetable', icon: Calendar, color: '#0A3B7B' },
+            ].map((a) => {
+              const QIcon = a.icon;
+              return (
+                <button
+                  key={a.href}
+                  id={`quick-action-${a.href.replace(/\W+/g, '-')}`}
+                  onClick={() => router.push(a.href)}
+                  className="group text-left bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 hover:shadow-md hover:border-blue-300 transition-all focus:outline-none focus:ring-2 focus:ring-[#0070F2]"
+                  style={{ borderTop: `3px solid ${a.color}` }}
+                >
+                  <span className="w-11 h-11 rounded-lg flex items-center justify-center mb-3" style={{ background: `${a.color}14`, color: a.color }}>
+                    <QIcon size={24} strokeWidth={1.75} />
+                  </span>
+                  <span className="block text-sm font-bold text-slate-900 dark:text-white leading-snug">{a.label}</span>
+                  <span className="block text-[11px] text-slate-500 mt-0.5">{a.hint}</span>
+                </button>
+              );
+            })}
+          </div>
+        </motion.section>
+
         {/* ── 2. FIORI HORIZON KPI LAUNCHPAD TILES (Numeric Cards) ── */}
         <motion.section variants={fadeUp} aria-labelledby="fiori-tiles-title">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-xs bg-[#0070F2]" />
               <h2 id="fiori-tiles-title" className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Indicateurs Clés de Performance (Fiori Horizon Launchpad)
+                Chiffres clés de l'école
               </h2>
             </div>
-            <span className="text-[11px] font-medium text-slate-400">Agrégation en direct</span>
+            <span className="text-[11px] font-medium text-slate-400">Mis à jour en direct</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
@@ -499,14 +536,14 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2">
                     <FolderCheck size={18} strokeWidth={1.75} className="text-[#0070F2] dark:text-blue-400" />
                     <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                      File d'Arbitrage des Dossiers & Contentieux
+                      Dossiers à traiter
                     </h2>
                     <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#0070F2]/10 text-[#0070F2] dark:text-blue-400">
                       {dossiersList.length} actifs
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Instruction des impayés, congés du corps enseignant et clôtures officielles
+                    Impayés, demandes de congé et bulletins à valider
                   </p>
                 </div>
 
@@ -553,12 +590,12 @@ export default function DashboardPage() {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      <th className="py-3 px-4">Réf. Dossier</th>
-                      <th className="py-3 px-4">Objet & Instruction</th>
-                      <th className="py-3 px-4">Tiers Concerné</th>
+                      <th className="py-3 px-4">N° dossier</th>
+                      <th className="py-3 px-4">Ce qu'il faut faire</th>
+                      <th className="py-3 px-4">Personne concernée</th>
                       <th className="py-3 px-4">Montant / Volume</th>
-                      <th className="py-3 px-4">Statut Fiori</th>
-                      <th className="py-3 px-4 text-right">Action Directe</th>
+                      <th className="py-3 px-4">État</th>
+                      <th className="py-3 px-4 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
@@ -659,10 +696,10 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-xs bg-[#107E3E]" />
                   <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    Catalogue des Procédures Opérationnelles (Guichet Établissement)
+                    Tous les services de l'école
                   </h2>
                 </div>
-                <span className="text-xs text-slate-400">Accès rapide par code</span>
+                <span className="text-xs text-slate-400">Cliquez pour ouvrir</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

@@ -1,108 +1,74 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import {
-  Landmark, ShieldCheck, FileCheck2, GraduationCap, Users,
-  ReceiptText, Scale, Building2, Search, ArrowRight, CheckCircle2,
-  Lock, ExternalLink, Sliders, CalendarDays, BookOpenCheck,
-  Award, ChevronRight, Activity, Globe, Phone, Mail
+  Landmark, ShieldCheck, GraduationCap, Users,
+  ReceiptText, CheckCircle2,
+  Lock, BookOpenCheck,
+  Award, ChevronRight, Activity, Globe, Phone, Mail, HelpCircle
 } from 'lucide-react';
 
 export default function GovernmentFioriLandingPage() {
   const router = useRouter();
-  const [searchMatricule, setSearchMatricule] = useState('');
-  const [searchResult, setSearchResult] = useState<null | { found: boolean; message: string; details?: any }>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
-
-  const handleVerify = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchMatricule.trim()) return;
-    setIsVerifying(true);
-    setSearchResult(null);
-
-    setTimeout(() => {
-      setIsVerifying(false);
-      const clean = searchMatricule.trim().toUpperCase();
-      if (clean.includes('GAO') || clean.includes('2025') || clean.includes('2026') || clean.startsWith('APP') || clean.startsWith('MAT')) {
-        setSearchResult({
-          found: true,
-          message: 'Dossier certifié et homologué auprès du registre national.',
-          details: {
-            matricule: clean,
-            etablissement: 'Centre de Formation Professionnelle Polyvalent (CFP-PAS) - Gao',
-            filiere: '1ère Année Transformation Économique & Agro-Pastoral',
-            statut: 'Régulier - Exercice Réglementaire 2025-2026',
-            referentiel: 'APC Niveau II Certifié',
-          }
-        });
-      } else {
-        setSearchResult({
-          found: false,
-          message: 'Aucun enregistrement homologué trouvé pour cette référence dans le registre actif.',
-        });
-      }
-    }, 450);
-  };
 
   const GUICHETS_FIORI = [
     {
-      code: 'GUICHET-01',
-      title: 'Direction & Arbitrage',
-      desc: 'Supervision générale, conformité académique, arbitrages des contentieux et balance de trésorerie.',
+      code: 'DIRECTION',
+      title: 'Je suis le directeur / la directrice',
+      desc: 'Voir l’état de l’école, les paiements, les absences et valider les demandes.',
       icon: <Landmark size={24} strokeWidth={1.75} className="text-[#0070F2]" />,
-      badge: 'Tutelle État',
+      badge: 'Direction',
       badgeClass: 'fiori-badge-info',
       borderColor: '#0070F2',
       href: '/login?role=ADMIN',
     },
     {
-      code: 'GUICHET-02',
-      title: 'Registre Scolarité & Admissions',
-      desc: 'Gestion des inscriptions, immatriculation nationale, émargement biométrique et cartes d’apprenants.',
+      code: 'SECRÉTARIAT',
+      title: 'Je suis au secrétariat',
+      desc: 'Inscrire un élève, retrouver un dossier, faire l’appel et imprimer les cartes.',
       icon: <GraduationCap size={24} strokeWidth={1.75} className="text-[#107E3E]" />,
-      badge: 'Registres Actifs',
+      badge: 'Élèves',
       badgeClass: 'fiori-badge-positive',
       borderColor: '#107E3E',
       href: '/login?role=REGISTRE',
     },
     {
-      code: 'GUICHET-03',
-      title: 'Pédagogie & Référentiel APC',
-      desc: 'Cahiers de texte, validation des compétences professionnelles, bulletins trimestriels et relevés officiels.',
+      code: 'ENSEIGNANT',
+      title: 'Je suis enseignant / formateur',
+      desc: 'Saisir les notes, remplir le cahier de texte et consulter mon emploi du temps.',
       icon: <BookOpenCheck size={24} strokeWidth={1.75} className="text-[#C55305]" />,
-      badge: 'Référentiel APC',
+      badge: 'Cours & notes',
       badgeClass: 'fiori-badge-attention',
       borderColor: '#C55305',
       href: '/login?role=TEACHER',
     },
     {
-      code: 'GUICHET-04',
-      title: 'Finances Publiques & Caisse',
-      desc: 'Facturation des frais, encaissements traçables, balances de trésorerie et déclarations légales.',
+      code: 'COMPTABILITÉ',
+      title: 'Je suis à la caisse / comptabilité',
+      desc: 'Encaisser un paiement, éditer un reçu, suivre les dépenses et les impayés.',
       icon: <ReceiptText size={24} strokeWidth={1.75} className="text-[#0A3B7B]" />,
-      badge: 'Audit & Caisse',
+      badge: 'Caisse',
       badgeClass: 'fiori-badge-info',
       borderColor: '#0A3B7B',
       href: '/login?role=FINANCE',
     },
     {
-      code: 'GUICHET-05',
-      title: 'Corps Formateurs & Salaires RH',
-      desc: 'Gestion des vacataires et permanents, suivi des heures d’enseignement et calcul conforme ITS / INPS / AMO.',
+      code: 'PERSONNEL',
+      title: 'Je gère le personnel (RH)',
+      desc: 'Suivre les présences des formateurs, les congés et préparer les fiches de paie.',
       icon: <Users size={24} strokeWidth={1.75} className="text-[#5C35CC]" />,
-      badge: 'Conformité RH',
+      badge: 'Personnel',
       badgeClass: 'fiori-badge-neutral',
       borderColor: '#5C35CC',
       href: '/login?role=HR',
     },
     {
-      code: 'GUICHET-06',
-      title: 'Portail Familles & Apprenants',
-      desc: 'Consultation des relevés périodiques, suivi des présences quotidiennes et quittances de paiement.',
+      code: 'FAMILLE',
+      title: 'Je suis parent ou élève',
+      desc: 'Voir les notes, les absences et les paiements de mon enfant.',
       icon: <Award size={24} strokeWidth={1.75} className="text-[#0284C7]" />,
-      badge: 'Guichet Usagers',
+      badge: 'Famille',
       badgeClass: 'fiori-badge-info',
       borderColor: '#0284C7',
       href: '/parent',
@@ -152,18 +118,18 @@ export default function GovernmentFioriLandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <button
-              onClick={() => router.push('/login')}
+            <a
+              href="#qui-etes-vous"
               className="px-4 py-2 rounded text-[13px] font-bold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              Consultation Dossier
-            </button>
+              Par où commencer ?
+            </a>
             <button
               onClick={() => router.push('/login')}
               className="px-4 py-2 rounded text-[13px] font-bold text-white bg-[#0070F2] hover:bg-[#0056B3] shadow-sm transition-all flex items-center gap-2"
             >
               <Lock size={14} strokeWidth={2} />
-              Accès Console Sécurisée
+              Se connecter
             </button>
           </div>
         </div>
@@ -177,30 +143,47 @@ export default function GovernmentFioriLandingPage() {
             <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[#0070F2] text-[11px] font-bold uppercase tracking-wider mb-5">
                 <ShieldCheck size={14} strokeWidth={2} />
-                Plateforme Réglementaire Sous Tutelle Ministérielle
+                Plateforme officielle de gestion scolaire
               </div>
               
               <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#0A3B7B] dark:text-white leading-[1.15] mb-5">
-                Pilotage Intégré de l'Enseignement & des Finances Publiques Scolaires
+                Gérez votre école simplement : élèves, notes, paiements.
               </h1>
               
-              <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-8 max-w-2xl font-normal">
-                Console officielle de gestion administrative, académique et budgétaire selon l'Approche Par Compétences (APC). Destinée au corps enseignant, aux intendants et à la tutelle académique de la région de Gao.
+              <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-6 max-w-2xl font-normal">
+                Tout se fait au même endroit, en quelques clics. Connectez-vous avec votre compte, ou choisissez votre fonction plus bas pour savoir par où commencer.
               </p>
+
+              {/* Parcours en 3 étapes */}
+              <ol className="mb-8 grid sm:grid-cols-3 gap-3 max-w-2xl text-sm">
+                {[
+                  { n: '1', t: 'Connectez-vous', d: 'avec votre email et mot de passe' },
+                  { n: '2', t: 'Choisissez une action', d: 'ex. « Inscrire un élève »' },
+                  { n: '3', t: 'Suivez les étapes', d: 'l’écran vous guide' },
+                ].map((s) => (
+                  <li key={s.n} className="flex items-start gap-3 p-3 rounded-lg bg-white/80 dark:bg-[#111829] border border-slate-200 dark:border-slate-800">
+                    <span className="w-7 h-7 rounded-full bg-[#0070F2] text-white text-sm font-bold flex items-center justify-center shrink-0">{s.n}</span>
+                    <span>
+                      <span className="block font-bold text-slate-900 dark:text-white">{s.t}</span>
+                      <span className="block text-xs text-slate-500">{s.d}</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
 
               <div className="flex flex-wrap items-center gap-3">
                 <button
+                  id="home-login-cta"
                   onClick={() => router.push('/login')}
-                  className="px-6 py-3 rounded text-[13.5px] font-bold text-white bg-[#0070F2] hover:bg-[#0056B3] shadow-md shadow-blue-600/20 transition-all flex items-center gap-2.5"
+                  className="px-8 py-4 rounded text-base font-bold text-white bg-[#0070F2] hover:bg-[#0056B3] shadow-md shadow-blue-600/20 transition-all flex items-center gap-2.5"
                 >
-                  Ouvrir la Console Fiori <ChevronRight size={16} strokeWidth={2} />
+                  Se connecter <ChevronRight size={18} strokeWidth={2} />
                 </button>
                 <a
-                  href="#verification"
-                  className="px-6 py-3 rounded text-[13.5px] font-bold text-[#0A3B7B] dark:text-blue-300 bg-white dark:bg-[#111829] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
+                  href="#qui-etes-vous"
+                  className="px-6 py-4 rounded text-[14px] font-bold text-[#0A3B7B] dark:text-blue-300 bg-white dark:bg-[#111829] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
                 >
-                  <Search size={15} strokeWidth={1.75} />
-                  Contrôler une Immatriculation
+                  Je ne sais pas par où commencer
                 </a>
               </div>
 
@@ -281,18 +264,18 @@ export default function GovernmentFioriLandingPage() {
       </section>
 
       {/* ── CATALOGUE DES GUICHETS & SERVICES PUBLICS (FIORI LAUNCHPAD) ── */}
-      <section className="py-16 bg-white dark:bg-[#0D1224] border-b border-slate-200 dark:border-slate-800">
+      <section id="qui-etes-vous" className="py-16 bg-white dark:bg-[#0D1224] border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           
           <div className="mb-10 text-center max-w-3xl mx-auto">
             <span className="fiori-badge fiori-badge-info mb-2 inline-block">
-              SERVICES D'ÉTAT DU PORTAIL
+              PAR OÙ COMMENCER ?
             </span>
             <h2 className="text-2xl md:text-3xl font-extrabold text-[#0A3B7B] dark:text-white tracking-tight">
-              Guichets Opérationnels & Modules Réglementaires
+              Qui êtes-vous ?
             </h2>
             <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
-              Chaque guichet est sécurisé par rôle avec traçabilité intégrale des écritures et des actes administratifs.
+              Cliquez sur votre fonction : vous arrivez sur la connexion, puis directement sur les actions qui vous concernent.
             </p>
           </div>
 
@@ -325,7 +308,7 @@ export default function GovernmentFioriLandingPage() {
                 </div>
 
                 <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-[#0070F2]">
-                  <span>Accéder au guichet</span>
+                  <span>Me connecter</span>
                   <ChevronRight size={14} strokeWidth={2} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -335,70 +318,40 @@ export default function GovernmentFioriLandingPage() {
         </div>
       </section>
 
-      {/* ── MODULE DE VÉRIFICATION RAPIDE D'ATTESTATION & MATRICULE ── */}
-      <section id="verification" className="py-16 bg-[#EEF0F7] dark:bg-[#080C18] border-b border-slate-200 dark:border-slate-800">
+      {/* ── BESOIN D'AIDE ── */}
+      <section id="aide" className="py-14 bg-[#EEF0F7] dark:bg-[#080C18] border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="bg-white dark:bg-[#111829] rounded-lg border border-slate-300 dark:border-slate-800 shadow-md p-6 sm:p-8">
-            
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded bg-[#0A3B7B] text-white flex items-center justify-center">
-                <Search size={20} strokeWidth={1.75} />
+            <div className="flex items-start gap-4">
+              <div className="w-11 h-11 rounded bg-[#0A3B7B] text-white flex items-center justify-center shrink-0">
+                <HelpCircle size={22} strokeWidth={1.75} />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
-                  Guichet Public : Vérification d'Attestation & Immatriculation
+                  Besoin d&apos;aide pour vous connecter ?
                 </h3>
-                <p className="text-xs text-slate-500">
-                  Contrôle d'authenticité des inscriptions, attestations de formation et compétences APC délivrées par le CFP-PAS de Gao.
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleVerify} className="mt-6 flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={searchMatricule}
-                onChange={(e) => setSearchMatricule(e.target.value)}
-                placeholder="Ex : CFP-GAO-2025-014 ou APP-128"
-                className="flex-1 px-4 py-3 rounded text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-[#0070F2] focus:ring-1 focus:ring-[#0070F2]"
-              />
-              <button
-                type="submit"
-                disabled={isVerifying}
-                className="px-6 py-3 rounded text-sm font-bold text-white bg-[#0A3B7B] hover:bg-[#0070F2] transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                {isVerifying ? (
-                  <span>Interrogation Registre...</span>
-                ) : (
-                  <>
-                    <Search size={16} strokeWidth={2} />
-                    Vérifier Authenticité
-                  </>
-                )}
-              </button>
-            </form>
-
-            {searchResult && (
-              <div className={`mt-6 p-4 rounded border text-sm ${searchResult.found ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200' : 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-800 text-red-950 dark:text-red-200'}`}>
-                <div className="flex items-center gap-2 font-bold mb-1">
-                  {searchResult.found ? <CheckCircle2 size={18} className="text-[#107E3E]" /> : <ShieldCheck size={18} className="text-[#BB0000]" />}
-                  <span>{searchResult.message}</span>
+                <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc pl-5">
+                  <li>Utilisez l&apos;adresse email et le mot de passe donnés par la direction de votre école.</li>
+                  <li>Mot de passe oublié ? Demandez sa réinitialisation à la direction ou écrivez-nous.</li>
+                  <li>Parent d&apos;élève ? Cliquez sur « Je suis parent ou élève » plus haut.</li>
+                </ul>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <button
+                    id="help-login-cta"
+                    onClick={() => router.push('/login')}
+                    className="px-6 py-3 rounded text-sm font-bold text-white bg-[#0070F2] hover:bg-[#0056B3] transition-colors flex items-center gap-2"
+                  >
+                    <Lock size={15} strokeWidth={2} /> Se connecter
+                  </button>
+                  <a
+                    href="mailto:contact@cfp-gao.edu.ml"
+                    className="px-6 py-3 rounded text-sm font-bold text-[#0A3B7B] dark:text-blue-300 bg-white dark:bg-[#111829] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
+                  >
+                    <Mail size={15} strokeWidth={1.75} /> Contacter l&apos;assistance
+                  </a>
                 </div>
-                {searchResult.details && (
-                  <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-800/60 grid sm:grid-cols-2 gap-2 text-xs">
-                    <div><span className="font-semibold text-slate-600 dark:text-slate-400">Matricule :</span> <strong className="font-mono">{searchResult.details.matricule}</strong></div>
-                    <div><span className="font-semibold text-slate-600 dark:text-slate-400">Établissement :</span> <strong>{searchResult.details.etablissement}</strong></div>
-                    <div><span className="font-semibold text-slate-600 dark:text-slate-400">Filière / Niveau :</span> <strong>{searchResult.details.filiere}</strong></div>
-                    <div><span className="font-semibold text-slate-600 dark:text-slate-400">Statut :</span> <strong className="text-emerald-700 dark:text-emerald-400">{searchResult.details.statut}</strong></div>
-                  </div>
-                )}
               </div>
-            )}
-
-            <div className="mt-4 text-[11px] text-slate-400 text-center">
-              Toute tentative d'utilisation frauduleuse de matricule ou d'attestation falsifiée est punie conformément aux dispositions du Code Pénal de la République du Mali.
             </div>
-
           </div>
         </div>
       </section>
@@ -424,12 +377,12 @@ export default function GovernmentFioriLandingPage() {
             </div>
 
             <div>
-              <h4 className="font-extrabold uppercase tracking-wider text-white mb-3 text-xs">Guichets Officiels</h4>
+              <h4 className="font-extrabold uppercase tracking-wider text-white mb-3 text-xs">Accès rapides</h4>
               <ul className="space-y-2 text-white/80">
-                <li><button onClick={() => router.push('/login')} className="hover:text-white transition-colors">Portail Formateurs</button></li>
-                <li><button onClick={() => router.push('/login')} className="hover:text-white transition-colors">Portail Administration & Caisse</button></li>
-                <li><button onClick={() => router.push('/parent')} className="hover:text-white transition-colors">Espace Familles & Tuteurs</button></li>
-                <li><a href="#verification" className="hover:text-white transition-colors">Vérification de Diplôme / Attestation</a></li>
+                <li><button onClick={() => router.push('/login')} className="hover:text-white transition-colors">Se connecter</button></li>
+                <li><a href="#qui-etes-vous" className="hover:text-white transition-colors">Par où commencer ?</a></li>
+                <li><button onClick={() => router.push('/parent')} className="hover:text-white transition-colors">Espace parents &amp; élèves</button></li>
+                <li><a href="#aide" className="hover:text-white transition-colors">Besoin d&apos;aide ?</a></li>
               </ul>
             </div>
 

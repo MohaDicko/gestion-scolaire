@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Landmark, ShieldCheck, Lock, Eye, EyeOff, Loader2,
-  ArrowRight, ArrowLeft, CheckCircle2, UserCheck, AlertCircle,
-  FileCheck2, Building2, KeyRound, HelpCircle
+  ArrowRight, ArrowLeft, AlertCircle,
+  FileCheck2, KeyRound
 } from 'lucide-react';
 
 export default function GovernmentFioriLoginPage() {
@@ -18,11 +18,6 @@ export default function GovernmentFioriLoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleQuickLogin = (quickEmail: string, quickPass: string) => {
-    setEmail(quickEmail);
-    setPassword(quickPass);
-    setError('');
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,38 +128,17 @@ export default function GovernmentFioriLoginPage() {
               </div>
             </div>
 
-            {/* Quick Guichet Presets (Aide Connexion Immédiate) */}
+            {/* Aide à la connexion (aucun identifiant n'est affiché ici) */}
             <div className="pt-6 border-t border-white/10">
               <div className="text-[11px] font-bold text-blue-200 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                 <KeyRound size={13} strokeWidth={2} />
-                Accès Rapides par Guichet Réglementaire :
+                Comment vous connecter
               </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('admin@cfppas-gao.ml', 'CfpPasGao2026!')}
-                  className="px-3 py-1.5 rounded bg-white/10 hover:bg-[#0070F2] text-white border border-white/20 transition-all font-semibold flex items-center gap-1.5"
-                >
-                  <Building2 size={13} strokeWidth={2} />
-                  Direction / Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('compta@cfppas-gao.ml', 'Demo2026!')}
-                  className="px-3 py-1.5 rounded bg-white/10 hover:bg-[#0070F2] text-white border border-white/20 transition-all font-semibold flex items-center gap-1.5"
-                >
-                  <Landmark size={13} strokeWidth={2} />
-                  Comptabilité / Caisse
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('parent@cfppas-gao.ml', 'Demo2026!')}
-                  className="px-3 py-1.5 rounded bg-white/10 hover:bg-[#0070F2] text-white border border-white/20 transition-all font-semibold flex items-center gap-1.5"
-                >
-                  <UserCheck size={13} strokeWidth={2} />
-                  Espace Famille
-                </button>
-              </div>
+              <ol className="space-y-1.5 text-xs text-blue-100/90 list-decimal pl-5">
+                <li>Saisissez l&apos;email donné par la direction de votre école.</li>
+                <li>Saisissez votre mot de passe, puis cliquez sur « Ouvrir la session ».</li>
+                <li>Mot de passe oublié ? Contactez la direction de votre école.</li>
+              </ol>
             </div>
 
           </div>
