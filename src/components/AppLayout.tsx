@@ -253,13 +253,13 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                 RÉPUBLIQUE DU MALI
               </span>
             </div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', lineHeight: 1.25, marginTop: 1, letterSpacing: '-0.2px' }}>
-              CFP-PAS DE GAO
+            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', lineHeight: 1.25, marginTop: 1, letterSpacing: '-0.2px' }} className="truncate">
+              {branding?.name ? branding.name.toUpperCase() : (user?.schoolName ? user.schoolName.toUpperCase() : 'ÉTABLISSEMENT NATIONAL')}
             </div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, background: 'rgba(0, 112, 242, 0.08)', padding: '1px 6px', borderRadius: 4, border: '1px solid rgba(0, 112, 242, 0.2)' }}>
               <ShieldCheck size={11} color="#0070f2" strokeWidth={2} />
               <span style={{ fontSize: 9, fontWeight: 700, color: '#0070f2', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                FIO-ERP • APC ÉTAT
+                {schoolType === 'SANTE' ? 'FIO-ERP • SANTÉ & PARAMÉDICAL' : 'FIO-ERP • APC ÉTAT'}
               </span>
             </div>
           </div>
@@ -466,7 +466,8 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                     EXERCICE 2025 - 2026
                   </span>
                   <span className="fiori-badge fiori-badge-positive">
-                    <ShieldCheck size={11} strokeWidth={2} /> RÉFÉRENTIEL APC CONFORME
+                    <ShieldCheck size={11} strokeWidth={2} />
+                    {schoolType === 'SANTE' ? 'AGRÉMENT SANTÉ MSHP • CYCLE DIPLÔMANT' : 'RÉFÉRENTIEL APC CONFORME'}
                   </span>
                 </div>
               </div>

@@ -62,7 +62,16 @@ export default function DashboardPage() {
     subjectsCount: 116,
     timetableCount: 81,
   });
-  const [user, setUser] = useState<{ firstName?: string; role?: string } | null>(null);
+  const [user, setUser] = useState<{ firstName?: string; lastName?: string; role?: string; schoolName?: string } | null>(null);
+  const [school, setSchool] = useState<{
+    id?: string;
+    name?: string;
+    code?: string;
+    city?: string;
+    type?: string;
+    motto?: string;
+    gradingScale?: number;
+  } | null>(null);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -79,10 +88,19 @@ export default function DashboardPage() {
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/dashboard/stats');
-      if (res.ok) {
-        const data = await res.json();
+      const [resStats, resConfig] = await Promise.all([
+        fetch('/api/dashboard/stats'),
+        fetch('/api/school/config')
+      ]);
+      if (resStats.ok) {
+        const data = await resStats.json();
         setStats((prev) => ({ ...prev, ...data }));
+      }
+      if (resConfig.ok) {
+        const cfg = await resConfig.json();
+        if (cfg && (cfg.name || cfg.type)) {
+          setSchool(cfg);
+        }
       }
     } catch {
       // Données de référence
@@ -111,14 +129,108 @@ export default function DashboardPage() {
     fetchStats();
   }, [fetchStats, router]);
 
+  // Détection du profil d'établissement : Santé / Paramédical vs Agro-pastoral / Général
+  const isHealth = school?.type === 'SANTE' || (user?.schoolName && /sant|kouchner|esbk/i.test(user.schoolName));
+  const schoolDisplayName = school?.name || user?.schoolName || (isHealth ? 'École de Santé Bernard Kouchner (ESBK)' : 'CFP-PAS de Gao');
+  const territoryDisplay = isHealth
+    ? (school?.city ? `${school.city} (District de Bamako)` : 'Bamako (District de Bamako)')
+    : (school?.city ? `${school.city} (Région VII)` : 'Gao (Région VII)');
+  const roleDisplay = user?.role === 'SUPER_ADMIN' ? 'Superviseur National' : (isHealth ? 'Direction Établissement (Santé)' : 'Direction École');
+
   // Recouvrement
   const recouvrementRate = stats.invoicesTotal > 0
     ? Math.round((stats.invoicesPaid / stats.invoicesTotal) * 100)
     : 85;
   const resteARecouvrer = Math.max(0, stats.invoicesTotal - stats.invoicesPaid);
 
-  // Tuiles Numériques SAP Fiori Horizon (Launchpad KPI Tiles enrichies)
-  const fioriTiles = [
+  // Tuiles Numériques SAP Fiori Horizon (Adaptatives selon Santé vs Agro)
+  const fioriTiles = isHealth ? [
+    {
+      category: 'Scolarité • Étudiants en Santé',
+      title: 'Étudiants Inscrits (IDE & SF)',
+      value: stats.studentsCount > 0 ? stats.studentsCount : 110,
+      unit: 'inscrits',
+      trend: 'Promotions IDE, SF, TLB',
+      trendPositive: true,
+      subtext: '4 promotions paramédicales actives',
+      href: '/students',
+      icon: GraduationCap,
+      accentColor: '#1d4ed8',
+      gradient: 'from-blue-600 to-indigo-600',
+      iconGradient: 'from-blue-500 to-indigo-600',
+      progress: 90,
+      statusLabel: 'Conforme MSHP',
+      statusType: 'success' as const,
+    },
+    {
+      category: 'Recouvrement & Frais de Stage',
+      title: 'Taux d\'Encaissement',
+      value: `${recouvrementRate}%`,
+      unit: `${(stats.invoicesPaid / 1000000).toFixed(1)}M FCFA`,
+      trend: 'Scolarités & Blouses',
+      trendPositive: true,
+      subtext: 'Paiement échelonné actif',
+      href: '/invoices',
+      icon: BadgePercent,
+      accentColor: '#059669',
+      gradient: 'from-emerald-600 to-teal-600',
+      iconGradient: 'from-emerald-500 to-teal-600',
+      progress: recouvrementRate,
+      statusLabel: 'Objectif Atteint',
+      statusType: 'success' as const,
+    },
+    {
+      category: 'Assiduité & Gardes Médicales',
+      title: 'Présence Cours & Hôpital',
+      value: '96.4%',
+      unit: 'taux du jour',
+      trend: 'Émargement stages & cours',
+      trendPositive: true,
+      subtext: 'Centres hospitaliers (CHU, CSRéf)',
+      href: '/attendance',
+      icon: CalendarCheck2,
+      accentColor: '#0284c7',
+      gradient: 'from-cyan-600 to-blue-600',
+      iconGradient: 'from-cyan-500 to-sky-600',
+      progress: 96,
+      statusLabel: 'Assiduité Haute',
+      statusType: 'info' as const,
+    },
+    {
+      category: 'Corps Médical & Enseignants',
+      title: 'Médecins & Formateurs',
+      value: stats.employeesCount > 0 ? stats.employeesCount : 18,
+      unit: 'praticiens & formateurs',
+      trend: 'Médecins conventionnés',
+      trendPositive: true,
+      subtext: 'Superviseurs de stage clinique',
+      href: '/employees',
+      icon: Briefcase,
+      accentColor: '#7c3aed',
+      gradient: 'from-violet-600 to-purple-600',
+      iconGradient: 'from-violet-500 to-purple-600',
+      progress: 85,
+      statusLabel: 'Corps Complet',
+      statusType: 'warning' as const,
+    },
+    {
+      category: 'Programme & Modules de Santé',
+      title: 'Unités d\'Enseignement (UE)',
+      value: stats.subjectsCount > 0 ? stats.subjectsCount : 14,
+      unit: 'modules agréés',
+      trend: 'Barème /20 • Note élim. <10',
+      trendPositive: true,
+      subtext: 'Conforme cursus national MSHP',
+      href: '/classrooms',
+      icon: Layers,
+      accentColor: '#d97706',
+      gradient: 'from-amber-500 to-orange-600',
+      iconGradient: 'from-amber-500 to-yellow-600',
+      progress: 100,
+      statusLabel: 'Agréé MSHP',
+      statusType: 'neutral' as const,
+    },
+  ] : [
     {
       category: 'Scolarité • Effectifs',
       title: 'Apprenants Inscrits',
@@ -206,8 +318,67 @@ export default function DashboardPage() {
     },
   ];
 
-  // Dossiers d'arbitrage institutionnel (Claims & Underwriting Worklist)
-  const dossiersList: DossierItem[] = [
+  // Dossiers d'arbitrage institutionnel adaptatifs (Santé vs Agro)
+  const healthDossiersList: DossierItem[] = [
+    {
+      id: 'd1',
+      refCode: 'DOS-STG-2026-012',
+      category: 'PEDAGOGY',
+      title: 'Validation des Mises en Situation Clinique (MSP)',
+      concerned: 'Promotion IDE 1 • Stages CHU Point G & Gabriel Touré',
+      dueDate: 'Échéance dans 48h',
+      impact: '38 carnets cliniques',
+      status: 'CRITICAL',
+      statusLabel: 'Visa Clinique Requis',
+      href: '/attendance',
+      actionText: 'Valider les Stages',
+      icon: Activity,
+    },
+    {
+      id: 'd2',
+      refCode: 'DOS-FAC-MED-044',
+      category: 'FINANCE',
+      title: 'Échéance Blouses & Matériel de Soins',
+      concerned: '14 étudiantes • Filière Sages-Femmes (SF)',
+      dueDate: 'Échu depuis 3 jours',
+      impact: '1 250 000 FCFA',
+      status: 'PENDING',
+      statusLabel: 'Frais en Attente',
+      href: '/invoices',
+      actionText: 'Émettre Relances',
+      icon: AlertOctagon,
+    },
+    {
+      id: 'd3',
+      refCode: 'DOS-RH-MED-009',
+      category: 'RH',
+      title: 'Autorisation d\'Absence pour Garde Médicale',
+      concerned: 'Dr. Coulibaly — Médecin Enseignant',
+      dueDate: 'Période : 25 au 27 Oct.',
+      impact: 'Garde Hôpital de Kati',
+      status: 'PENDING',
+      statusLabel: 'À Arbitrer',
+      href: '/hr/leaves',
+      actionText: 'Arbitrer Demande',
+      icon: Clock4,
+    },
+    {
+      id: 'd4',
+      refCode: 'DOS-EXAM-S1-2026',
+      category: 'ACADEMIC',
+      title: 'Clôture des Notes de Partiels Semestre 1',
+      concerned: 'Filière Laboratoire & Biologie Médicale',
+      dueDate: 'Validation Délibération',
+      impact: 'Barème /20 • Éliminatoire <10',
+      status: 'READY',
+      statusLabel: 'Prêt Délibération',
+      href: '/grades',
+      actionText: 'Valider Notes',
+      icon: FileCheck2,
+    },
+  ];
+
+  const agroDossiersList: DossierItem[] = [
     {
       id: 'd1',
       refCode: 'DOS-FAC-2026-042',
@@ -265,6 +436,8 @@ export default function DashboardPage() {
       icon: ReceiptText,
     },
   ];
+
+  const dossiersList = isHealth ? healthDossiersList : agroDossiersList;
 
   const filteredDossiers = dossiersList.filter((item) => {
     if (activeTab === 'critical') return item.status === 'CRITICAL';
@@ -376,18 +549,18 @@ export default function DashboardPage() {
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-1.5">
                   <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                    CFP-PAS de Gao
+                    {schoolDisplayName}
                   </h1>
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase tracking-wider">
                     Exercice 2025 - 2026
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1">
                     <CheckCircle2 size={12} strokeWidth={2.5} />
-                    Référentiel APC Homologué
+                    {isHealth ? 'Agrément MSHP N°2024-087 • Santé Publique' : 'Référentiel APC Homologué'}
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-blue-100/80 font-medium">
-                  {greeting}{user?.firstName ? `, ${user.firstName}` : ''} • Plateforme Nationale de Gestion & de Pilotage de l'Établissement
+                  {greeting}{user?.firstName ? `, ${user.firstName}` : ''} • {isHealth ? 'Plateforme de Formation Paramédicale & de Gestion des Soins' : "Plateforme Nationale de Gestion & de Pilotage de l'Établissement"}
                 </p>
               </div>
             </div>
@@ -396,12 +569,12 @@ export default function DashboardPage() {
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3 text-xs">
               <div className="flex flex-col px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200/70">Territoire</span>
-                <span className="font-bold text-white text-xs mt-0.5">Gao (Région VII)</span>
+                <span className="font-bold text-white text-xs mt-0.5 truncate">{territoryDisplay}</span>
               </div>
               <div className="flex flex-col px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200/70">Rôle Opérateur</span>
-                <span className="font-bold text-amber-300 text-xs mt-0.5">
-                  {user?.role === 'SUPER_ADMIN' ? 'Superviseur National' : 'Direction École'}
+                <span className="font-bold text-amber-300 text-xs mt-0.5 truncate">
+                  {roleDisplay}
                 </span>
               </div>
               <div className="flex flex-col px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
@@ -878,11 +1051,15 @@ export default function DashboardPage() {
               </div>
 
               <div className="space-y-4">
-                {[
+                {(isHealth ? [
+                  { name: "1ère Année IDE (Infirmiers Diplômés d'État)", current: 38, total: 45, pct: 84, gradient: 'from-emerald-500 via-teal-400 to-emerald-400' },
+                  { name: "1ère Année SF (Sages-Femmes d'État)", current: 30, total: 35, pct: 86, gradient: 'from-blue-500 via-indigo-400 to-cyan-400' },
+                  { name: "Techniciens de Laboratoire & Biologie (TLB)", current: 24, total: 30, pct: 80, gradient: 'from-amber-500 via-orange-400 to-yellow-400' },
+                ] : [
                   { name: '1ère Année TE (Transformation)', current: 48, total: 52, pct: 92, gradient: 'from-emerald-500 via-teal-400 to-emerald-400' },
                   { name: '1ère Année EA (Élevage & Agri)', current: 37, total: 44, pct: 84, gradient: 'from-blue-500 via-indigo-400 to-cyan-400' },
                   { name: '2ème Année EA (Spécialisation)', current: 28, total: 35, pct: 79, gradient: 'from-amber-500 via-orange-400 to-yellow-400' },
-                ].map((row, idx) => (
+                ]).map((row, idx) => (
                   <div key={idx} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-extrabold text-slate-800 dark:text-slate-200 truncate">
@@ -924,10 +1101,10 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h3 className="text-xs font-black uppercase tracking-wider text-amber-300">
-                    Conformité Institutionnelle
+                    {isHealth ? 'Conformité Ministère de la Santé' : 'Conformité Institutionnelle'}
                   </h3>
                   <p className="text-[11px] text-blue-200/70">
-                    Ministère de l'Éducation Nationale • Mali
+                    {isHealth ? 'Ministère de la Santé et du Développement Social • Mali' : "Ministère de l'Éducation Nationale • Mali"}
                   </p>
                 </div>
               </div>
@@ -937,26 +1114,32 @@ export default function DashboardPage() {
                   <span className="text-blue-200/80">Statut Établissement</span>
                   <span className="font-extrabold text-emerald-400 flex items-center gap-1.5">
                     <CheckCircle2 size={13} strokeWidth={2.5} />
-                    Agréé & Conforme
+                    {isHealth ? "Agréé MSHP & Diplômant d'État" : "Agréé & Conforme"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
                   <span className="text-blue-200/80">Mode Pédagogique</span>
-                  <span className="font-extrabold text-amber-300">APC Modulaire</span>
+                  <span className="font-extrabold text-amber-300">
+                    {isHealth ? 'Théorie (40%) + Stages Cliniques (60%)' : 'APC Modulaire'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <span className="text-blue-200/80">Convention Formateurs</span>
-                  <span className="font-extrabold text-white tabular-nums">1 750 FCFA / h</span>
+                  <span className="text-blue-200/80">Corps Enseignant</span>
+                  <span className="font-extrabold text-white tabular-nums">
+                    {isHealth ? 'Praticiens Hospitaliers Conventionnés' : '1 750 FCFA / h'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <span className="text-blue-200/80">Partitionnement Données</span>
-                  <span className="font-extrabold text-blue-300">100% Isolé Multi-Tenant</span>
+                  <span className="text-blue-200/80">Règle de Notation</span>
+                  <span className="font-extrabold text-blue-300">
+                    {isHealth ? 'Barème /20 • Éliminatoire stage <10' : '100% Isolé Multi-Tenant'}
+                  </span>
                 </div>
               </div>
 
               <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-blue-200/60 font-semibold">
-                <span>Région de Gao (Mali)</span>
-                <span className="text-amber-400 font-mono">ERP v1.1.0 Homologué</span>
+                <span>{territoryDisplay}</span>
+                <span className="text-amber-400 font-mono">{isHealth ? 'Santé ERP v1.1.0' : 'ERP v1.1.0 Homologué'}</span>
               </div>
             </div>
 

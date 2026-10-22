@@ -47,6 +47,20 @@ export interface StudentBulletin {
   mention: string;
 }
 
+export interface HealthSubjectResult extends SubjectResult {
+  isClinicalStage?: boolean;     // Stage clinique / MSP hospitalière
+  isEliminatory?: boolean;       // Note inférieure au seuil éliminatoire
+  eliminationThreshold?: number; // Seuil éliminatoire (ex: 10/20 au Mali)
+}
+
+export interface HealthStudentBulletin extends StudentBulletin {
+  subjects: HealthSubjectResult[];
+  clinicalValidated: boolean;    // Tous les stages cliniques validés (>= 10/20)
+  hasEliminatoryScore: boolean;  // Contient au moins une note éliminatoire
+  decision: 'ADMIS' | 'AJOURNÉ' | 'RATTRAPAGE_STAGE' | 'RATTRAPAGE_THEORIE';
+  decisionLabel: string;
+}
+
 /**
  * Mentions adaptées à l'échelle de l'école.
  * @param average — Moyenne de l'élève
@@ -163,6 +177,163 @@ export function calculateClassBulletins(grades: GradeInput[], scale: number = DE
   });
 
   // 3. Rangs
+  bulletins.sort((a, b) => b.generalAverage - a.generalAverage);
+  bulletins.forEach((b, index) => {
+    b.rank = index + 1;
+  });
+
+  return bulletins;
+}
+
+/**
+ * ================================================================
+ * CALCUL DES BULLETINS EN ÉCOLE DE SANTÉ & SCIENCES PARAMÉDICALES
+ * (Réglementation INFSS / Ministère de la Santé du Mali)
+ * ================================================================
+ * - Barème strict sur 20.
+ * - Formule Théorie : Contrôle Continu (40%) + Examen/Partiel (60%).
+ * - Formule Stage Clinique & MSP Hospitalière : Évaluation pratique directe.
+ * - Règle éliminatoire : Toute note de stage clinique < 10.00/20
+ *   est éliminatoire et bloque la validation du semestre.
+ */
+export function calculateHealthBulletins(
+  grades: GradeInput[],
+  scale: number = 20,
+  stageEliminationThreshold: number = 10
+): HealthStudentBulletin[] {
+  const studentsMap = new Map<string, { 
+    name: string; 
+    number: string; 
+    subjects: Map<string, { 
+      classScores: number[], 
+      compScores: number[], 
+      coef: number, 
+      name: string,
+      isClinical: boolean
+    }> 
+  }>();
+
+  grades.forEach(g => {
+    if (!studentsMap.has(g.studentId)) {
+      studentsMap.set(g.studentId, {
+        name: g.studentName,
+        number: g.studentNumber,
+        subjects: new Map()
+      });
+    }
+
+    const student = studentsMap.get(g.studentId)!;
+    const isClinical = /stage|msp|clinique|garde|pratique|hospitalier/i.test(g.subjectName);
+
+    if (!student.subjects.has(g.subjectId)) {
+      student.subjects.set(g.subjectId, {
+        classScores: [],
+        compScores: [],
+        coef: g.coefficient || 1,
+        name: g.subjectName,
+        isClinical
+      });
+    }
+
+    const sub = student.subjects.get(g.subjectId)!;
+    const normalizedScore = (g.score / g.maxScore) * scale;
+
+    if (g.examType === 'CONTINUOUS') {
+      sub.classScores.push(normalizedScore);
+    } else {
+      sub.compScores.push(normalizedScore);
+    }
+  });
+
+  const bulletins: HealthStudentBulletin[] = Array.from(studentsMap.entries()).map(([studentId, data]) => {
+    let totalPoints = 0;
+    let totalCoefficients = 0;
+    let hasEliminatoryScore = false;
+    let clinicalValidated = true;
+    const subjectResults: HealthSubjectResult[] = [];
+
+    data.subjects.forEach((sub, subjectId) => {
+      const moyClasse = sub.classScores.length > 0 
+        ? sub.classScores.reduce((a, b) => a + b, 0) / sub.classScores.length 
+        : 0;
+
+      const moyComp = sub.compScores.length > 0 
+        ? sub.compScores.reduce((a, b) => a + b, 0) / sub.compScores.length 
+        : moyClasse;
+
+      let average: number;
+      if (sub.isClinical) {
+        // En stage clinique : évaluation pratique directe
+        average = sub.compScores.length > 0 ? moyComp : moyClasse;
+      } else {
+        // En théorie médicale : 40% Contrôle Continu + 60% Partiel Semestriel
+        average = moyClasse > 0 ? (0.4 * moyClasse + 0.6 * moyComp) : moyComp;
+      }
+
+      const isEliminatory = sub.isClinical && average < stageEliminationThreshold;
+      if (isEliminatory) {
+        hasEliminatoryScore = true;
+        clinicalValidated = false;
+      }
+
+      const weightedAverage = average * sub.coef;
+
+      subjectResults.push({
+        subjectId,
+        subjectName: sub.name,
+        coefficient: sub.coef,
+        moyenneClasse: Number(moyClasse.toFixed(2)),
+        moyenneComposition: Number(moyComp.toFixed(2)),
+        average: Number(average.toFixed(2)),
+        weightedAverage: Number(weightedAverage.toFixed(2)),
+        mention: getMaliMention(average, scale),
+        isClinicalStage: sub.isClinical,
+        isEliminatory,
+        eliminationThreshold: stageEliminationThreshold
+      });
+
+      totalPoints += weightedAverage;
+      totalCoefficients += sub.coef;
+    });
+
+    const generalAverage = totalCoefficients > 0 ? totalPoints / totalCoefficients : 0;
+    const roundedAvg = Number(generalAverage.toFixed(2));
+
+    let decision: HealthStudentBulletin['decision'] = 'AJOURNÉ';
+    let decisionLabel = 'Ajourné';
+
+    if (hasEliminatoryScore) {
+      decision = 'RATTRAPAGE_STAGE';
+      decisionLabel = 'Stage clinique non validé (Rattrapage obligatoire)';
+    } else if (roundedAvg >= 10.00) {
+      decision = 'ADMIS';
+      decisionLabel = 'Admis au semestre supérieur';
+    } else if (roundedAvg >= 8.00) {
+      decision = 'RATTRAPAGE_THEORIE';
+      decisionLabel = 'Session de rattrapage théorique';
+    } else {
+      decision = 'AJOURNÉ';
+      decisionLabel = 'Ajourné (Moyenne insuffisante)';
+    }
+
+    return {
+      studentId,
+      studentName: data.name,
+      studentNumber: data.number,
+      subjects: subjectResults,
+      totalPoints: Number(totalPoints.toFixed(2)),
+      totalCoefficients,
+      generalAverage: roundedAvg,
+      rank: 0,
+      classSize: studentsMap.size,
+      mention: getMaliMention(generalAverage, scale),
+      clinicalValidated,
+      hasEliminatoryScore,
+      decision,
+      decisionLabel
+    };
+  });
+
   bulletins.sort((a, b) => b.generalAverage - a.generalAverage);
   bulletins.forEach((b, index) => {
     b.rank = index + 1;
