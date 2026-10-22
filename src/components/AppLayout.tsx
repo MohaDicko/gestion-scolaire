@@ -6,12 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import React, { ReactNode, useEffect, useState, useCallback } from 'react';
 import {
-  LayoutDashboard, Users, School, BookOpen, CalendarCheck,
-  Briefcase, FileText, Receipt, Clock, Settings, LogOut,
+  LayoutDashboard, Users, School, BookOpenCheck, CalendarDays,
+  Briefcase, FileSpreadsheet, ReceiptText, Clock, Settings, LogOut,
   ChevronRight, GraduationCap, BadgeDollarSign, BarChart3,
   UserCog, Menu, X, Bell, Award, ClipboardCheck, Landmark,
-  Zap, Activity, ShieldAlert, Plus, Package, Loader2, MessageSquare,
-  Moon, Sun, Search, Home, BookMarked, Coins, LibraryBig, ChevronDown, Hash
+  Zap, Activity, ShieldAlert, Plus, PackageCheck, Loader2, MessageSquare,
+  Moon, Sun, Search, Home, BookMarked, Coins, LibraryBig, ChevronDown, Hash,
+  UserPlus, UserCheck, FileCheck2, Scale, Building2, ShieldCheck, Sliders,
+  BookOpen, FileText, Receipt, Package
 } from 'lucide-react';
 
 import PushNotificationManager from './PushNotificationManager';
@@ -29,46 +31,46 @@ interface NavSection { title: string; items: NavItem[]; }
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    title: 'Vue Générale',
+    title: 'Pilotage & État',
     items: [
-      { label: 'Tableau de Bord', href: '/dashboard', icon: <LayoutDashboard size={16}/> },
+      { label: 'Tableau de Bord', href: '/dashboard', icon: <LayoutDashboard size={16} strokeWidth={1.75} /> },
     ]
   },
   {
-    title: 'Scolarité',
+    title: 'Registre Scolarité',
     items: [
-      { label: 'Inscriptions',       href: '/students/enroll', icon: <Plus size={16}/> },
-      { label: 'Apprenants',         href: '/students',        icon: <Users size={16}/> },
-      { label: 'Emploi du Temps',    href: '/timetable',       icon: <Clock size={16}/> },
-      { label: 'Présences',          href: '/attendance',      icon: <CalendarCheck size={16}/> },
+      { label: 'Inscriptions & Admissions', href: '/students/enroll', icon: <UserPlus size={16} strokeWidth={1.75} /> },
+      { label: 'Fichier des Apprenants',   href: '/students',        icon: <GraduationCap size={16} strokeWidth={1.75} /> },
+      { label: 'Planning & Horaires',      href: '/timetable',       icon: <CalendarDays size={16} strokeWidth={1.75} /> },
+      { label: 'Émargement & Assiduité',   href: '/attendance',      icon: <UserCheck size={16} strokeWidth={1.75} /> },
     ]
   },
   {
-    title: 'Pédagogie',
+    title: 'Pédagogie & Compétences',
     items: [
-      { label: 'Cahier de Texte',    href: '/lessons',            icon: <BookOpen size={16}/> },
-      { label: 'Saisie des Notes',   href: '/grades',             icon: <FileText size={16}/> },
-      { label: 'Bulletins',          href: '/reports/bulletins',  icon: <Award size={16}/> },
+      { label: 'Cahier de Texte APC',      href: '/lessons',            icon: <BookOpenCheck size={16} strokeWidth={1.75} /> },
+      { label: 'Relevés des Notes',        href: '/grades',             icon: <FileSpreadsheet size={16} strokeWidth={1.75} /> },
+      { label: 'Bulletins & Décisions',    href: '/reports/bulletins',  icon: <FileCheck2 size={16} strokeWidth={1.75} /> },
       // NB: 'Relevé Compétences' est réservé aux établissements agro-pastoraux (AGRO)
-      { label: 'Bibliothèque',       href: '/library',            icon: <LibraryBig size={16}/> },
+      { label: 'Fonds Documentaire',       href: '/library',            icon: <LibraryBig size={16} strokeWidth={1.75} /> },
     ]
   },
   {
-    title: 'Finances',
+    title: 'Finances & Recouvrement',
     items: [
-      { label: 'Facturation',        href: '/invoices',    icon: <Receipt size={16}/> },
-      { label: 'Dépenses',           href: '/expenses',    icon: <Coins size={16}/> },
-      { label: 'Bilan Financier',    href: '/finance',     icon: <Landmark size={16}/> },
+      { label: 'Facturation & Échéances',  href: '/invoices',    icon: <ReceiptText size={16} strokeWidth={1.75} /> },
+      { label: 'Dépenses & Décaissements', href: '/expenses',    icon: <Scale size={16} strokeWidth={1.75} /> },
+      { label: 'Bilan & Balance de Caisse',href: '/finance',     icon: <Landmark size={16} strokeWidth={1.75} /> },
     ]
   },
   {
-    title: 'Administration',
+    title: 'Administration & Tutelle',
     items: [
-      { label: 'Personnel (RH)',     href: '/employees',   icon: <Briefcase size={16}/> },
-      { label: 'Classes & Modules',  href: '/classrooms',  icon: <School size={16}/> },
-      { label: 'Inventaire',         href: '/inventory',   icon: <Package size={16}/> },
-      { label: 'Journaux d\'Audit',  href: '/admin/audit', icon: <ShieldAlert size={16}/> },
-      { label: 'Paramètres',         href: '/settings',    icon: <Settings size={16}/> },
+      { label: 'Corps Formateurs (RH)',    href: '/employees',   icon: <Briefcase size={16} strokeWidth={1.75} /> },
+      { label: 'Filières & Référentiels',  href: '/classrooms',  icon: <Building2 size={16} strokeWidth={1.75} /> },
+      { label: 'Matériels & Inventaire',   href: '/inventory',   icon: <PackageCheck size={16} strokeWidth={1.75} /> },
+      { label: 'Registres d\'Audit État',  href: '/admin/audit', icon: <ShieldCheck size={16} strokeWidth={1.75} /> },
+      { label: 'Configuration Système',    href: '/settings',    icon: <Sliders size={16} strokeWidth={1.75} /> },
     ]
   }
 ];
@@ -218,51 +220,57 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
   /* ── SIDEBAR CONTENT ── */
   const SidebarContent = () => (
-    <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>
+    <div className="flex flex-col h-full overflow-hidden fiori-sidebar" style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>
       
-      {/* Logo Area */}
+      {/* Government & State Official Header */}
       <div style={{
-        padding: '18px 18px 14px',
-        borderBottom: '1px solid var(--border)',
+        padding: '16px 16px 14px',
+        borderBottom: '1px solid var(--border-md)',
         position: 'relative',
+        background: 'linear-gradient(180deg, rgba(0, 112, 242, 0.03) 0%, transparent 100%)',
       }}>
         {/* Mali flag top bar */}
         <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-          background: 'linear-gradient(90deg, #14A44D 33%, #FCD116 33% 66%, #CE1126 66%)',
+          position: 'absolute', top: 0, left: 0, right: 0, height: '3.5px',
+          background: 'linear-gradient(90deg, #14A44D 33.3%, #FCD116 33.3% 66.6%, #CE1126 66.6%)',
         }} />
         
-        <div className="flex items-center gap-3 mt-1">
+        <div className="flex items-start gap-3 mt-1.5">
+          {/* Institutional Shield Badge */}
           <div style={{
-            width: 40, height: 40, borderRadius: 12,
-            background: 'var(--primary-grad)',
+            width: 42, height: 42, borderRadius: 8,
+            background: 'linear-gradient(135deg, #0a3b7b 0%, #0070f2 100%)',
             display: 'grid', placeItems: 'center',
-            boxShadow: 'var(--shadow-glow)',
-            flexShrink: 0, overflow: 'hidden', position: 'relative',
+            boxShadow: '0 2px 6px rgba(10, 59, 123, 0.25)',
+            flexShrink: 0, position: 'relative', border: '1px solid rgba(255, 255, 255, 0.2)',
           }}>
-            <GraduationCap size={20} color="white" />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%)' }} />
+            <Landmark size={22} color="#ffffff" strokeWidth={1.75} />
           </div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 900, fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-0.5px', lineHeight: 1.2, color: 'var(--text)' }}>
-              SahelEdu<span style={{ color: 'var(--primary)' }}>.pro</span>
+          
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ fontSize: 9, fontWeight: 900, color: '#0a3b7b', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                RÉPUBLIQUE DU MALI
+              </span>
             </div>
-            <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 2 }}>
-              {branding?.name || user?.schoolName || 'Plateforme Éducative Mali'}
+            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', lineHeight: 1.25, marginTop: 1, letterSpacing: '-0.2px' }}>
+              CFP-PAS DE GAO
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, background: 'rgba(0, 112, 242, 0.08)', padding: '1px 6px', borderRadius: 4, border: '1px solid rgba(0, 112, 242, 0.2)' }}>
+              <ShieldCheck size={11} color="#0070f2" strokeWidth={2} />
+              <span style={{ fontSize: 9, fontWeight: 700, color: '#0070f2', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                FIO-ERP • APC ÉTAT
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav aria-label="Navigation principale" style={{ flex: 1, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {/* Navigation Links with Fiori Active Border Indicator */}
+      <nav aria-label="Navigation principale" style={{ flex: 1, padding: '8px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {navSections.map(section => (
-          <div key={section.title} style={{ marginBottom: 6 }}>
-            <div style={{
-              fontSize: 9, fontWeight: 800, color: 'var(--text-dim)',
-              textTransform: 'uppercase', letterSpacing: '0.14em',
-              padding: '12px 10px 4px',
-            }}>
+          <div key={section.title} style={{ marginBottom: 4 }}>
+            <div className="fiori-section-label">
               {section.title}
             </div>
             {section.items.map(item => {
@@ -272,30 +280,17 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '8px 10px', borderRadius: 10, marginBottom: 1,
-                    fontSize: 13, fontWeight: active ? 700 : 500,
-                    color: active ? 'var(--primary)' : 'var(--text-muted)',
-                    background: active ? 'var(--primary-dim)' : 'transparent',
-                    transition: 'all 0.18s var(--ease)',
-                    position: 'relative',
-                    textDecoration: 'none',
-                  }}
-                  className="group nav-link-item"
+                  className={`fiori-nav-item ${active ? 'active' : ''}`}
                 >
-                  <span style={{ color: active ? 'var(--primary)' : 'var(--text-dim)', flexShrink: 0, transition: 'color 0.18s' }}>
+                  <span className="fiori-icon">
                     {item.icon}
                   </span>
                   <span style={{ flex: 1 }}>{item.label}</span>
                   {item.badge && (
                     <span style={{
-                      background: 'var(--primary)', color: '#fff', borderRadius: 99,
-                      fontSize: 9, fontWeight: 800, padding: '1px 6px',
+                      background: '#0070f2', color: '#fff', borderRadius: 3,
+                      fontSize: 9, fontWeight: 700, padding: '1px 5px', letterSpacing: '0.04em',
                     }}>{item.badge}</span>
-                  )}
-                  {active && (
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)', flexShrink: 0 }} />
                   )}
                 </Link>
               );
@@ -304,39 +299,54 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
         ))}
       </nav>
 
-      {/* User Footer */}
+      {/* Institutional User & Agent Footer */}
       <div style={{
-        padding: '12px 12px',
-        borderTop: '1px solid var(--border)',
+        padding: '12px 14px',
+        borderTop: '1px solid var(--border-md)',
         background: 'var(--bg-4)',
       }}>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'var(--primary-grad)',
+            width: 34, height: 34, borderRadius: 6,
+            background: 'linear-gradient(135deg, #0070f2 0%, #0a3b7b 100%)',
             display: 'grid', placeItems: 'center',
-            color: '#fff', fontSize: 13, fontWeight: 800,
-            boxShadow: '0 2px 8px var(--primary-glow)',
-            flexShrink: 0, letterSpacing: '-0.5px',
+            color: '#fff', fontSize: 12, fontWeight: 800,
+            flexShrink: 0, letterSpacing: '-0.3px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
           }}>
             {initials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName}
             </div>
-            <div style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              {roleLabel}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#107e3e' }} />
+              <span style={{ fontSize: 9.5, color: '#556b82', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {roleLabel} • MAT: AG-2025
+              </span>
             </div>
           </div>
-          <button onClick={handleLogout} style={{
-            width: 32, height: 32, borderRadius: 8, display: 'grid', placeItems: 'center',
-            color: 'var(--text-dim)', transition: 'all 0.15s', background: 'none', border: 'none', cursor: 'pointer',
-          }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--danger-dim)'; (e.currentTarget as HTMLElement).style.color = 'var(--danger)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'var(--text-dim)'; }}
+          <button
+            onClick={handleLogout}
+            title="Déconnexion sécurisée"
+            aria-label="Déconnexion"
+            style={{
+              width: 30, height: 30, borderRadius: 6, display: 'grid', placeItems: 'center',
+              color: '#556b82', transition: 'all 0.15s', background: 'none', border: '1px solid transparent', cursor: 'pointer',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(187, 0, 0, 0.08)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(187, 0, 0, 0.2)';
+              (e.currentTarget as HTMLElement).style.color = '#bb0000';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.background = 'none';
+              (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
+              (e.currentTarget as HTMLElement).style.color = '#556b82';
+            }}
           >
-            <LogOut size={16} />
+            <LogOut size={15} strokeWidth={1.75} />
           </button>
         </div>
       </div>
@@ -404,85 +414,95 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             </div>
           )}
 
-          {/* ── TOP HEADER ── */}
-          <header style={{
+          {/* ── TOP HEADER (SAP FIORI SHELLBAR) ── */}
+          <header className="fiori-shellbar" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '0 clamp(12px, 2.5vw, 20px)', height: 'clamp(52px, 6vh, 58px)',
-            background: 'var(--bg-glass)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderBottom: '1px solid var(--border)',
+            padding: '0 clamp(12px, 2vw, 20px)', height: '56px',
+            background: 'var(--bg-2)',
+            borderBottom: '1px solid var(--border-md)',
             flexShrink: 0, zIndex: 30,
             position: 'sticky', top: 0,
-            gap: 8,
+            gap: 12,
           }}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               {/* Mobile menu button */}
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden"
                 aria-label="Ouvrir le menu de navigation"
                 title="Ouvrir le menu"
-                style={{ padding: 6, borderRadius: 9, color: 'var(--text-muted)', transition: 'all 0.15s', background: 'none', border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
+                style={{ padding: 6, borderRadius: 6, color: '#556b82', transition: 'all 0.15s', background: 'none', border: '1px solid var(--border-md)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
               >
-                <Menu size={22} />
+                <Menu size={20} strokeWidth={1.75} />
               </button>
 
-              {/* Page Title / Breadcrumbs */}
-              <div className="hidden sm:block">
+              {/* Breadcrumb / Title Fiori */}
+              <div className="hidden sm:flex items-center gap-2 min-w-0">
                 {breadcrumbs && breadcrumbs.length > 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontFamily: "'72', sans-serif" }}>
                     {breadcrumbs.map((b, i) => (
                       <React.Fragment key={i}>
-                        {i > 0 && <ChevronRight size={13} style={{ color: 'var(--text-dim)' }} />}
+                        {i > 0 && <ChevronRight size={13} style={{ color: '#556b82' }} />}
                         {b.href ? (
-                          <Link href={b.href} style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}
-                            className="hover:text-primary transition-colors">
+                          <Link href={b.href} style={{ fontWeight: 600, color: '#556b82' }}
+                            className="hover:text-blue-600 transition-colors">
                             {b.label}
                           </Link>
                         ) : (
-                          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>{b.label}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--text)' }}>{b.label}</span>
                         )}
                       </React.Fragment>
                     ))}
                   </div>
                 ) : title ? (
-                  <h1 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-0.3px' }}>
+                  <h1 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', fontFamily: "'72', sans-serif", letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>
                     {title}
                   </h1>
                 ) : null}
+
+                {/* Government Official Badges */}
+                <div className="hidden xl:flex items-center gap-2 ml-3 pl-3 border-l border-slate-200 dark:border-slate-800">
+                  <span className="fiori-badge fiori-badge-info">
+                    EXERCICE 2025 - 2026
+                  </span>
+                  <span className="fiori-badge fiori-badge-positive">
+                    <ShieldCheck size={11} strokeWidth={2} /> RÉFÉRENTIEL APC CONFORME
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* RIGHT ACTIONS */}
-            <div className="flex items-center gap-2">
-              {/* Search */}
+            {/* RIGHT ACTIONS (FIORI SHELLBAR TOOLS) */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Institutional Search Bar */}
               <button
                 onClick={() => setIsCommandPaletteOpen(true)}
                 className="hidden md:flex items-center gap-2"
-                aria-label="Ouvrir la recherche globale"
+                aria-label="Recherche rapide de dossiers"
                 style={{
-                  padding: '7px 12px', borderRadius: 10, fontSize: 13, fontWeight: 500,
+                  padding: '6px 12px', borderRadius: 6, fontSize: 12.5, fontWeight: 500,
                   color: 'var(--text-muted)', background: 'var(--bg-4)',
-                  border: '1.5px solid var(--border)',
-                  cursor: 'pointer', transition: 'all 0.18s', width: 200,
-                  gap: 8, display: 'flex', alignItems: 'center',
+                  border: '1px solid var(--border-md)',
+                  cursor: 'pointer', transition: 'all 0.15s', width: 230,
+                  fontFamily: "'72', sans-serif",
                 }}
               >
-                <Search size={14} />
-                <span style={{ flex: 1, textAlign: 'left' }}>Rechercher...</span>
-                <kbd style={{ fontSize: 10, fontWeight: 700, opacity: 0.5, fontFamily: 'monospace' }}>⌘K</kbd>
+                <Search size={14} strokeWidth={1.75} style={{ color: '#556b82' }} />
+                <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  Rechercher dossier, élève...
+                </span>
+                <kbd style={{ fontSize: 10, fontWeight: 700, opacity: 0.6, fontFamily: "'72Mono', monospace", background: 'var(--bg-2)', padding: '1px 4px', borderRadius: 3, border: '1px solid var(--border-md)' }}>⌘K</kbd>
               </button>
 
               {user?.role === 'SUPER_ADMIN' && user.schoolName && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '5px 10px', borderRadius: 8,
-                  background: 'rgba(59,130,246,0.08)',
-                  border: '1px solid rgba(59,130,246,0.2)',
+                  padding: '4px 8px', borderRadius: 4,
+                  background: 'rgba(0, 112, 242, 0.08)',
+                  border: '1px solid rgba(0, 112, 242, 0.25)',
                 }} className="hidden lg:flex">
-                  <ShieldAlert size={12} style={{ color: '#3b82f6' }} />
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Impersonation</span>
+                  <ShieldAlert size={12} strokeWidth={2} style={{ color: '#0070f2' }} />
+                  <span style={{ fontSize: 9.5, fontWeight: 800, color: '#0070f2', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Supervision État</span>
                 </div>
               )}
 

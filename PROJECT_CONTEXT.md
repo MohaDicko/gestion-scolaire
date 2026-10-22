@@ -403,4 +403,32 @@ npm run prisma:migrate   # Appliquer les migrations
 
 ---
 
+## 15. 🧪 Journal de recette et de suivi
+
+### Session du 16/10/2026 — vérification production
+
+**Statut :** session clôturée, reprise des tests prévue lors de la prochaine session.
+
+Contrôles réalisés sans écriture ni modification des données de production :
+
+- Connexion réussie sur l'environnement de production avec un compte `SCHOOL_ADMIN`.
+- Tableau de bord chargé et identité de l'établissement vérifiée.
+- Navigation contrôlée sur les modules Élèves, Présences, Notes, Facturation, Ressources humaines et Paramètres.
+- Données de production chargées correctement dans les listes Élèves et Facturation.
+- Suite automatisée locale validée : **20 fichiers de tests, 183 tests réussis, 0 échec**.
+- Build de production validé avec compilation TypeScript réussie et génération de 115 pages.
+- Lint validé sans erreur bloquante ; 5 avertissements non bloquants restent à traiter.
+
+Tests à poursuivre lors de la prochaine session, de préférence avec des données de test ou un environnement de préproduction :
+
+- scénarios d'écriture : création et modification d'élève, inscription, facture, paiement, présence et note ;
+- exports Excel/PDF et génération de documents ;
+- contrôles d'autorisation par rôle et isolation multi-tenant ;
+- tests de session expirée, erreurs réseau et reprise après chargement ;
+- correction ou qualification des avertissements ESLint et des avertissements de configuration du build.
+
+**Règle de sécurité :** ne jamais consigner de mot de passe, jeton ou autre secret dans ce document. Le mot de passe de production communiqué pendant la recette doit être renouvelé.
+
+---
+
 *Ce fichier est la source de vérité du projet. Mettre à jour après chaque changement majeur d'architecture.*

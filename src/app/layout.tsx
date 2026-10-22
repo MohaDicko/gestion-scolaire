@@ -1,4 +1,4 @@
-import { Manrope } from "next/font/google";
+import { Manrope, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import { Metadata, Viewport } from "next";
@@ -7,6 +7,12 @@ import { cn } from "@/lib/utils";
 const manrope = Manrope({
   subsets: ["latin"],
   variable: '--font-sans',
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: '--font-fiori',
+  display: 'swap',
 });
 
 export const viewport: Viewport = {
@@ -38,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={cn("font-sans", manrope.variable)} suppressHydrationWarning>
+    <html lang="fr" className={cn("font-sans", manrope.variable, inter.variable)} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

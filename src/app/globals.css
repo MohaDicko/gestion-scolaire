@@ -8,8 +8,77 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── SAP FIORI HORIZON TYPOGRAPHY (72 FONT FAMILY) ───────────────────── */
+@font-face {
+  font-family: '72';
+  src: url('https://sdk.openui5.org/resources/sap/ui/core/themes/sap_horizon/fonts/72-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: '72';
+  src: url('https://sdk.openui5.org/resources/sap/ui/core/themes/sap_horizon/fonts/72-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: '72';
+  src: url('https://sdk.openui5.org/resources/sap/ui/core/themes/sap_horizon/fonts/72-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: '72';
+  src: url('https://sdk.openui5.org/resources/sap/ui/core/themes/sap_horizon/fonts/72-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: '72';
+  src: url('https://sdk.openui5.org/resources/sap/ui/core/themes/sap_horizon/fonts/72-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: '72Mono';
+  src: url('https://sdk.openui5.org/resources/sap/ui/core/themes/sap_horizon/fonts/72Mono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── GLOBAL SAP FIORI 72 TYPOGRAPHY ENFORCEMENT ────────────────────────── */
+html, body, button, input, select, textarea, table, th, td, div, span, p, h1, h2, h3, h4, h5, h6 {
+  font-family: '72', var(--font-fiori), var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono, code, kbd, samp {
+  font-family: '72Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
 /* ─── LIGHT MODE TOKENS ─────────────────────────────────────────────────── */
 :root {
+  /* SAP Fiori Horizon Font & Theme Tokens */
+  --font-fiori: '72', var(--font-fiori), var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --fiori-blue: #0070f2;
+  --fiori-blue-hover: #0056b3;
+  --fiori-blue-dim: rgba(0, 112, 242, 0.08);
+  --fiori-navy: #0a3b7b;
+  --fiori-green: #107e3e;
+  --fiori-green-dim: rgba(16, 126, 62, 0.08);
+  --fiori-amber: #c55305;
+  --fiori-amber-dim: rgba(197, 83, 5, 0.08);
+  --fiori-critical: #bb0000;
+  --fiori-critical-dim: rgba(187, 0, 0, 0.08);
+  --fiori-neutral: #556b82;
+
   /* Base Backgrounds */
   --bg:           #f4f6fb;
   --bg-2:         #ffffff;
@@ -147,6 +216,125 @@
   --shadow-glow: 0 0 30px rgba(79, 117, 255, 0.2), 0 4px 16px rgba(79, 117, 255, 0.15);
   --shadow-gold: 0 4px 20px rgba(245, 158, 11, 0.2);
   --shadow-card: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* ─── SAP FIORI HORIZON GOVERNMENT & INSURANCE SPECIFIC STYLES ───────────── */
+.fiori-shellbar {
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.fiori-sidebar {
+  background: var(--bg-2);
+  border-right: 1px solid var(--border-md);
+}
+
+.fiori-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-left: 3px solid transparent;
+  color: var(--text-muted);
+  font-family: '72', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease-in-out;
+}
+
+.fiori-nav-item:hover {
+  background: var(--bg-4);
+  color: var(--text);
+}
+
+.fiori-nav-item.active {
+  border-left: 3px solid #0070f2;
+  background: rgba(0, 112, 242, 0.08);
+  color: #0070f2;
+  font-weight: 700;
+}
+
+.fiori-icon {
+  stroke-width: 1.75px !important;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.fiori-nav-item.active .fiori-icon {
+  color: #0070f2;
+}
+
+.fiori-nav-item:not(.active) .fiori-icon {
+  color: #556b82;
+}
+
+.fiori-section-label {
+  font-family: '72', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #556b82;
+  padding: 12px 12px 4px;
+}
+
+.fiori-tile {
+  background: var(--bg-2);
+  border: 1px solid var(--border-md);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fiori-tile:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.fiori-badge {
+  font-family: '72', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fiori-badge-positive {
+  background: rgba(16, 126, 62, 0.1);
+  color: #107e3e;
+  border: 1px solid rgba(16, 126, 62, 0.3);
+}
+
+.fiori-badge-critical {
+  background: rgba(187, 0, 0, 0.1);
+  color: #bb0000;
+  border: 1px solid rgba(187, 0, 0, 0.3);
+}
+
+.fiori-badge-attention {
+  background: rgba(197, 83, 5, 0.1);
+  color: #c55305;
+  border: 1px solid rgba(197, 83, 5, 0.3);
+}
+
+.fiori-badge-neutral {
+  background: rgba(85, 107, 130, 0.1);
+  color: #556b82;
+  border: 1px solid rgba(85, 107, 130, 0.3);
+}
+
+.fiori-badge-info {
+  background: rgba(0, 112, 242, 0.1);
+  color: #0070f2;
+  border: 1px solid rgba(0, 112, 242, 0.3);
 }
 
 /* ─── KEYFRAMES ─────────────────────────────────────────────────────────── */

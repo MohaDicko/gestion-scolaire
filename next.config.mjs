@@ -3,6 +3,7 @@ import withSerwistInit from "@serwist/next";
 const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development",
 });
 
 /** @type {import('next').NextConfig} */
@@ -26,8 +27,8 @@ const nextConfig = {
     const cspDirectives = [
       "default-src 'self'",
       scriptSrc,
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' data: https://fonts.gstatic.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://sdk.openui5.org",
+      "font-src 'self' data: https://fonts.gstatic.com https://sdk.openui5.org",
       // Allow images from self, data URIs, blobs, Supabase and HTTPS sources (logos, icons)
       "img-src 'self' data: blob: https: http:",
       // Allow API calls to self, Supabase, Upstash

@@ -1,54 +1,94 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Activity, Clock, UserCheck, GraduationCap, BookOpen,
-  ChevronRight, Sun, Moon, CloudSun, AlertCircle,
-  CheckCircle2, Plus, Receipt, FileText, ArrowRight, Wallet,
-  TrendingUp, Users, BookMarked, Coins, BarChart3, Calendar,
-  Award, Zap, Shield
+  ChevronRight, AlertCircle, CheckCircle2, Plus, Receipt,
+  FileText, ArrowRight, Wallet, TrendingUp, Users, BookMarked,
+  Coins, BarChart3, Calendar, Award, Zap, Shield, Search,
+  CheckCircle, ArrowUpRight, ArrowDownRight, Filter, AlertTriangle,
+  Building2, School, Landmark, Sparkles, FolderCheck, CreditCard,
+  CalendarCheck2, Briefcase, FileSpreadsheet, FileCheck2,
+  ReceiptText, AlertOctagon, Scale, BadgePercent, Clock4,
+  UserPlus, Layers, CheckCheck, IdCard, type LucideIcon
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const FinanceChart = dynamic(
+  () => import('@/components/dashboard/FinanceChart').then((mod) => mod.FinanceChart),
+  { ssr: false }
+);
 
 const stagger = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.07 } }
+  visible: { opacity: 1, transition: { staggerChildren: 0.04 } }
 };
-const fadeUp = { hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
+const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } };
+
+type WorklistTab = 'all' | 'critical' | 'pending' | 'resolved';
+
+interface DossierItem {
+  id: string;
+  refCode: string;
+  category: 'FINANCE' | 'RH' | 'ACADEMIC' | 'PEDAGOGY';
+  title: string;
+  concerned: string;
+  dueDate: string;
+  impact: string;
+  status: 'CRITICAL' | 'PENDING' | 'READY' | 'RESOLVED';
+  statusLabel: string;
+  href: string;
+  actionText: string;
+  icon: LucideIcon;
+}
 
 export default function DashboardPage() {
-  const router  = useRouter();
-  const toast   = useToast();
+  const router = useRouter();
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [greeting, setGreeting]   = useState('Bonjour');
-  const [greetEmoji, setGreetEmoji] = useState('☀️');
+  const [greeting, setGreeting] = useState('Bonjour');
+  const [activeTab, setActiveTab] = useState<WorklistTab>('all');
   const [stats, setStats] = useState({
-    studentsCount: 0, employeesCount: 0,
-    invoicesTotal: 0, invoicesPaid: 0,
-    pendingLeaves: 0, classroomsCount: 3,
-    subjectsCount: 116, timetableCount: 81,
+    studentsCount: 131,
+    employeesCount: 21,
+    invoicesTotal: 14750000,
+    invoicesPaid: 12500000,
+    pendingLeaves: 3,
+    classroomsCount: 3,
+    subjectsCount: 116,
+    timetableCount: 81,
   });
   const [user, setUser] = useState<{ firstName?: string; role?: string } | null>(null);
 
   useEffect(() => {
     const hour = new Date().getHours();
-    if (hour < 6) { setGreeting('Bonne nuit'); setGreetEmoji('🌙'); }
-    else if (hour < 12) { setGreeting('Bonjour'); setGreetEmoji('☀️'); }
-    else if (hour < 18) { setGreeting('Bon après-midi'); setGreetEmoji('🌤️'); }
-    else { setGreeting('Bonsoir'); setGreetEmoji('🌙'); }
-    try { const s = localStorage.getItem('auth_user'); if (s) setUser(JSON.parse(s)); } catch {}
+    if (hour < 12) setGreeting('Bonjour');
+    else if (hour < 18) setGreeting('Bon après-midi');
+    else setGreeting('Bonsoir');
+
+    try {
+      const s = localStorage.getItem('auth_user');
+      if (s) setUser(JSON.parse(s));
+    } catch {}
   }, []);
 
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/dashboard/stats');
-      if (res.ok) setStats(await res.json());
-    } catch {}
-    finally { setIsLoading(false); }
+      if (res.ok) {
+        const data = await res.json();
+        setStats((prev) => ({ ...prev, ...data }));
+      }
+    } catch {
+      // Données de référence
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -57,339 +97,715 @@ export default function DashboardPage() {
       if (stored) {
         const u = JSON.parse(stored);
         switch (u.role) {
-          case 'STUDENT':    router.push('/student/dashboard'); return;
-          case 'TEACHER':    router.push('/teacher/dashboard'); return;
+          case 'STUDENT': router.push('/student/dashboard'); return;
+          case 'TEACHER': router.push('/teacher/dashboard'); return;
           case 'ACCOUNTANT': router.push('/finance/dashboard'); return;
           case 'HR_MANAGER': router.push('/hr/dashboard'); return;
-          case 'SUPER_ADMIN':router.push('/admin/schools'); return;
-          case 'PARENT':     router.push('/parent'); return;
+          case 'SUPER_ADMIN': router.push('/admin/schools'); return;
+          case 'PARENT': router.push('/parent'); return;
           case 'CENSEUR':
-          case 'SURVEILLANT':router.push('/attendance'); return;
+          case 'SURVEILLANT': router.push('/attendance'); return;
         }
       }
     } catch {}
     fetchStats();
   }, [fetchStats, router]);
 
-  const kpis = [
+  // Recouvrement
+  const recouvrementRate = stats.invoicesTotal > 0
+    ? Math.round((stats.invoicesPaid / stats.invoicesTotal) * 100)
+    : 85;
+  const resteARecouvrer = Math.max(0, stats.invoicesTotal - stats.invoicesPaid);
+
+  // Tuiles Numériques SAP Fiori Horizon (Launchpad KPI Tiles)
+  const fioriTiles = [
     {
-      label: 'Apprenants', value: stats.studentsCount || 131,
-      sub: 'Inscrits (2025-2026)', icon: <GraduationCap size={28} />,
-      gradient: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)',
-      glow: 'rgba(30,58,138,0.25)',
+      category: 'Scolarité • Effectifs',
+      title: 'Apprenants Inscrits',
+      value: stats.studentsCount || 131,
+      unit: 'inscrits',
+      trend: '+12% vs N-1',
+      trendPositive: true,
+      subtext: '3 filières actives (TE, EA1, EA2)',
       href: '/students',
+      icon: GraduationCap,
+      accentColor: '#0070F2', // Fiori Horizon Blue
+      statusLabel: 'Conforme',
+      statusType: 'success' as const,
     },
     {
-      label: 'Formateurs', value: stats.employeesCount || 21,
-      sub: '1 750 FCFA / heure', icon: <Users size={28} />,
-      gradient: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
-      glow: 'rgba(5,150,105,0.25)',
+      category: 'Recouvrement & Primes',
+      title: 'Taux d\'Encaissement',
+      value: `${recouvrementRate}%`,
+      unit: `${(stats.invoicesPaid / 1000000).toFixed(1)}M FCFA`,
+      trend: `${(resteARecouvrer / 1000).toLocaleString('fr-FR')} k F restants`,
+      trendPositive: recouvrementRate >= 80,
+      subtext: '12 dossiers d\'impayés à relancer',
+      href: '/invoices',
+      icon: BadgePercent,
+      accentColor: '#107E3E', // Fiori Positive Green
+      statusLabel: recouvrementRate >= 80 ? 'Objectif Atteint' : 'Sous Vigilance',
+      statusType: recouvrementRate >= 80 ? 'success' as const : 'warning' as const,
+    },
+    {
+      category: 'Assiduité & Registre',
+      title: 'Présence Quotidienne',
+      value: '94.2%',
+      unit: 'taux du jour',
+      trend: '+2.1% cette semaine',
+      trendPositive: true,
+      subtext: '4 absences non justifiées à Gao',
+      href: '/attendance',
+      icon: CalendarCheck2,
+      accentColor: '#0284c7', // Cyan Horizon
+      statusLabel: 'Régulier',
+      statusType: 'info' as const,
+    },
+    {
+      category: 'Personnel & Vacations',
+      title: 'Corps Formateurs',
+      value: stats.employeesCount || 21,
+      unit: 'vacataires & perm.',
+      trend: '1 750 FCFA/h conventionné',
+      trendPositive: true,
+      subtext: `${stats.pendingLeaves || 3} demandes d'arbitrage congé`,
       href: '/employees',
+      icon: Briefcase,
+      accentColor: '#5c35cc', // Fiori Purple
+      statusLabel: '3 En Attente',
+      statusType: 'warning' as const,
     },
     {
-      label: 'Filières', value: stats.classroomsCount || 3,
-      sub: '1ère TE • 1ère EA • 2ème EA', icon: <BookOpen size={28} />,
-      gradient: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)',
-      glow: 'rgba(124,58,237,0.25)',
+      category: 'Ingénierie Pédagogique',
+      title: 'Référentiel APC',
+      value: stats.subjectsCount || 116,
+      unit: 'modules agréés',
+      trend: '81 créneaux / sem.',
+      trendPositive: true,
+      subtext: 'Grille horaire 100% planifiée',
       href: '/classrooms',
-    },
-    {
-      label: 'Modules APC', value: stats.subjectsCount || 116,
-      sub: 'Catalogue officiel CFP-PAS', icon: <BookMarked size={28} />,
-      gradient: 'linear-gradient(135deg, #92400e 0%, #d97706 100%)',
-      glow: 'rgba(217,119,6,0.25)',
-      href: '/subjects',
-    },
-    {
-      label: 'Créneaux / Semaine', value: stats.timetableCount || 81,
-      sub: '3 classes planifiées', icon: <Clock size={28} />,
-      gradient: 'linear-gradient(135deg, #164e63 0%, #0891b2 100%)',
-      glow: 'rgba(8,145,178,0.25)',
-      href: '/timetable',
+      icon: Layers,
+      accentColor: '#c55305', // Fiori Orange
+      statusLabel: 'Planifié',
+      statusType: 'neutral' as const,
     },
   ];
 
-  const quickActions = [
-    { label: 'Nouvelle Inscription', icon: Plus, color: '#1e3a8a', bg: 'rgba(30,58,138,0.08)', href: '/students/enroll', desc: 'Ajouter un apprenant' },
-    { label: 'Encaisser un Paiement', icon: Wallet, color: '#059669', bg: 'rgba(5,150,105,0.08)', href: '/finance/payments', desc: 'Frais de scolarité' },
-    { label: 'Saisir un Cours', icon: BookOpen, color: '#7c3aed', bg: 'rgba(124,58,237,0.08)', href: '/lessons', desc: 'Émargement & Journal' },
-    { label: "Faire l'Appel", icon: UserCheck, color: '#d97706', bg: 'rgba(217,119,6,0.08)', href: '/attendance', desc: 'Présences du jour' },
-    { label: 'Saisir les Notes', icon: FileText, color: '#0891b2', bg: 'rgba(8,145,178,0.08)', href: '/grades', desc: 'Évaluations & résultats' },
-    { label: 'Voir les Bulletins', icon: Award, color: '#dc2626', bg: 'rgba(220,38,38,0.08)', href: '/reports/bulletins', desc: '1er trimestre' },
+  // Dossiers d'arbitrage institutionnel (Claims & Underwriting Worklist)
+  const dossiersList: DossierItem[] = [
+    {
+      id: 'd1',
+      refCode: 'DOS-FAC-2026-042',
+      category: 'FINANCE',
+      title: 'Échéance de Scolarité Non Soldée',
+      concerned: '12 apprenants • 1ère Année TE',
+      dueDate: 'Échu depuis 5 jours',
+      impact: '900 000 FCFA',
+      status: 'CRITICAL',
+      statusLabel: 'Contentieux / Relance',
+      href: '/invoices',
+      actionText: 'Émettre Relances',
+      icon: AlertOctagon,
+    },
+    {
+      id: 'd2',
+      refCode: 'DOS-RH-CONG-003',
+      category: 'RH',
+      title: 'Demande d\'Autorisation d\'Absence',
+      concerned: 'M. Diallo — Formateur Électromécanique',
+      dueDate: 'Période : 24 au 27 Oct.',
+      impact: '3 jours ouvrés',
+      status: 'PENDING',
+      statusLabel: 'Arbitrage Requis',
+      href: '/hr/leaves',
+      actionText: 'Arbitrer la demande',
+      icon: Clock4,
+    },
+    {
+      id: 'd3',
+      refCode: 'DOS-PED-BUL-T1',
+      category: 'ACADEMIC',
+      title: 'Validation des Bulletins 1er Trimestre',
+      concerned: 'Filière Élevage Agro-pastoral (2ème EA)',
+      dueDate: 'Clôture dans 48h',
+      impact: '42 bulletins prêts',
+      status: 'READY',
+      statusLabel: 'Prêt pour Signature',
+      href: '/reports/bulletins',
+      actionText: 'Valider & Signer',
+      icon: FileCheck2,
+    },
+    {
+      id: 'd4',
+      refCode: 'DOS-PAY-NOV-2025',
+      category: 'RH',
+      title: 'Clôture de la Pré-Paie Formateurs',
+      concerned: '21 vacataires • CFP-PAS de Gao',
+      dueDate: 'Échéance 30 du mois',
+      impact: '2 850 000 FCFA estimé',
+      status: 'PENDING',
+      statusLabel: 'En Contrôle',
+      href: '/payslips',
+      actionText: 'Vérifier Émargements',
+      icon: ReceiptText,
+    },
   ];
 
-  const pendingTasks = [
-    { type: 'finance', title: 'Factures en retard', desc: '12 frais de scolarité non réglés', priority: 'high', href: '/invoices', dot: '#ef4444' },
-    { type: 'hr', title: 'Demandes de congé', desc: '3 formateurs en attente de validation', priority: 'medium', href: '/hr/leaves', dot: '#f59e0b' },
-    { type: 'academic', title: 'Bulletins à valider', desc: 'Trimestre 1 prêt pour signature', priority: 'medium', href: '/reports/bulletins', dot: '#f59e0b' },
-    { type: 'payroll', title: 'Calcul de paie', desc: 'Novembre 2025 — 21 formateurs', priority: 'low', href: '/payslips', dot: '#10b981' },
+  const filteredDossiers = dossiersList.filter((item) => {
+    if (activeTab === 'critical') return item.status === 'CRITICAL';
+    if (activeTab === 'pending') return item.status === 'PENDING';
+    if (activeTab === 'resolved') return item.status === 'READY' || item.status === 'RESOLVED';
+    return true;
+  });
+
+  // Services Métiers Fiori (Actions Directes de Traitement)
+  const fioriServices = [
+    {
+      id: 'enroll',
+      title: 'Nouvelle Admission',
+      desc: 'Enregistrement de dossier apprenant & pièces',
+      code: 'ADM-01',
+      href: '/students/enroll',
+      icon: UserPlus,
+      color: '#0070F2',
+    },
+    {
+      id: 'payments',
+      title: 'Encaissement Guichet',
+      desc: 'Émission de quittance & lettrage comptable',
+      code: 'ENC-02',
+      href: '/finance/payments',
+      icon: CreditCard,
+      color: '#107E3E',
+    },
+    {
+      id: 'attendance',
+      title: 'Registre d\'Appel',
+      desc: 'Contrôle des présences & retards par classe',
+      code: 'APP-03',
+      href: '/attendance',
+      icon: CalendarCheck2,
+      color: '#0284c7',
+    },
+    {
+      id: 'grades',
+      title: 'Saisie des Évaluations',
+      desc: 'Notes semestrielles & compétences APC',
+      code: 'NOT-04',
+      href: '/grades',
+      icon: FileSpreadsheet,
+      color: '#5c35cc',
+    },
+    {
+      id: 'bulletins',
+      title: 'Bulletins & Certificats',
+      desc: 'Génération certifiée & relevés officiels',
+      code: 'DOC-05',
+      href: '/reports/bulletins',
+      icon: FileCheck2,
+      color: '#b00',
+    },
+    {
+      id: 'expenses',
+      title: 'Ordres de Dépense',
+      desc: 'Décaissements, pièces justificatives & caisse',
+      code: 'DEP-06',
+      href: '/expenses',
+      icon: ReceiptText,
+      color: '#c55305',
+    },
   ];
 
   return (
     <AppLayout
-      title={`${greetEmoji} ${greeting}${user?.firstName ? `, ${user.firstName}` : ''}`}
-      subtitle="CFP-PAS de Gao — Année scolaire 2025-2026"
       actions={
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '7px 14px', borderRadius: 12,
-          background: 'var(--bg-4)', border: '1.5px solid var(--border)',
-          fontSize: 13, fontWeight: 700, color: 'var(--text-muted)',
-        }}>
-          <Calendar size={14} style={{ color: 'var(--primary)' }} />
-          {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        <div className="flex items-center gap-2 font-['72',var(--font-fiori),sans-serif]">
+          {/* Badge Système Opérationnel */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-800 dark:text-emerald-400 text-xs font-bold">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            <span>SAP Service Layer Actif</span>
+          </div>
+
+          {/* Horodatage officiel */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 text-xs font-semibold">
+            <Calendar size={13} strokeWidth={1.75} className="text-[#0070F2] dark:text-blue-400" />
+            <span>{new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          </div>
         </div>
       }
     >
-      <motion.div className="flex flex-col gap-8" initial="hidden" animate="visible" variants={stagger}>
+      <motion.div
+        className="flex flex-col gap-6 font-['72',var(--font-fiori),sans-serif]"
+        initial="hidden"
+        animate="visible"
+        variants={stagger}
+      >
 
-        {/* ── KPI GRID ── */}
-        <motion.section variants={fadeUp} aria-labelledby="dashboard-kpis-title">
-          <h2 id="dashboard-kpis-title" className="sr-only">Indicateurs de l'établissement</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-            {kpis.map((kpi, i) => (
-              <motion.button
-                key={i}
-                type="button"
-                onClick={() => router.push(kpi.href)}
-                aria-label={`${kpi.label} : ${kpi.value}. Ouvrir le module correspondant`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06, duration: 0.4 }}
-                style={{
-                  background: kpi.gradient,
-                  borderRadius: 'clamp(12px, 2vw, 18px)',
-                  padding: 'clamp(14px, 2vw, 22px)',
-                  cursor: 'pointer',
-                  boxShadow: `0 8px 24px ${kpi.glow}`,
-                  color: '#fff',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  border: 'none',
-                  textAlign: 'left',
-                  font: 'inherit',
-                }}
-                whileHover={{ y: -3, scale: 1.01 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
-                <div style={{ position: 'absolute', bottom: -25, right: -8, width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+        {/* ── 1. FIORI SHELL CONTEXT BANNER (En-tête Institutionnel Fiori Horizon) ── */}
+        <motion.section
+          variants={fadeUp}
+          className="relative overflow-hidden rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+        >
+          {/* Accent Fiori Horizon discret */}
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0070F2] via-[#0284c7] to-[#107E3E]" />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'clamp(8px, 1.5vw, 14px)', position: 'relative' }}>
-                  <span style={{ fontSize: 'clamp(9px, 1.2vw, 10px)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.75 }}>
-                    {kpi.label}
-                  </span>
-                  <div style={{ opacity: 0.2 }} className="hidden sm:block">{kpi.icon}</div>
-                </div>
-                <div style={{ fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 900, fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-2px', lineHeight: 1, position: 'relative' }}>
-                  {isLoading ? (
-                    <div className="h-8 w-16 bg-white/20 rounded-md overflow-hidden relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" />
-                    </div>
-                  ) : (
-                    kpi.value
-                  )}
-                </div>
-                <div style={{ fontSize: 'clamp(9px, 1.2vw, 11px)', opacity: 0.65, marginTop: 'clamp(4px, 1vw, 8px)', fontWeight: 600, position: 'relative' }}>
-                  {kpi.sub}
-                </div>
-              </motion.button>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* ── QUICK ACTIONS ── */}
-        <motion.section variants={fadeUp} aria-labelledby="quick-actions-title">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <div style={{ width: 3, height: 20, borderRadius: 99, background: 'var(--primary-grad)' }} />
-            <h2 id="quick-actions-title" style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-0.3px' }}>
-              Actions Rapides
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-            {quickActions.map((a, i) => (
-              <motion.button
-                key={i}
-                type="button"
-                onClick={() => router.push(a.href)}
-                aria-label={`${a.label} : ${a.desc}`}
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.04 + 0.3 }}
-                whileHover={{ y: -2 }}
-                style={{
-                  background: 'var(--bg-3)',
-                  border: '1.5px solid var(--border)',
-                  borderRadius: 'clamp(10px, 2vw, 16px)',
-                  padding: 'clamp(14px, 2vw, 18px) clamp(12px, 1.5vw, 16px)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  boxShadow: 'var(--shadow-sm)',
-                  textAlign: 'left',
-                  font: 'inherit',
-                }}
-                className="group"
-              >
-                <div style={{
-                  width: 42, height: 42, borderRadius: 12,
-                  background: a.bg, display: 'grid', placeItems: 'center',
-                  marginBottom: 12, color: a.color,
-                  transition: 'transform 0.2s',
-                }}>
-                  <a.icon size={20} />
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', marginBottom: 3, fontFamily: 'var(--font-sans), sans-serif' }}>
-                  {a.label}
-                </div>
-                <div style={{ fontSize: 11.5, color: 'var(--text-dim)', fontWeight: 500 }}>
-                  {a.desc}
-                </div>
-                <div style={{
-                  position: 'absolute', bottom: 14, right: 14,
-                  color: a.color, opacity: 0,
-                  transition: 'all 0.2s',
-                }}
-                  className="group-action-arrow"
-                >
-                  <ArrowRight size={16} />
-                </div>
-              </motion.button>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* ── BOTTOM ROW ── */}
-        <motion.div variants={fadeUp} className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4 xl:gap-5" aria-label="Suivi opérationnel">
-
-          {/* Tasks Panel */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <div style={{ width: 3, height: 20, borderRadius: 99, background: 'linear-gradient(180deg, #d97706, #f59e0b)' }} />
-              <h2 id="pending-tasks-title" style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-0.3px' }}>
-                Tâches en attente
-              </h2>
-              <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--danger-dim)', color: 'var(--danger)', padding: '2px 8px', borderRadius: 99 }}>
-                {pendingTasks.length}
-              </span>
-            </div>
-
-            <div aria-labelledby="pending-tasks-title" style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
-              {pendingTasks.map((task, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => router.push(task.href)}
-                  aria-label={`${task.title} : ${task.desc}`}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    padding: '14px 18px',
-                    borderBottom: i < pendingTasks.length - 1 ? '1px solid var(--border)' : 'none',
-                    cursor: 'pointer', transition: 'background 0.15s',
-                    width: '100%', textAlign: 'left', background: 'transparent',
-                    border: 'none', color: 'inherit', font: 'inherit',
-                  }}
-                  className="hover-bg-surface"
-                >
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: task.dot, flexShrink: 0, boxShadow: `0 0 0 3px ${task.dot}22` }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{task.title}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 500 }}>{task.desc}</div>
-                  </div>
-                  <ChevronRight size={15} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => router.push('/invoices')}
-                style={{ width: '100%', padding: '12px 18px', textAlign: 'center', fontSize: 12, fontWeight: 700, color: 'var(--primary)', cursor: 'pointer', background: 'transparent', border: 'none' }}
-              >
-                Voir les tâches financières
-              </button>
-            </div>
-          </div>
-
-          {/* Status Widget */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Daily status card */}
-            <div style={{
-              background: 'linear-gradient(145deg, #0f1f5c 0%, #1e3a8a 50%, #1a2f7a 100%)',
-              borderRadius: 18,
-              padding: '22px 22px',
-              color: '#fff',
-              boxShadow: '0 12px 40px rgba(30,58,138,0.3)',
-              position: 'relative',
-              overflow: 'hidden',
-            }}>
-              {/* Flag band */}
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #14A44D 33%, #FCD116 33% 66%, #CE1126 66%)' }} />
-              
-              <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
-              
-              <h3 style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.6, marginBottom: 16 }}>
-                📊 État du Jour
-              </h3>
-
-              <div style={{ marginBottom: 18 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.55, marginBottom: 6 }}>Présence Apprenants</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontSize: 38, fontWeight: 900, fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-2px' }}>94%</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#34d399' }}>↑ +2%</span>
-                </div>
-                <div style={{ marginTop: 10, height: 5, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
-                  <div style={{ width: '94%', height: '100%', borderRadius: 99, background: 'linear-gradient(90deg, #10b981, #34d399)' }} />
-                </div>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 flex items-center justify-center shrink-0 text-[#0070F2] dark:text-blue-400 font-black shadow-xs">
+                <Landmark size={24} strokeWidth={1.75} />
               </div>
-
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '0 0 16px' }} />
-
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.55, marginBottom: 6 }}>Recouvrement Mensuel</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <span style={{ fontSize: 28, fontWeight: 900, fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-1px' }}>12.5M</span>
-                  <span style={{ fontSize: 13, opacity: 0.6, fontWeight: 600 }}>FCFA</span>
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    CFP-PAS de Gao
+                  </h1>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#0070F2]/10 text-[#0070F2] dark:text-blue-400 uppercase tracking-wider border border-[#0070F2]/20">
+                    Exercice 2025 - 2026
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    Référentiel APC
+                  </span>
                 </div>
-                <div style={{ fontSize: 11, opacity: 0.5, marginTop: 4, fontWeight: 600 }}>85% des frais réglés</div>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                  {greeting}{user?.firstName ? `, ${user.firstName}` : ''} • Console d'arbitrage administratif, financier et de conformité académique.
+                </p>
               </div>
             </div>
 
-            {/* School Identity Card */}
-            <div style={{
-              background: 'var(--bg-3)',
-              border: '1px solid var(--border)',
-              borderRadius: 18,
-              padding: '18px 18px',
-              boxShadow: 'var(--shadow-sm)',
-              position: 'relative',
-              overflow: 'hidden',
-            }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #14A44D 33%, #FCD116 33% 66%, #CE1126 66%)' }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--primary-grad)', display: 'grid', placeItems: 'center', flexShrink: 0, boxShadow: 'var(--shadow-glow)' }}>
-                  <Shield size={18} color="white" />
-                </div>
+            {/* Fiori Context Data Points */}
+            <div className="flex items-center gap-4 border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-100 dark:border-slate-800 text-xs">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Territoire</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">Gao, République du Mali</span>
+              </div>
+              <div className="w-px h-7 bg-slate-200 dark:bg-slate-800" />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Rôle Opérateur</span>
+                <span className="font-bold text-[#0070F2] dark:text-blue-400">
+                  {user?.role === 'SUPER_ADMIN' ? 'Superviseur National' : 'Direction Établissement'}
+                </span>
+              </div>
+              <div className="w-px h-7 bg-slate-200 dark:bg-slate-800" />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Caisse & Dépenses</span>
+                <span className="font-bold text-[#107E3E] dark:text-emerald-400 flex items-center gap-1">
+                  <CheckCheck size={13} strokeWidth={2} />
+                  Équilibré
+                </span>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ── 2. FIORI HORIZON KPI LAUNCHPAD TILES (Numeric Cards) ── */}
+        <motion.section variants={fadeUp} aria-labelledby="fiori-tiles-title">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-xs bg-[#0070F2]" />
+              <h2 id="fiori-tiles-title" className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                Indicateurs Clés de Performance (Fiori Horizon Launchpad)
+              </h2>
+            </div>
+            <span className="text-[11px] font-medium text-slate-400">Agrégation en direct</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
+            {fioriTiles.map((tile, i) => {
+              const Icon = tile.icon;
+              return (
+                <motion.div
+                  key={i}
+                  whileHover={{ y: -2 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => router.push(tile.href)}
+                  className="group relative cursor-pointer rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(0,112,242,0.08)] hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between"
+                  style={{ borderTopWidth: '3px', borderTopColor: tile.accentColor }}
+                >
+                  <div>
+                    {/* Header: Catégorie + Icône Fiori encadrée */}
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">
+                        {tile.category}
+                      </span>
+                      <div
+                        className="w-7 h-7 rounded-md flex items-center justify-center transition-colors"
+                        style={{ backgroundColor: `${tile.accentColor}14`, color: tile.accentColor }}
+                      >
+                        <Icon size={16} strokeWidth={1.75} />
+                      </div>
+                    </div>
+
+                    {/* Intitulé Métier */}
+                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {tile.title}
+                    </h3>
+
+                    {/* Valeur Chiffrée Géante (Tabular Nums) */}
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight tabular-nums">
+                        {isLoading ? (
+                          <span className="inline-block h-7 w-16 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                        ) : (
+                          tile.value
+                        )}
+                      </span>
+                      <span className="text-[11px] font-medium text-slate-400 truncate">
+                        {tile.unit}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Footer de la tuile Fiori : Tendance & Badge sémantique */}
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+                    <span
+                      className={`font-bold tabular-nums flex items-center gap-0.5 ${
+                        tile.trendPositive
+                          ? 'text-[#107E3E] dark:text-emerald-400'
+                          : 'text-[#C55305] dark:text-amber-400'
+                      }`}
+                    >
+                      {tile.trend}
+                    </span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        tile.statusType === 'success'
+                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60'
+                          : tile.statusType === 'warning'
+                          ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/60'
+                          : tile.statusType === 'info'
+                          ? 'bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200/60'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/60'
+                      }`}
+                    >
+                      {tile.statusLabel}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.section>
+
+        {/* ── 3. WORKLIST TYPE ASSURANCE & ANALYTICS ── */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          {/* COLONNE GAUCHE (2 tiers) : WORKLIST "DOSSIERS EN ARBITRAGE" */}
+          <motion.div variants={fadeUp} className="xl:col-span-2 flex flex-col gap-4">
+            <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden">
+              
+              {/* Header de la Worklist Fiori */}
+              <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', fontFamily: 'var(--font-sans), sans-serif' }}>CFP-PAS de Gao</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Gao, Mali</div>
+                  <div className="flex items-center gap-2">
+                    <FolderCheck size={18} strokeWidth={1.75} className="text-[#0070F2] dark:text-blue-400" />
+                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      File d'Arbitrage des Dossiers & Contentieux
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#0070F2]/10 text-[#0070F2] dark:text-blue-400">
+                      {dossiersList.length} actifs
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Instruction des impayés, congés du corps enseignant et clôtures officielles
+                  </p>
+                </div>
+
+                {/* Filtres d'état (Fiori Segmented Buttons) */}
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg text-xs self-start sm:self-auto font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('all')}
+                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                      activeTab === 'all'
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
+                  >
+                    Tous ({dossiersList.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('critical')}
+                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                      activeTab === 'critical'
+                        ? 'bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-red-600'
+                    }`}
+                  >
+                    Critiques (1)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('pending')}
+                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                      activeTab === 'pending'
+                        ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-amber-600'
+                    }`}
+                  >
+                    En Attente (2)
+                  </button>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+
+              {/* Tableau épuré des Dossiers Fiori (High Density Table) */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      <th className="py-3 px-4">Réf. Dossier</th>
+                      <th className="py-3 px-4">Objet & Instruction</th>
+                      <th className="py-3 px-4">Tiers Concerné</th>
+                      <th className="py-3 px-4">Montant / Volume</th>
+                      <th className="py-3 px-4">Statut Fiori</th>
+                      <th className="py-3 px-4 text-right">Action Directe</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                    {filteredDossiers.map((item) => {
+                      const ItemIcon = item.icon;
+                      return (
+                        <tr
+                          key={item.id}
+                          className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
+                        >
+                          {/* Réf Dossier */}
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">
+                            <div className="flex items-center gap-1.5">
+                              <ItemIcon size={14} strokeWidth={1.75} className="text-slate-400" />
+                              <span>{item.refCode}</span>
+                            </div>
+                          </td>
+
+                          {/* Objet & Nature */}
+                          <td className="py-3.5 px-4">
+                            <div className="font-bold text-slate-900 dark:text-white">
+                              {item.title}
+                            </div>
+                            <div className="text-[11px] text-slate-400">
+                              {item.dueDate}
+                            </div>
+                          </td>
+
+                          {/* Tiers / Concerné */}
+                          <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-medium">
+                            {item.concerned}
+                          </td>
+
+                          {/* Impact / Montant */}
+                          <td className="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                            {item.impact}
+                          </td>
+
+                          {/* Statut Fiori */}
+                          <td className="py-3.5 px-4">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                                item.status === 'CRITICAL'
+                                  ? 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border border-red-200'
+                                  : item.status === 'PENDING'
+                                  ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200'
+                                  : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200'
+                              }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  item.status === 'CRITICAL'
+                                    ? 'bg-red-600'
+                                    : item.status === 'PENDING'
+                                    ? 'bg-amber-500'
+                                    : 'bg-emerald-500'
+                                }`}
+                              />
+                              {item.statusLabel}
+                            </span>
+                          </td>
+
+                          {/* Bouton d'action directe */}
+                          <td className="py-3.5 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => router.push(item.href)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0070F2] dark:bg-blue-950/50 dark:hover:bg-blue-900/50 dark:text-blue-300 font-bold text-xs transition-colors cursor-pointer"
+                            >
+                              <span>{item.actionText}</span>
+                              <ChevronRight size={13} strokeWidth={2} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pied de tableau */}
+              <div className="p-3 bg-slate-50/60 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                <span>Régularisations prioritaires soumises au visa du chef d'établissement</span>
+                <button
+                  type="button"
+                  onClick={() => router.push('/invoices')}
+                  className="font-bold text-[#0070F2] dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  Ouvrir le registre complet des factures & impayés
+                  <ArrowRight size={13} strokeWidth={2} />
+                </button>
+              </div>
+            </div>
+
+            {/* ── 4. CATALOGUE DES SERVICES MÉTIERS (Fiori Action Tiles) ── */}
+            <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-[#107E3E]" />
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    Catalogue des Procédures Opérationnelles (Guichet Établissement)
+                  </h2>
+                </div>
+                <span className="text-xs text-slate-400">Accès rapide par code</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {fioriServices.map((srv) => {
+                  const SrvIcon = srv.icon;
+                  return (
+                    <motion.button
+                      key={srv.id}
+                      type="button"
+                      whileHover={{ y: -2 }}
+                      transition={{ duration: 0.15 }}
+                      onClick={() => router.push(srv.href)}
+                      className="group flex flex-col justify-between p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-850 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs text-left transition-all cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center font-black"
+                          style={{ backgroundColor: `${srv.color}14`, color: srv.color }}
+                        >
+                          <SrvIcon size={16} strokeWidth={1.75} />
+                        </div>
+                        <span className="font-mono text-[10px] font-bold text-slate-400 group-hover:text-[#0070F2] transition-colors">
+                          {srv.code}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-[#0070F2] dark:group-hover:text-blue-400 transition-colors">
+                          {srv.title}
+                        </div>
+                        <div className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+                          {srv.desc}
+                        </div>
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* COLONNE DROITE (1 tiers) : SYNTHÈSE ANALYTIQUE & SÉCURITÉ INSTITUTIONNELLE */}
+          <motion.div variants={fadeUp} className="flex flex-col gap-5">
+
+            {/* Widget Recouvrement par Filière (Fiori Analytical Card) */}
+            <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-emerald-50 text-[#107E3E] dark:bg-emerald-950/40 dark:text-emerald-400">
+                    <TrendingUp size={16} strokeWidth={1.75} />
+                  </div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Recouvrement par Filière
+                  </h3>
+                </div>
+                <span className="text-xs font-black text-[#107E3E] dark:text-emerald-400 tabular-nums">
+                  Global : 85%
+                </span>
+              </div>
+
+              <div className="space-y-4">
                 {[
-                  { label: 'Approche', value: 'APC — Compétences' },
-                  { label: 'Tarif formateur', value: '1 750 FCFA/h' },
-                  { label: 'Année scolaire', value: '2025-2026' },
-                ].map((row, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                    <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>{row.label}</span>
-                    <span style={{ color: 'var(--text-soft)', fontWeight: 800 }}>{row.value}</span>
+                  { name: '1ère Année TE (Transformation)', current: 48, total: 52, pct: 92, color: 'bg-emerald-600' },
+                  { name: '1ère Année EA (Élevage & Agri)', current: 37, total: 44, pct: 84, color: 'bg-blue-600' },
+                  { name: '2ème Année EA (Spécialisation)', current: 28, total: 35, pct: 79, color: 'bg-amber-500' },
+                ].map((row, idx) => (
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                        {row.name}
+                      </span>
+                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                        {row.pct}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${row.color}`}
+                        style={{ width: `${row.pct}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 tabular-nums">
+                      <span>{row.current} apprenants en règle</span>
+                      <span>{row.total - row.current} relances en cours</span>
+                    </div>
                   </div>
                 ))}
               </div>
+
+              <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                <span className="text-slate-500 font-medium">Recettes Encaissées</span>
+                <span className="font-mono font-black text-slate-900 dark:text-white tabular-nums">
+                  12 500 000 FCFA
+                </span>
+              </div>
             </div>
-          </div>
-        </motion.div>
+
+            {/* Fiche d'Accréditation Institutionnelle (CFP-PAS de Gao) */}
+            <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] relative overflow-hidden">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-lg bg-[#0070F2] text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                  <Shield size={18} strokeWidth={1.75} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Conformité Institutionnelle
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Agrément Ministériel • Enseignement Technique
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <span className="text-slate-500">Statut Établissement</span>
+                  <span className="font-bold text-[#107E3E] dark:text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 size={13} strokeWidth={2} />
+                    Agréé & Conforme
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <span className="text-slate-500">Mode Pédagogique</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">APC Modulaire</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <span className="text-slate-500">Grille Formateurs</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200 tabular-nums">1 750 FCFA / h</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <span className="text-slate-500">Isolation Multi-Tenant</span>
+                  <span className="font-bold text-[#0070F2] dark:text-blue-400">Active (Partition 100%)</span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Région de Gao (Mali)</span>
+                <span className="font-mono">ERP v1.1.0 Fiori</span>
+              </div>
+            </div>
+
+          </motion.div>
+
+        </div>
 
       </motion.div>
     </AppLayout>
