@@ -1,18 +1,21 @@
-import { Manrope, Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import { Metadata, Viewport } from "next";
 import { cn } from "@/lib/utils";
 
-const manrope = Manrope({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: '--font-sans',
+  variable: '--font-jakarta',
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '800'],
 });
 
 const inter = Inter({
   subsets: ["latin"],
-  variable: '--font-fiori',
+  variable: '--font-inter',
   display: 'swap',
+  weight: ['400', '500', '600', '700'],
 });
 
 export const viewport: Viewport = {
@@ -44,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={cn("font-sans", manrope.variable, inter.variable)} suppressHydrationWarning>
+    <html lang="fr" className={cn("font-sans", plusJakartaSans.variable, inter.variable)} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

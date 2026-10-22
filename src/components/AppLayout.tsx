@@ -439,7 +439,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               {/* Breadcrumb / Title Fiori */}
               <div className="hidden sm:flex items-center gap-2 min-w-0">
                 {breadcrumbs && breadcrumbs.length > 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontFamily: "'72', sans-serif" }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
                     {breadcrumbs.map((b, i) => (
                       <React.Fragment key={i}>
                         {i > 0 && <ChevronRight size={13} style={{ color: '#556b82' }} />}
@@ -455,7 +455,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                     ))}
                   </div>
                 ) : title ? (
-                  <h1 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', fontFamily: "'72', sans-serif", letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>
+                  <h1 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>
                     {title}
                   </h1>
                 ) : null}
@@ -484,14 +484,13 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                   color: 'var(--text-muted)', background: 'var(--bg-4)',
                   border: '1px solid var(--border-md)',
                   cursor: 'pointer', transition: 'all 0.15s', width: 230,
-                  fontFamily: "'72', sans-serif",
                 }}
               >
                 <Search size={14} strokeWidth={1.75} style={{ color: '#556b82' }} />
                 <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   Rechercher dossier, élève...
                 </span>
-                <kbd style={{ fontSize: 10, fontWeight: 700, opacity: 0.6, fontFamily: "'72Mono', monospace", background: 'var(--bg-2)', padding: '1px 4px', borderRadius: 3, border: '1px solid var(--border-md)' }}>⌘K</kbd>
+                <kbd style={{ fontSize: 10, fontWeight: 700, opacity: 0.6, background: 'var(--bg-2)', padding: '1px 4px', borderRadius: 3, border: '1px solid var(--border-md)' }}>⌘K</kbd>
               </button>
 
               {user?.role === 'SUPER_ADMIN' && user.schoolName && (
