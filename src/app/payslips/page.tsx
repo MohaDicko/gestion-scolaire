@@ -255,150 +255,192 @@ export default function PayslipsPage() {
     <AppLayout
       title="Rémunération & Paie — CFP-PAS de Gao"
       subtitle="Bordereau officiel d'émargement vacataires (1 750 FCFA/h) & Bulletins salariés conformes Mali"
-      breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Paie' }]}
+      breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Paie & Rémunération' }]}
       actions={
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           {activeTab === 'vacataires' ? (
             <>
               <button className="btn-outline" onClick={fetchVacataires} disabled={isLoadingVacataires}>
-                <Clock size={15} /> Recalculer Émargements
+                <Clock size={14} /> Recalculer Émargements
               </button>
               <button 
-                className="btn-primary" 
+                className="btn-success" 
                 onClick={handleDownloadVacatairesPdf}
                 disabled={!vacatairesData.vacataires || vacatairesData.vacataires.length === 0}
-                style={{ background: '#16a34a', borderColor: '#16a34a' }}
               >
-                <Printer size={15} /> 📄 Télécharger Bordereau Officiel (PDF)
+                <Printer size={14} /> Bordereau Officiel (PDF)
               </button>
             </>
           ) : (
             <>
               <button className="btn-outline" onClick={handleExportExcel} disabled={payslips.length === 0}>
-                <Download size={15} /> Exporter Excel
+                <Download size={14} /> Exporter Excel
               </button>
               <button className="btn-outline" onClick={downloadDipe} disabled={payslips.length === 0}>
-                <Download size={15} /> Télécharger DIPE
+                <Download size={14} /> Télécharger DIPE
               </button>
               <button className="btn-primary" onClick={() => setShowModal(true)}>
-                <Plus size={15} /> Nouveau Bulletin
+                <Plus size={14} /> Nouveau Bulletin
               </button>
             </>
           )}
         </div>
       }
     >
-      {/* ── Sélecteur d'onglets principaux ── */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '14px', marginBottom: '16px' }}>
-        <button
-          onClick={() => setActiveTab('vacataires')}
-          className={activeTab === 'vacataires' ? 'btn-primary' : 'btn-outline'}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            borderRadius: '10px',
-            background: activeTab === 'vacataires' ? '#16a34a' : undefined,
-            borderColor: activeTab === 'vacataires' ? '#16a34a' : undefined
-          }}
-        >
-          <span>🌾</span>
-          <strong>État des Vacataires (Bordereau d'Émargement CFPPAS)</strong>
-        </button>
-        <button
-          onClick={() => setActiveTab('salaries')}
-          className={activeTab === 'salaries' ? 'btn-primary' : 'btn-outline'}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px' }}
-        >
-          <span>📄</span>
-          <span>Bulletins Salariés Mensuels (CDI / CDD)</span>
-        </button>
+      {/* ── Sélecteur d'onglets principaux (Segmented Control Apple/macOS) ── */}
+      <div style={{ marginBottom: '20px' }}>
+        <div className="segmented-control">
+          <button
+            onClick={() => setActiveTab('vacataires')}
+            className={`segmented-tab ${activeTab === 'vacataires' ? 'active-emerald' : ''}`}
+            aria-pressed={activeTab === 'vacataires'}
+          >
+            <span>🌾</span>
+            <span>Bordereau Vacataires (CFPPAS)</span>
+            <span style={{
+              fontSize: '11px',
+              padding: '2px 7px',
+              borderRadius: '9999px',
+              background: activeTab === 'vacataires' ? 'rgba(255, 255, 255, 0.25)' : 'var(--bg-3)',
+              color: activeTab === 'vacataires' ? '#fff' : 'var(--text-muted)',
+              fontWeight: 800
+            }}>
+              {vacatairesData.vacataires?.length || 20}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('salaries')}
+            className={`segmented-tab ${activeTab === 'salaries' ? 'active-primary' : ''}`}
+            aria-pressed={activeTab === 'salaries'}
+          >
+            <span>📄</span>
+            <span>Bulletins Salariés (Moteur Mali)</span>
+            <span style={{
+              fontSize: '11px',
+              padding: '2px 7px',
+              borderRadius: '9999px',
+              background: activeTab === 'salaries' ? 'rgba(255, 255, 255, 0.25)' : 'var(--bg-3)',
+              color: activeTab === 'salaries' ? '#fff' : 'var(--text-muted)',
+              fontWeight: 800
+            }}>
+              {payslips.length}
+            </span>
+          </button>
+        </div>
       </div>
 
       {activeTab === 'vacataires' ? (
         /* ══════════════════════════════════════════════════════════════════════════
            VUE ÉTAT DES HONORAIRES DES PROFESSEURS VACATAIRES (PHOTO 1 & 2)
            ══════════════════════════════════════════════════════════════════════════ */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
           {/* Filtres de Période & Indicateurs Clés */}
-          <div className="card" style={{ padding: '18px 24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+          <div className="card" style={{ padding: '20px 24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--text)' }}>
-                  🗓️ Période de Liquidation des Honoraires
+                <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🗓️</span> Période de Liquidation des Honoraires
                 </h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '3px 0 0' }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0' }}>
                   Total des heures certifiées d'après le registre de présence et le cahier d'émargement de Gao.
                 </p>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Du:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>Du:</span>
                   <input
                     type="date"
                     className="form-input"
-                    style={{ padding: '6px 10px', fontSize: '13px' }}
+                    style={{ padding: '6px 12px', fontSize: '13px', width: 'auto' }}
                     value={vacatairesPeriod.start}
                     onChange={e => setVacatairesPeriod({ ...vacatairesPeriod, start: e.target.value })}
                   />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Au:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>Au:</span>
                   <input
                     type="date"
                     className="form-input"
-                    style={{ padding: '6px 10px', fontSize: '13px' }}
+                    style={{ padding: '6px 12px', fontSize: '13px', width: 'auto' }}
                     value={vacatairesPeriod.end}
                     onChange={e => setVacatairesPeriod({ ...vacatairesPeriod, end: e.target.value })}
                   />
                 </div>
-                <button className="btn-outline" onClick={fetchVacataires} style={{ padding: '6px 14px' }}>
-                  Filtrer
+                <button className="btn-outline" onClick={fetchVacataires} style={{ padding: '7px 16px' }}>
+                  Actualiser
                 </button>
               </div>
             </div>
 
-            {/* Cartes KPI */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginTop: '18px' }}>
-              <div style={{ padding: '14px', background: 'var(--bg-3)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Heures Exécutées</div>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: '#16a34a', marginTop: '4px' }}>
-                  {vacatairesData.totals?.totalHours || 0} h
+            {/* Cartes KPI Premium v2 */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginTop: '20px' }}>
+              <div className="kpi-card-v2" style={{ ['--card-accent' as any]: '#10b981' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Heures Exécutées
+                  </span>
+                  <span style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(16, 185, 129, 0.1)', display: 'grid', placeItems: 'center', color: '#10b981' }}>
+                    <Clock size={14} />
+                  </span>
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px' }}>
-                  Validées par émargement
+                <div className="tabular-nums" style={{ fontSize: '26px', fontWeight: 900, color: '#10b981', lineHeight: 1.1 }}>
+                  {vacatairesData.totals?.totalHours || 0} <span style={{ fontSize: '16px', fontWeight: 700 }}>h</span>
+                </div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-dim)' }}>
+                  Validées par émargement officiel
                 </div>
               </div>
 
-              <div style={{ padding: '14px', background: 'var(--bg-3)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Tarif Conventionné</div>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--primary)', marginTop: '4px' }}>
-                  1 750 <span style={{ fontSize: '14px' }}>FCFA / h</span>
+              <div className="kpi-card-v2" style={{ ['--card-accent' as any]: '#d97706' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Tarif Conventionné
+                  </span>
+                  <span style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(217, 119, 6, 0.1)', display: 'grid', placeItems: 'center', color: '#d97706' }}>
+                    <BadgeDollarSign size={14} />
+                  </span>
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px' }}>
+                <div className="tabular-nums" style={{ fontSize: '26px', fontWeight: 900, color: 'var(--primary)', lineHeight: 1.1 }}>
+                  1 750 <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-muted)' }}>FCFA/h</span>
+                </div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-dim)' }}>
                   Taux horaire officiel CFPPAS
                 </div>
               </div>
 
-              <div style={{ padding: '14px', background: 'var(--bg-3)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Masse Brute Honoraires</div>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text)', marginTop: '4px' }}>
-                  {(vacatairesData.totals?.totalGross || 0).toLocaleString('fr-FR')} <span style={{ fontSize: '14px' }}>FCFA</span>
+              <div className="kpi-card-v2" style={{ ['--card-accent' as any]: '#1e3a8a' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Masse Brute Honoraires
+                  </span>
+                  <span style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(30, 58, 138, 0.1)', display: 'grid', placeItems: 'center', color: 'var(--primary)' }}>
+                    <FileText size={14} />
+                  </span>
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px' }}>
-                  Montant total à payer
+                <div className="tabular-nums" style={{ fontSize: '26px', fontWeight: 900, color: 'var(--text)', lineHeight: 1.1 }}>
+                  {(vacatairesData.totals?.totalGross || 0).toLocaleString('fr-FR')} <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-muted)' }}>FCFA</span>
+                </div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-dim)' }}>
+                  Montant certifié à liquider
                 </div>
               </div>
 
-              <div style={{ padding: '14px', background: 'var(--bg-3)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Formateurs Émargés</div>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: '#6366f1', marginTop: '4px' }}>
-                  {vacatairesData.vacataires?.filter((v: any) => v.totalHours > 0).length || 0} / {vacatairesData.vacataires?.length || 0}
+              <div className="kpi-card-v2" style={{ ['--card-accent' as any]: '#6366f1' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Formateurs Émargés
+                  </span>
+                  <span style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(99, 102, 241, 0.1)', display: 'grid', placeItems: 'center', color: '#6366f1' }}>
+                    <Users size={14} />
+                  </span>
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px' }}>
-                  Ayant dispensé des cours
+                <div className="tabular-nums" style={{ fontSize: '26px', fontWeight: 900, color: '#6366f1', lineHeight: 1.1 }}>
+                  {vacatairesData.vacataires?.filter((v: any) => v.totalHours > 0).length || 0} <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-muted)' }}>/ {vacatairesData.vacataires?.length || 0}</span>
+                </div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-dim)' }}>
+                  Ayant dispensé des cours ce mois
                 </div>
               </div>
             </div>
@@ -406,17 +448,17 @@ export default function PayslipsPage() {
 
           {/* Tableau Récapitulatif Conforme Photo 1 */}
           <div className="card" style={{ padding: 0 }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <div>
-                <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800 }}>
+                <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: 'var(--text)' }}>
                   📋 État de Paiement des Honoraires des Professeurs Vacataires
                 </h4>
-                <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
+                <span style={{ fontSize: '11.5px', color: 'var(--text-dim)' }}>
                   Modèle homologué Ministère de l'Agriculture et de l'Élevage — Gao
                 </span>
               </div>
-              <button className="btn-outline" onClick={handleDownloadVacatairesPdf} style={{ fontSize: '12px', padding: '6px 12px' }}>
-                <Printer size={14} /> Imprimer Bordereau
+              <button className="btn-outline" onClick={handleDownloadVacatairesPdf} style={{ fontSize: '12px', padding: '6px 14px' }}>
+                <Printer size={13} /> Imprimer Bordereau
               </button>
             </div>
 
@@ -430,16 +472,16 @@ export default function PayslipsPage() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '40px', textAlign: 'center' }}>N°</th>
-                      <th>Prénoms & Nom</th>
-                      <th>Matières / Modules Enseignés</th>
-                      <th style={{ textAlign: 'center' }}>Classe</th>
-                      <th style={{ textAlign: 'center' }}>Total Heures</th>
-                      <th style={{ textAlign: 'center' }}>Absences</th>
-                      <th style={{ textAlign: 'right' }}>T.H</th>
-                      <th style={{ textAlign: 'right' }}>Montant Brut</th>
-                      <th style={{ textAlign: 'right' }}>Net à Payer</th>
-                      <th style={{ textAlign: 'center' }}>Émargement / Séances</th>
+                      <th className="sticky-th" style={{ width: '40px', textAlign: 'center' }}>N°</th>
+                      <th className="sticky-th">Prénoms & Nom</th>
+                      <th className="sticky-th">Matières / Modules Enseignés</th>
+                      <th className="sticky-th" style={{ textAlign: 'center' }}>Classe</th>
+                      <th className="sticky-th" style={{ textAlign: 'center' }}>Total Heures</th>
+                      <th className="sticky-th" style={{ textAlign: 'center' }}>Absences</th>
+                      <th className="sticky-th" style={{ textAlign: 'right' }}>T.H</th>
+                      <th className="sticky-th" style={{ textAlign: 'right' }}>Montant Brut</th>
+                      <th className="sticky-th" style={{ textAlign: 'right' }}>Net à Payer</th>
+                      <th className="sticky-th" style={{ textAlign: 'center' }}>Émargement / Séances</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -452,39 +494,39 @@ export default function PayslipsPage() {
                               {idx + 1}
                             </td>
                             <td>
-                              <strong style={{ fontSize: '14px', color: 'var(--text)' }}>{v.name}</strong>
-                              <div style={{ fontSize: '11px', color: 'var(--text-dim)' }}>{v.employeeNumber}</div>
+                              <strong style={{ fontSize: '13.5px', color: 'var(--text)' }}>{v.name}</strong>
+                              <div style={{ fontSize: '11px', color: 'var(--text-dim)', fontFamily: 'monospace' }}>{v.employeeNumber}</div>
                             </td>
                             <td style={{ fontSize: '13px', maxWidth: '240px' }}>
-                              <span style={{ color: 'var(--text)' }}>{v.subjects}</span>
+                              <span style={{ color: 'var(--text-soft)' }}>{v.subjects}</span>
                             </td>
                             <td style={{ textAlign: 'center' }}>
-                              <span style={{ fontSize: '11px', fontWeight: 700, background: 'rgba(22, 163, 74, 0.1)', color: '#16a34a', padding: '3px 8px', borderRadius: '6px' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#059669', padding: '3px 8px', borderRadius: '6px' }}>
                                 {v.classes}
                               </span>
                             </td>
                             <td style={{ textAlign: 'center' }}>
-                              <strong style={{ fontSize: '14px', color: v.totalHours > 0 ? '#16a34a' : 'var(--text-muted)' }}>
+                              <strong className="tabular-nums font-mono" style={{ fontSize: '14px', color: v.totalHours > 0 ? '#059669' : 'var(--text-muted)' }}>
                                 {v.totalHours} h
                               </strong>
                             </td>
                             <td style={{ textAlign: 'center' }}>
                               {v.absentHours > 0 ? (
-                                <span style={{ fontSize: '11px', fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '3px 8px', borderRadius: '6px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', padding: '3px 8px', borderRadius: '6px' }}>
                                   (P) Absent ({v.absentHours}h)
                                 </span>
                               ) : (
                                 <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>0h</span>
                               )}
                             </td>
-                            <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)' }}>
+                            <td className="tabular-nums font-mono" style={{ textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)' }}>
                               {v.hourlyRate.toLocaleString('fr-FR')} F
                             </td>
-                            <td style={{ textAlign: 'right', fontWeight: 700 }}>
+                            <td className="tabular-nums font-mono" style={{ textAlign: 'right', fontWeight: 700 }}>
                               {v.grossAmount.toLocaleString('fr-FR')} F
                             </td>
-                            <td style={{ textAlign: 'right' }}>
-                              <strong style={{ color: '#16a34a', fontSize: '14px' }}>
+                            <td className="tabular-nums font-mono" style={{ textAlign: 'right' }}>
+                              <strong style={{ color: '#059669', fontSize: '14px' }}>
                                 {v.netAmount.toLocaleString('fr-FR')} FCFA
                               </strong>
                             </td>
@@ -492,7 +534,7 @@ export default function PayslipsPage() {
                               <button
                                 className="btn-outline"
                                 onClick={() => setExpandedVacataireId(isExpanded ? null : v.id)}
-                                style={{ fontSize: '11px', padding: '4px 8px' }}
+                                style={{ fontSize: '11px', padding: '4px 10px' }}
                               >
                                 {isExpanded ? 'Masquer' : `${v.lessons?.length || 0} séances`}
                                 {isExpanded ? <ChevronUp size={12} style={{ marginLeft: '4px' }} /> : <ChevronDown size={12} style={{ marginLeft: '4px' }} />}

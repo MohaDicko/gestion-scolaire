@@ -315,7 +315,7 @@ export default function TimetablePage() {
                     
                     {/* Class Selector Tabs */}
                     <div className="space-y-1.5 flex-1">
-                        <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Sélectionner une Classe</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Sélectionner une Classe</span>
                         <div className="flex items-center gap-2 overflow-x-auto pb-1">
                             {classrooms.map(c => (
                                 <button
@@ -324,11 +324,17 @@ export default function TimetablePage() {
                                     onClick={() => setSelectedClassroom(c.id)}
                                     aria-pressed={selectedClassroom === c.id}
                                     aria-label={`Afficher l'emploi du temps de la classe ${c.name}`}
-                                    className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${
-                                        selectedClassroom === c.id 
-                                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 scale-[1.02]' 
-                                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                                    }`}
+                                    className="px-4 py-2 rounded-xl font-bold text-xs transition-all"
+                                    style={selectedClassroom === c.id ? {
+                                        background: 'var(--primary-grad)',
+                                        color: '#ffffff',
+                                        boxShadow: '0 4px 14px var(--primary-glow)',
+                                        transform: 'scale(1.02)'
+                                    } : {
+                                        background: 'var(--bg-4)',
+                                        color: 'var(--text-soft)',
+                                        border: '1px solid var(--border)'
+                                    }}
                                 >
                                     {c.name}
                                 </button>
@@ -352,10 +358,11 @@ export default function TimetablePage() {
                         <label
                             style={{
                                 display: 'inline-flex', alignItems: 'center', gap: '8px',
-                                padding: '8px 16px', borderRadius: '8px', cursor: isImporting ? 'not-allowed' : 'pointer',
-                                border: '1px solid var(--border)', background: 'transparent',
-                                color: 'var(--text)', fontSize: '14px', fontWeight: 500,
-                                opacity: isImporting ? 0.6 : 1, transition: 'all 0.2s'
+                                padding: '8px 16px', borderRadius: '10px', cursor: isImporting ? 'not-allowed' : 'pointer',
+                                border: '1px solid var(--border-md)', background: 'var(--bg-2)',
+                                color: 'var(--text-soft)', fontSize: '13px', fontWeight: 700,
+                                opacity: isImporting ? 0.6 : 1, transition: 'all 0.2s',
+                                boxShadow: 'var(--shadow-xs)'
                             }}
                         >
                             {isImporting ? <Loader2 size={15} className="spin" /> : <Upload size={15} />}
@@ -392,13 +399,13 @@ export default function TimetablePage() {
                         ];
 
                         return (
-                            <div className="timetable-grid" style={{ overflowX: 'auto', border: '2px solid #1e293b', borderRadius: '8px', overflow: 'hidden' }}>
+                            <div className="timetable-grid" style={{ overflowX: 'auto', border: '1px solid var(--border-md)', borderRadius: '14px', overflow: 'hidden' }}>
                                 <table style={{
                                     width: '100%',
                                     minWidth: '700px',
                                     borderCollapse: 'collapse',
                                     tableLayout: 'fixed',
-                                    border: '2px solid #475569',
+                                    background: 'var(--bg-2)',
                                 }}>
                                     {/* ── En-tête : jours ── */}
                                     <thead>
@@ -407,12 +414,12 @@ export default function TimetablePage() {
                                             <th style={{
                                                 width: '110px',
                                                 padding: '14px 10px',
-                                                background: '#1e293b',
-                                                borderRight: '2px solid #475569',
-                                                borderBottom: '3px solid #475569',
+                                                background: 'var(--bg-4)',
+                                                borderRight: '1px solid var(--border-md)',
+                                                borderBottom: '1px solid var(--border-md)',
                                                 fontSize: '11px',
                                                 fontWeight: 800,
-                                                color: '#94a3b8',
+                                                color: 'var(--text-muted)',
                                                 textTransform: 'uppercase',
                                                 letterSpacing: '0.08em',
                                                 textAlign: 'center',
@@ -422,12 +429,12 @@ export default function TimetablePage() {
                                             {DAYS.map((day, idx) => (
                                                 <th key={day.id} style={{
                                                     padding: '14px 10px',
-                                                    background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
-                                                    borderRight: idx < DAYS.length - 1 ? '2px solid rgba(255,255,255,0.25)' : 'none',
-                                                    borderBottom: '3px solid #475569',
+                                                    background: 'var(--primary-grad)',
+                                                    borderRight: idx < DAYS.length - 1 ? '1px solid rgba(255,255,255,0.15)' : 'none',
+                                                    borderBottom: '1px solid var(--border-md)',
                                                     fontSize: '13px',
                                                     fontWeight: 800,
-                                                    color: '#fff',
+                                                    color: '#ffffff',
                                                     textAlign: 'center',
                                                     letterSpacing: '0.04em',
                                                 }}>
@@ -444,10 +451,10 @@ export default function TimetablePage() {
                                                 {/* Colonne heure */}
                                                 <td className="col-time" style={{
                                                     padding: '12px 8px',
-                                                    background: '#f1f5f9',
-                                                    borderRight: '3px solid #475569',
+                                                    background: 'var(--bg-4)',
+                                                    borderRight: '1px solid var(--border-md)',
                                                     borderBottom: rowIdx < timeSlots.length - 1
-                                                        ? '2px solid #cbd5e1'
+                                                        ? '1px solid var(--border)'
                                                         : 'none',
                                                     textAlign: 'center',
                                                     verticalAlign: 'middle',
@@ -466,14 +473,14 @@ export default function TimetablePage() {
                                                             color: 'var(--primary)',
                                                         }}>
                                                             <Clock size={11} />
-                                                            <span style={{ fontSize: '12px', fontWeight: 800 }}>{slot.start}</span>
+                                                            <span className="tabular-nums font-mono" style={{ fontSize: '12px', fontWeight: 800 }}>{slot.start}</span>
                                                         </div>
                                                         <div style={{
                                                             width: '1px',
                                                             height: '10px',
-                                                            background: 'var(--border)',
+                                                            background: 'var(--border-md)',
                                                         }} />
-                                                        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>{slot.end}</span>
+                                                        <span className="tabular-nums font-mono" style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>{slot.end}</span>
                                                     </div>
                                                 </td>
 
@@ -490,12 +497,12 @@ export default function TimetablePage() {
                                                             verticalAlign: 'middle',
                                                             textAlign: 'center',
                                                             borderRight: colIdx < DAYS.length - 1
-                                                                ? '2px solid #cbd5e1'
+                                                                ? '1px solid var(--border)'
                                                                 : 'none',
                                                             borderBottom: rowIdx < timeSlots.length - 1
-                                                                ? '2px solid #cbd5e1'
+                                                                ? '1px solid var(--border)'
                                                                 : 'none',
-                                                            background: rowIdx % 2 === 0 ? '#ffffff' : '#f8fafc',
+                                                            background: 'var(--bg-2)',
                                                             minHeight: '90px',
                                                             position: 'relative',
                                                         }}>
@@ -508,8 +515,8 @@ export default function TimetablePage() {
                                                                     padding: '10px 12px',
                                                                     textAlign: 'left',
                                                                     position: 'relative',
-                                                                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                                                                    transition: 'box-shadow 0.2s',
+                                                                    boxShadow: 'var(--shadow-xs)',
+                                                                    transition: 'all 0.2s',
                                                                 }}>
                                                                     <div style={{
                                                                         fontWeight: 800,
