@@ -112,7 +112,7 @@ export default function GovernmentFioriLandingPage() {
                 FIO-ERP • SYSTÈME NATIONAL DE GESTION SCOLAIRE
               </div>
               <div className="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Centre de Formation Professionnelle Polyvalent (CFP-PAS) — Gao
+                École de Santé Bernard Kouchner (ESBK) — Bamako
               </div>
             </div>
           </div>
@@ -212,7 +212,7 @@ export default function GovernmentFioriLandingPage() {
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
                   <div>
                     <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-100">
-                      CFP-PAS DE GAO • ÉTAT DES REGISTRES
+                      ESBK • ÉTAT DES REGISTRES PARAMÉDICAUX
                     </h2>
                     <p className="text-[11px] text-slate-500 font-medium">Session de contrôle académique en direct</p>
                   </div>
@@ -372,7 +372,7 @@ export default function GovernmentFioriLandingPage() {
                 </div>
               </div>
               <p className="text-white/75 text-xs leading-relaxed max-w-md">
-                Centre de Formation Professionnelle Polyvalent (CFP-PAS) de Gao. Plateforme d'arbitrage de scolarité, conformité de formation technique et trésorerie publique homologuée.
+                École de Santé Bernard Kouchner (ESBK) de Bamako. Plateforme de gestion de la scolarité, des stages cliniques, du personnel et de la trésorerie.
               </p>
             </div>
 
@@ -389,8 +389,8 @@ export default function GovernmentFioriLandingPage() {
             <div>
               <h4 className="font-extrabold uppercase tracking-wider text-white mb-3 text-xs">Assistance Régionale</h4>
               <ul className="space-y-2 text-white/80">
-                <li className="flex items-center gap-2"><Phone size={13} /> <span>Gao : +223 21 82 00 00</span></li>
-                <li className="flex items-center gap-2"><Mail size={13} /> <span>contact@cfp-gao.edu.ml</span></li>
+                <li className="flex items-center gap-2"><Phone size={13} /> <span>Bamako — École de Santé Bernard Kouchner</span></li>
+                <li className="flex items-center gap-2"><Mail size={13} /> <span>admin@esbk-bamako.ml</span></li>
                 <li className="flex items-center gap-2"><Globe size={13} /> <span>education.gouv.ml</span></li>
               </ul>
             </div>

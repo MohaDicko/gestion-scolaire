@@ -98,10 +98,10 @@ export default function GovernmentFioriLoginPage() {
                   SYSTÈME D'INFORMATION NATIONAL
                 </span>
                 <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
-                  FIO-ERP • GESTION SCOLAIRE & REGISTRES
+                  FIO-ERP • GESTION SCOLAIRE & SANTÉ
                 </h1>
                 <p className="text-xs text-blue-200/90 font-medium mt-1">
-                  Centre de Formation Professionnelle Polyvalent (CFP-PAS) — Gao
+                  École de Santé Bernard Kouchner (ESBK) — Bamako
                 </p>
               </div>
             </div>
@@ -113,17 +113,17 @@ export default function GovernmentFioriLoginPage() {
                   <span>Chiffrement d'État & Audit Réglementaire</span>
                 </div>
                 <p className="text-xs text-blue-200/80 leading-relaxed font-normal">
-                  Chaque accès agent est audité et horodaté selon les dispositions de la Direction Nationale de l'Enseignement Technique et Professionnel.
+                  Chaque accès agent est audité et horodaté selon les dispositions de la Direction Nationale de la Santé et de l'Hygiène Publique.
                 </p>
               </div>
 
               <div className="p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm">
                 <div className="flex items-center gap-2.5 text-blue-100 font-bold text-sm mb-1.5">
                   <FileCheck2 size={18} className="text-amber-300" strokeWidth={2} />
-                  <span>Référentiel APC & Validation des Compétences</span>
+                  <span>Référentiel Paramédical & Validation des Compétences</span>
                 </div>
                 <p className="text-xs text-blue-200/80 leading-relaxed font-normal">
-                  Accès unifié aux livrets de compétences des apprenants, cahiers de texte, jurys d'examens et clôture des balances de trésorerie.
+                  Accès unifié aux livrets de compétences, cahiers de texte, jurys d'examens, stages cliniques et conventions hospitalières.
                 </p>
               </div>
             </div>
@@ -201,7 +201,7 @@ export default function GovernmentFioriLoginPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="nom.prenom@cfppas-gao.ml"
+                      placeholder="nom.prenom@esbk-bamako.ml"
                       required
                       autoComplete="email"
                       className="w-full px-3.5 py-2.5 rounded bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 font-sans focus:outline-none focus:border-[#0070F2] focus:ring-1 focus:ring-[#0070F2] transition-colors"
@@ -218,7 +218,7 @@ export default function GovernmentFioriLoginPage() {
                       Mot de Passe d'Habilitation
                     </label>
                     <a
-                      href="mailto:support@cfppas-gao.ml?subject=Demande de reinitialisation de mot de passe habilitation"
+                      href="mailto:admin@esbk-bamako.ml?subject=Demande de reinitialisation de mot de passe"
                       className="text-[11px] font-bold text-[#0070F2] hover:underline"
                     >
                       Assistance Mot de Passe
