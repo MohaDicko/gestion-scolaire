@@ -49,6 +49,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Pédagogie & Compétences',
     items: [
       { label: 'Cahier de Texte APC',      href: '/lessons',            icon: <BookOpenCheck size={16} strokeWidth={1.75} /> },
+      { label: 'Tableau Utilitaire (Heures)', href: '/hr/timesheet',   icon: <Clock size={16} strokeWidth={1.75} /> },
       { label: 'Relevés des Notes',        href: '/grades',             icon: <FileSpreadsheet size={16} strokeWidth={1.75} /> },
       { label: 'Bulletins & Décisions',    href: '/reports/bulletins',  icon: <FileCheck2 size={16} strokeWidth={1.75} /> },
       // NB: 'Relevé Compétences' est réservé aux établissements agro-pastoraux (AGRO)
@@ -61,6 +62,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Facturation & Échéances',  href: '/invoices',    icon: <ReceiptText size={16} strokeWidth={1.75} /> },
       { label: 'Dépenses & Décaissements', href: '/expenses',    icon: <Scale size={16} strokeWidth={1.75} /> },
       { label: 'Bilan & Balance de Caisse',href: '/finance',     icon: <Landmark size={16} strokeWidth={1.75} /> },
+      { label: 'Honoraires Vacataires & Paie', href: '/payslips', icon: <FileText size={16} strokeWidth={1.75} /> },
     ]
   },
   {

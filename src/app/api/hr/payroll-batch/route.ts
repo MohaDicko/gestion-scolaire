@@ -44,7 +44,8 @@ export async function POST(request: Request) {
             date: {
               gte: new Date(periodStart),
               lte: new Date(periodEnd)
-            }
+            },
+            status: 'COMPLETED'
           },
           _sum: { hoursCount: true }
         });

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Plus, Search, Clock, User, FileText, Loader2, Save, X, ClipboardList, School, Timer, ChevronRight, TrendingUp, Award, Edit3, CheckCircle } from 'lucide-react';
+import { BookOpen, Plus, Search, Clock, User, FileText, Loader2, Save, X, ClipboardList, School, Timer, ChevronRight, TrendingUp, Award, Edit3, CheckCircle, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
@@ -247,9 +247,15 @@ export default function LessonLogsPage() {
                             <div className="text-xs font-bold text-zinc-600 dark:text-zinc-400 flex items-center gap-1 justify-end">
                               <User size={11} /> {log.teacher?.firstName} {log.teacher?.lastName}
                             </div>
-                            <div className="inline-flex items-center gap-1 mt-1 bg-green-50 dark:bg-green-900/30 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                              <CheckCircle size={8} /> Validé
-                            </div>
+                            {log.status === 'ABSENT' ? (
+                              <div className="inline-flex items-center gap-1 mt-1 bg-red-50 dark:bg-red-900/30 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-200">
+                                <XCircle size={9} /> (P) Absent
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center gap-1 mt-1 bg-green-50 dark:bg-green-900/30 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-200">
+                                <CheckCircle size={9} /> 02 Exécuté
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -293,6 +299,31 @@ export default function LessonLogsPage() {
         {/* ── Synthèse Tab ── */}
         {activeTab === 'synthese' && (
           <div className="flex flex-col gap-4">
+            {/* Bannière de liquidation vacataires */}
+            <div className="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                  🌾
+                </div>
+                <div>
+                  <h4 className="font-bold text-emerald-950 dark:text-emerald-100 text-sm">
+                    Bordereau Officiel des Honoraires Vacataires (1 750 FCFA/h)
+                  </h4>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                    Toutes les heures certifiées par émargement sont automatiquement liquidées sur l'état de paiement officiel.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push('/payslips')}
+                className="btn-primary text-xs font-bold px-4 py-2"
+                style={{ background: '#16a34a', borderColor: '#16a34a' }}
+              >
+                Générer le Bordereau d'Émargement →
+              </button>
+            </div>
+
             {Object.values(teacherStats).length === 0 ? (
               <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
                 <EmptyState
@@ -424,8 +455,38 @@ export default function LessonLogsPage() {
                   </div>
                 </div>
 
-                {/* Date et durée */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Créneaux horaires de Gao */}
+                <div style={{ background: 'var(--bg-3)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '8px', textTransform: 'uppercase' }}>
+                    ⏰ Créneaux horaires standards de Gao (Registre CFPPAS) :
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { label: '🌅 07h45 – 09h45 (2h)', hours: 2, slot: '07h45-09h45' },
+                      { label: '☀️ 10h00 – 12h00 (2h)', hours: 2, slot: '10h00-12h00' },
+                      { label: '🌤️ 15h00 – 17h00 (2h)', hours: 2, slot: '15h00-17h00' }
+                    ].map(s => (
+                      <button
+                        key={s.slot}
+                        type="button"
+                        className="btn-outline"
+                        style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px' }}
+                        onClick={() => {
+                          setFormData(f => ({
+                            ...f,
+                            hoursCount: s.hours,
+                            title: f.title.includes('[') ? f.title.replace(/\[.*?\]\s*/, `[${s.slot}] `) : `[${s.slot}] ${f.title}`
+                          }));
+                        }}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Date, durée et statut */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="form-group">
                     <label>Date du cours *</label>
                     <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="form-input" required />
@@ -436,17 +497,30 @@ export default function LessonLogsPage() {
                       Nombre d'heures *
                     </label>
                     <input
-                      type="number" min="0.5" max="8" step="0.5"
+                      type="number" min="0" max="8" step="0.5"
                       value={formData.hoursCount}
-                      onChange={e => setFormData({...formData, hoursCount: parseFloat(e.target.value)})}
+                      onChange={e => setFormData({...formData, hoursCount: parseFloat(e.target.value) || 0})}
                       className="form-input"
                       required
                     />
-                    {formData.hoursCount > 0 && (
-                      <p className="text-xs text-emerald-600 font-bold mt-1">
-                        💰 Rémunération calculée automatiquement lors de la paie.
-                      </p>
-                    )}
+                  </div>
+                  <div className="form-group">
+                    <label>Émargement / Statut *</label>
+                    <select
+                      value={formData.status}
+                      onChange={e => {
+                        const newStatus = e.target.value;
+                        setFormData({
+                          ...formData,
+                          status: newStatus,
+                          hoursCount: newStatus === 'ABSENT' ? 0 : (formData.hoursCount || 2)
+                        });
+                      }}
+                      className="form-input"
+                    >
+                      <option value="COMPLETED">🟢 02 Exécuté (Rémunéré)</option>
+                      <option value="ABSENT">🔴 (P) Absent (Non rémunéré)</option>
+                    </select>
                   </div>
                 </div>
 
