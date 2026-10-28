@@ -112,7 +112,7 @@ export async function middleware(request: NextRequest) {
   // ── 3. Routes publiques ──────────────────────────────────────────────────
   if (isPublicPath(pathname)) {
     const token = request.cookies.get('refreshToken')?.value;
-    if (token && pathname === '/login') {
+    if (token && (pathname === '/login' || pathname === '/')) {
       return applySecurityHeaders(NextResponse.redirect(new URL('/dashboard', request.url)));
     }
     return applySecurityHeaders(NextResponse.next());

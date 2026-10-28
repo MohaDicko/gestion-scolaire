@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('School Management SaaS - Interface & Fonctionnalités', () => {
 
-  test('Page d\'accueil SaaS : Présentation sobre et professionnelle', async ({ page }) => {
+  test('Page d\'accueil SaaS : Login Landing Page sobre et accès rapide', async ({ page }) => {
     await page.goto('/');
 
     // Vérifier l'identité EduGestion
@@ -12,14 +12,20 @@ test.describe('School Management SaaS - Interface & Fonctionnalités', () => {
     await expect(page.locator('text=RÉPUBLIQUE DU MALI')).not.toBeVisible();
     await expect(page.locator('text=Service Layer d\'État Opérationnel')).not.toBeVisible();
 
-    // Vérifier le titre et les CTA clairs
-    await expect(page.locator('h1')).toContainText('La solution simple et complète');
-    await expect(page.locator('#hero-cta-dashboard')).toBeVisible();
+    // Vérifier le titre de connexion et le formulaire
+    await expect(page.locator('h1')).toContainText('Connexion à votre espace');
+    await expect(page.locator('#email-input')).toBeVisible();
+    await expect(page.locator('#password-input')).toBeVisible();
+    await expect(page.locator('#submit-login-button')).toBeVisible();
 
-    // Vérifier les portails métiers
-    await expect(page.locator('text=Espace Direction')).toBeVisible();
-    await expect(page.locator('text=Secrétariat & Admissions')).toBeVisible();
-    await expect(page.locator('text=Espace Enseignants')).toBeVisible();
+    // Vérifier les boutons d'accès rapide aux établissements
+    await expect(page.locator('#btn-quick-cfppas')).toBeVisible();
+    await expect(page.locator('#btn-quick-esbk')).toBeVisible();
+
+    // Cliquer sur le compte CFPPAS pour pré-remplir
+    await page.locator('#btn-quick-cfppas').click();
+    await expect(page.locator('#email-input')).toHaveValue('admin@cfppas-gao.ml');
+    await expect(page.locator('#password-input')).toHaveValue('CfpPasGao2026!');
   });
 
   test('Tableau de bord : Navigation et Chiffres clés opérationnels', async ({ page }) => {
