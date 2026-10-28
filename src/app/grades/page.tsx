@@ -272,9 +272,12 @@ export default function GradesPage() {
               <BookOpen size={18} className="text-primary" />
               Grille de saisie ({students.length} apprenants)
               </h2>
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <StatusBadge tone="success" dot>{enteredGrades} saisie{enteredGrades > 1 ? 's' : ''}</StatusBadge>
                 <StatusBadge tone={missingGrades > 0 ? 'warning' : 'success'} dot>{missingGrades} restante{missingGrades > 1 ? 's' : ''}</StatusBadge>
+                <span className="text-[11px] text-slate-500 font-medium ml-1 hidden sm:inline-flex items-center gap-1">
+                  ⌨️ Touche Entrée ou ↑/↓ pour passer rapidement d'un apprenant à l'autre
+                </span>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -307,7 +310,7 @@ export default function GradesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map(e => (
+                  {students.map((e, idx) => (
                     <tr key={e.student.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '16px 24px' }}><span className="badge badge-primary">{e.student.studentNumber}</span></td>
                       <td><strong style={{ color: 'var(--text)' }}>{e.student.firstName} {e.student.lastName}</strong></td>
@@ -322,6 +325,18 @@ export default function GradesPage() {
                           placeholder="—"
                           aria-label={`Note de ${e.student.firstName} ${e.student.lastName} sur ${form.maxScore}`}
                           value={grades[e.student.id]?.score || ''}
+                          data-grade-row={idx}
+                          onKeyDown={(ev) => {
+                            if (ev.key === 'Enter' || ev.key === 'ArrowDown') {
+                              ev.preventDefault();
+                              const next = document.querySelector(`input[data-grade-row="${idx + 1}"]`) as HTMLInputElement;
+                              if (next) next.focus();
+                            } else if (ev.key === 'ArrowUp') {
+                              ev.preventDefault();
+                              const prev = document.querySelector(`input[data-grade-row="${idx - 1}"]`) as HTMLInputElement;
+                              if (prev) prev.focus();
+                            }
+                          }}
                           onChange={(ev) => handleGradeChange(e.student.id, 'score', ev.target.value)}
                         />
                       </td>
@@ -333,6 +348,14 @@ export default function GradesPage() {
                           placeholder="Appréciation libre..." 
                           aria-label={`Commentaire pour ${e.student.firstName} ${e.student.lastName}`}
                           value={grades[e.student.id]?.comment || ''}
+                          data-comment-row={idx}
+                          onKeyDown={(ev) => {
+                            if (ev.key === 'Enter') {
+                              ev.preventDefault();
+                              const next = document.querySelector(`input[data-comment-row="${idx + 1}"]`) as HTMLInputElement;
+                              if (next) next.focus();
+                            }
+                          }}
                           onChange={(ev) => handleGradeChange(e.student.id, 'comment', ev.target.value)}
                         />
                       </td>

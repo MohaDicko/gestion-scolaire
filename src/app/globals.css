@@ -1879,13 +1879,40 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--primary); outli
   background-color: #f8fafc !important;
 }
 
-/* ── Mode impression ── */
+/* ── Mode impression institutionnel (Print-First) ── */
 @media print {
+  /* Masquer la navigation, boutons d'action et éléments d'interface non imprimables */
+  header, nav, aside, .fiori-shellbar, button, [role="button"], input[type="file"],
+  .btn-primary, .btn-ghost, .btn-outline, .no-print, [data-no-print] {
+    display: none !important;
+  }
+
+  body, html, main, #main-content {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
   .timetable-grid table {
     border-collapse: collapse !important;
   }
   .timetable-grid th,
   .timetable-grid td {
     border: 1px solid #000 !important;
+  }
+
+  /* Éviter les coupures de tableaux et de blocs en milieu de page */
+  tr, .card, .report-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Forcer le noir et blanc / contraste d'encre propre */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 }

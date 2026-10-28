@@ -372,12 +372,12 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           {/* ── OFFLINE BANNER ── */}
           {isOffline && (
             <div style={{
-              background: '#ef4444', color: 'white', padding: '6px 12px',
-              fontSize: '12px', fontWeight: 600, display: 'flex',
+              background: '#d97706', color: 'white', padding: '7px 14px',
+              fontSize: '12px', fontWeight: 500, display: 'flex',
               alignItems: 'center', justifyContent: 'center', gap: '8px',
-              zIndex: 40
+              zIndex: 40, borderBottom: '1px solid #b45309'
             }}>
-              <span>⚠️ Vous êtes hors-ligne. Vos modifications seront synchronisées une fois la connexion rétablie.</span>
+              <span>📡 Mode Hors-ligne actif — Vos saisies restent en sécurité sur cet appareil et seront synchronisées au retour du réseau.</span>
             </div>
           )}
 
@@ -462,17 +462,25 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                 <kbd style={{ fontSize: 10, fontWeight: 700, opacity: 0.6, background: 'var(--bg-2)', padding: '1px 4px', borderRadius: 3, border: '1px solid var(--border-md)' }}>⌘K</kbd>
               </button>
 
-              {user?.role === 'SUPER_ADMIN' && user.schoolName && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '4px 8px', borderRadius: 4,
-                  background: 'rgba(0, 112, 242, 0.08)',
-                  border: '1px solid rgba(0, 112, 242, 0.25)',
-                }} className="hidden lg:flex">
-                  <ShieldAlert size={12} strokeWidth={2} style={{ color: '#0070f2' }} />
-                  <span style={{ fontSize: 9.5, fontWeight: 800, color: '#0070f2', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Supervision État</span>
-                </div>
-              )}
+              {/* Live Connectivity Status Indicator */}
+              <div
+                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+                style={{
+                  background: isOffline ? 'rgba(217, 119, 6, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                  color: isOffline ? '#b45309' : '#047857',
+                  border: `1px solid ${isOffline ? 'rgba(217, 119, 6, 0.3)' : 'rgba(16, 185, 129, 0.25)'}`
+                }}
+                title={isOffline ? "Connexion interrompue : modifications conservées localement" : "Connecté et synchronisé en temps réel"}
+              >
+                <span
+                  style={{
+                    width: 6, height: 6, borderRadius: '50%',
+                    backgroundColor: isOffline ? '#d97706' : '#10b981'
+                  }}
+                  className={isOffline ? '' : 'animate-pulse'}
+                />
+                <span>{isOffline ? 'Hors-ligne' : 'En ligne'}</span>
+              </div>
 
               {actions}
 
