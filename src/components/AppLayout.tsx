@@ -146,6 +146,20 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    // Unregister legacy service workers & clear caches in dev mode
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      if (process.env.NODE_ENV === 'development') {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          for (const r of regs) r.unregister();
+        }).catch(() => {});
+        if ('caches' in window) {
+          caches.keys().then(keys => {
+            for (const k of keys) caches.delete(k);
+          }).catch(() => {});
+        }
+      }
+    }
+
     return () => {
       window.removeEventListener('keydown', hk);
       window.removeEventListener('online', handleOnline);
@@ -222,133 +236,84 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
   /* ── SIDEBAR CONTENT ── */
   const SidebarContent = () => (
-    <div className="flex flex-col h-full overflow-hidden fiori-sidebar" style={{ background: 'var(--bg-2)', color: 'var(--text)' }}>
+    <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
       
-      {/* Government & State Official Header */}
-      <div style={{
-        padding: '16px 16px 14px',
-        borderBottom: '1px solid var(--border-md)',
-        position: 'relative',
-        background: 'linear-gradient(180deg, rgba(0, 112, 242, 0.03) 0%, transparent 100%)',
-      }}>
-        {/* Mali flag top bar */}
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: '3.5px',
-          background: 'linear-gradient(90deg, #14A44D 33.3%, #FCD116 33.3% 66.6%, #CE1126 66.6%)',
-        }} />
-        
-        <div className="flex items-start gap-3 mt-1.5">
-          {/* Institutional Shield Badge */}
-          <div style={{
-            width: 42, height: 42, borderRadius: 8,
-            background: 'linear-gradient(135deg, #0a3b7b 0%, #0070f2 100%)',
-            display: 'grid', placeItems: 'center',
-            boxShadow: '0 2px 6px rgba(10, 59, 123, 0.25)',
-            flexShrink: 0, position: 'relative', border: '1px solid rgba(255, 255, 255, 0.2)',
-          }}>
-            <Landmark size={22} color="#ffffff" strokeWidth={1.75} />
+      {/* School identity header */}
+      <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+            <GraduationCap size={20} strokeWidth={2} />
           </div>
-          
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ fontSize: 9, fontWeight: 900, color: '#0a3b7b', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                RÉPUBLIQUE DU MALI
-              </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-bold text-slate-900 dark:text-white truncate leading-tight">
+              {branding?.name || user?.schoolName || 'CFP-PAS de Gao'}
             </div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', lineHeight: 1.25, marginTop: 1, letterSpacing: '-0.2px' }} className="truncate">
-              {branding?.name ? branding.name.toUpperCase() : (user?.schoolName ? user.schoolName.toUpperCase() : 'ÉTABLISSEMENT NATIONAL')}
-            </div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, background: 'rgba(0, 112, 242, 0.08)', padding: '1px 6px', borderRadius: 4, border: '1px solid rgba(0, 112, 242, 0.2)' }}>
-              <ShieldCheck size={11} color="#0070f2" strokeWidth={2} />
-              <span style={{ fontSize: 9, fontWeight: 700, color: '#0070f2', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                {schoolType === 'SANTE' ? 'FIO-ERP • SANTÉ & PARAMÉDICAL' : 'FIO-ERP • APC ÉTAT'}
-              </span>
+            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
+              Portail de Gestion • 2025-2026
             </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation Links with Fiori Active Border Indicator */}
-      <nav aria-label="Navigation principale" style={{ flex: 1, padding: '8px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {/* Navigation Links */}
+      <nav aria-label="Navigation principale" className="flex-1 py-3 px-2 overflow-y-auto space-y-4">
         {navSections.map(section => (
-          <div key={section.title} style={{ marginBottom: 4 }}>
-            <div className="fiori-section-label">
+          <div key={section.title}>
+            <div className="px-2.5 pb-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               {section.title}
             </div>
-            {section.items.map(item => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`fiori-nav-item ${active ? 'active' : ''}`}
-                >
-                  <span className="fiori-icon">
-                    {item.icon}
-                  </span>
-                  <span style={{ flex: 1 }}>{item.label}</span>
-                  {item.badge && (
-                    <span style={{
-                      background: '#0070f2', color: '#fff', borderRadius: 3,
-                      fontSize: 9, fontWeight: 700, padding: '1px 5px', letterSpacing: '0.04em',
-                    }}>{item.badge}</span>
-                  )}
-                </Link>
-              );
-            })}
+            <div className="space-y-0.5">
+              {section.items.map(item => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+                      active
+                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <span className={`shrink-0 ${active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                      {item.icon}
+                    </span>
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {item.badge && (
+                      <span className="bg-blue-600 text-white rounded-full text-[10px] font-semibold px-1.5 py-0.2">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         ))}
       </nav>
 
-      {/* Institutional User & Agent Footer */}
-      <div style={{
-        padding: '12px 14px',
-        borderTop: '1px solid var(--border-md)',
-        background: 'var(--bg-4)',
-      }}>
+      {/* User Footer */}
+      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80">
         <div className="flex items-center gap-2.5">
-          <div style={{
-            width: 34, height: 34, borderRadius: 6,
-            background: 'linear-gradient(135deg, #0070f2 0%, #0a3b7b 100%)',
-            display: 'grid', placeItems: 'center',
-            color: '#fff', fontSize: 12, fontWeight: 800,
-            flexShrink: 0, letterSpacing: '-0.3px',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-          }}>
+          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center justify-center shrink-0">
             {initials}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
               {displayName}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#107e3e' }} />
-              <span style={{ fontSize: 9.5, color: '#556b82', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                {roleLabel} • MAT: AG-2025
-              </span>
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+              {roleLabel}
             </div>
           </div>
           <button
             onClick={handleLogout}
-            title="Déconnexion sécurisée"
+            title="Déconnexion"
             aria-label="Déconnexion"
-            style={{
-              width: 30, height: 30, borderRadius: 6, display: 'grid', placeItems: 'center',
-              color: '#556b82', transition: 'all 0.15s', background: 'none', border: '1px solid transparent', cursor: 'pointer',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.background = 'rgba(187, 0, 0, 0.08)';
-              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(187, 0, 0, 0.2)';
-              (e.currentTarget as HTMLElement).style.color = '#bb0000';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.background = 'none';
-              (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
-              (e.currentTarget as HTMLElement).style.color = '#556b82';
-            }}
+            className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
           >
-            <LogOut size={15} strokeWidth={1.75} />
+            <LogOut size={15} strokeWidth={1.8} />
           </button>
         </div>
       </div>
@@ -462,15 +427,16 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                   </h1>
                 ) : null}
 
-                {/* Government Official Badges */}
+                {/* School Year Context Badge */}
                 <div className="hidden xl:flex items-center gap-2 ml-3 pl-3 border-l border-slate-200 dark:border-slate-800">
-                  <span className="fiori-badge fiori-badge-info">
-                    EXERCICE 2025 - 2026
+                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                    Année scolaire 2025-2026
                   </span>
-                  <span className="fiori-badge fiori-badge-positive">
-                    <ShieldCheck size={11} strokeWidth={2} />
-                    {schoolType === 'SANTE' ? 'AGRÉMENT SANTÉ MSHP • CYCLE DIPLÔMANT' : 'RÉFÉRENTIEL APC CONFORME'}
-                  </span>
+                  {schoolType === 'SANTE' && (
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                      Santé & Paramédical
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -658,23 +624,17 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, paddingBottom: 'clamp(12px, 2vw, 18px)', flexWrap: 'wrap', position: 'relative' }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <h1 style={{
-                      fontSize: 'clamp(17px, 2.5vw, 22px)', fontWeight: 900, color: 'var(--text)',
-                      fontFamily: 'var(--font-sans), sans-serif', letterSpacing: '-0.5px', lineHeight: 1.2,
+                      fontSize: '18px', fontWeight: 800, color: 'var(--text)',
+                      fontFamily: 'inherit', letterSpacing: '-0.3px', lineHeight: 1.2,
                       overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>
                       {title}
                     </h1>
                     {subtitle && (
-                      <p style={{ fontSize: 'clamp(11px, 1.5vw, 13px)', color: 'var(--text-muted)', marginTop: 4, fontWeight: 500 }}>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 3, fontWeight: 500 }}>
                         {subtitle}
                       </p>
                     )}
-                    {/* Mali underline accent */}
-                    <div style={{
-                      display: 'block', width: 36, height: 3, borderRadius: 99,
-                      background: 'linear-gradient(90deg, #14A44D 33%, #FCD116 33% 66%, #CE1126 66%)',
-                      marginTop: 8,
-                    }} />
                   </div>
                   {actions && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
@@ -686,12 +646,12 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             )}
 
             {/* Children */}
-            <div className="app-page-content" style={{ padding: 'clamp(16px, 2.5vw, 24px) clamp(16px, 3vw, 28px)', minHeight: 'calc(100% - 200px)' }}>
+            <div className="app-page-content" style={{ padding: 'clamp(14px, 2vw, 20px)', minHeight: 'calc(100% - 150px)' }}>
               <motion.div
                 key={pathname}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+                transition={{ duration: 0.2 }}
               >
                 {children}
               </motion.div>
@@ -699,17 +659,17 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
 
             {/* Footer */}
             <footer style={{
-              padding: '16px 28px',
+              padding: '14px 24px',
               borderTop: '1px solid var(--border)',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               flexWrap: 'wrap', gap: 8,
             }}>
-              <p style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600 }}>
-                © {new Date().getFullYear()} SahelEdu.pro — Plateforme Nationale de Gestion Scolaire du Mali
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500 }}>
+                © {new Date().getFullYear()} {branding?.name || 'CFP-PAS de Gao'} — Système de Gestion Scolaire
               </p>
-              <a href="https://sahelmultiservices.com" style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)' }}>
-                SAHEL MULTISERVICES
-              </a>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)' }}>
+                Version 2.4.0
+              </span>
             </footer>
           </div>
         </div>

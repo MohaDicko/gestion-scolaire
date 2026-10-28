@@ -3,31 +3,20 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import {
-  Activity, Clock, UserCheck, GraduationCap, BookOpen,
-  ChevronRight, AlertCircle, CheckCircle2, Plus, Receipt,
-  FileText, ArrowRight, Wallet, TrendingUp, Users, BookMarked,
-  Coins, BarChart3, Calendar, Award, Zap, Shield, Search,
-  CheckCircle, ArrowUpRight, ArrowDownRight, Filter, AlertTriangle,
-  Building2, School, Landmark, Sparkles, FolderCheck, CreditCard,
-  CalendarCheck2, Briefcase, FileSpreadsheet, FileCheck2,
-  ReceiptText, AlertOctagon, Scale, BadgePercent, Clock4,
-  UserPlus, Layers, CheckCheck, IdCard, type LucideIcon
+  GraduationCap, UserCheck, Receipt, Briefcase, Calendar,
+  ArrowRight, Search, Plus, CreditCard, FileSpreadsheet,
+  FileCheck2, CheckCircle2, AlertCircle, Clock, ChevronRight,
+  TrendingUp, Users, Building2, BookOpen, Layers,
+  Wallet, ShieldCheck, ArrowUpRight, ArrowDownRight, type LucideIcon
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const FinanceChart = dynamic(
   () => import('@/components/dashboard/FinanceChart').then((mod) => mod.FinanceChart),
   { ssr: false }
 );
-
-const stagger = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.04 } }
-};
-const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } };
 
 type WorklistTab = 'all' | 'critical' | 'pending' | 'resolved';
 
@@ -103,7 +92,7 @@ export default function DashboardPage() {
         }
       }
     } catch {
-      // Données de référence
+      // Données de secours
     } finally {
       setIsLoading(false);
     }
@@ -129,13 +118,8 @@ export default function DashboardPage() {
     fetchStats();
   }, [fetchStats, router]);
 
-  // Détection du profil d'établissement : Santé / Paramédical vs Agro-pastoral / Général
   const isHealth = school?.type === 'SANTE' || (user?.schoolName && /sant|kouchner|esbk/i.test(user.schoolName));
   const schoolDisplayName = school?.name || user?.schoolName || (isHealth ? 'École de Santé Bernard Kouchner (ESBK)' : 'CFP-PAS de Gao');
-  const territoryDisplay = isHealth
-    ? (school?.city ? `${school.city} (District de Bamako)` : 'Bamako (District de Bamako)')
-    : (school?.city ? `${school.city} (Région VII)` : 'Gao (Région VII)');
-  const roleDisplay = user?.role === 'SUPER_ADMIN' ? 'Superviseur National' : (isHealth ? 'Direction Établissement (Santé)' : 'Direction École');
 
   // Recouvrement
   const recouvrementRate = stats.invoicesTotal > 0
@@ -143,237 +127,62 @@ export default function DashboardPage() {
     : 85;
   const resteARecouvrer = Math.max(0, stats.invoicesTotal - stats.invoicesPaid);
 
-  // Tuiles Numériques SAP Fiori Horizon (Adaptatives selon Santé vs Agro)
-  const fioriTiles = isHealth ? [
-    {
-      category: 'Scolarité • Étudiants en Santé',
-      title: 'Étudiants Inscrits (IDE & SF)',
-      value: stats.studentsCount > 0 ? stats.studentsCount : 110,
-      unit: 'inscrits',
-      trend: 'Promotions IDE, SF, TLB',
-      trendPositive: true,
-      subtext: '4 promotions paramédicales actives',
-      href: '/students',
-      icon: GraduationCap,
-      accentColor: '#1d4ed8',
-      gradient: 'from-blue-600 to-indigo-600',
-      iconGradient: 'from-blue-500 to-indigo-600',
-      progress: 90,
-      statusLabel: 'Conforme MSHP',
-      statusType: 'success' as const,
-    },
-    {
-      category: 'Recouvrement & Frais de Stage',
-      title: 'Taux d\'Encaissement',
-      value: `${recouvrementRate}%`,
-      unit: `${(stats.invoicesPaid / 1000000).toFixed(1)}M FCFA`,
-      trend: 'Scolarités & Blouses',
-      trendPositive: true,
-      subtext: 'Paiement échelonné actif',
-      href: '/invoices',
-      icon: BadgePercent,
-      accentColor: '#059669',
-      gradient: 'from-emerald-600 to-teal-600',
-      iconGradient: 'from-emerald-500 to-teal-600',
-      progress: recouvrementRate,
-      statusLabel: 'Objectif Atteint',
-      statusType: 'success' as const,
-    },
-    {
-      category: 'Assiduité & Gardes Médicales',
-      title: 'Présence Cours & Hôpital',
-      value: '96.4%',
-      unit: 'taux du jour',
-      trend: 'Émargement stages & cours',
-      trendPositive: true,
-      subtext: 'Centres hospitaliers (CHU, CSRéf)',
-      href: '/attendance',
-      icon: CalendarCheck2,
-      accentColor: '#0284c7',
-      gradient: 'from-cyan-600 to-blue-600',
-      iconGradient: 'from-cyan-500 to-sky-600',
-      progress: 96,
-      statusLabel: 'Assiduité Haute',
-      statusType: 'info' as const,
-    },
-    {
-      category: 'Corps Médical & Enseignants',
-      title: 'Médecins & Formateurs',
-      value: stats.employeesCount > 0 ? stats.employeesCount : 18,
-      unit: 'praticiens & formateurs',
-      trend: 'Médecins conventionnés',
-      trendPositive: true,
-      subtext: 'Superviseurs de stage clinique',
-      href: '/employees',
-      icon: Briefcase,
-      accentColor: '#7c3aed',
-      gradient: 'from-violet-600 to-purple-600',
-      iconGradient: 'from-violet-500 to-purple-600',
-      progress: 85,
-      statusLabel: 'Corps Complet',
-      statusType: 'warning' as const,
-    },
-    {
-      category: 'Programme & Modules de Santé',
-      title: 'Unités d\'Enseignement (UE)',
-      value: stats.subjectsCount > 0 ? stats.subjectsCount : 14,
-      unit: 'modules agréés',
-      trend: 'Barème /20 • Note élim. <10',
-      trendPositive: true,
-      subtext: 'Conforme cursus national MSHP',
-      href: '/classrooms',
-      icon: Layers,
-      accentColor: '#d97706',
-      gradient: 'from-amber-500 to-orange-600',
-      iconGradient: 'from-amber-500 to-yellow-600',
-      progress: 100,
-      statusLabel: 'Agréé MSHP',
-      statusType: 'neutral' as const,
-    },
-  ] : [
-    {
-      category: 'Scolarité • Effectifs',
-      title: 'Apprenants Inscrits',
-      value: stats.studentsCount || 131,
-      unit: 'inscrits',
-      trend: '+12% vs N-1',
-      trendPositive: true,
-      subtext: '3 filières actives (TE, EA1, EA2)',
-      href: '/students',
-      icon: GraduationCap,
-      accentColor: '#1d4ed8',
-      gradient: 'from-blue-600 to-indigo-600',
-      iconGradient: 'from-blue-500 to-indigo-600',
-      progress: 88,
-      statusLabel: 'Conforme',
-      statusType: 'success' as const,
-    },
-    {
-      category: 'Recouvrement & Primes',
-      title: 'Taux d\'Encaissement',
-      value: `${recouvrementRate}%`,
-      unit: `${(stats.invoicesPaid / 1000000).toFixed(1)}M FCFA`,
-      trend: `${(resteARecouvrer / 1000).toLocaleString('fr-FR')} k F restants`,
-      trendPositive: recouvrementRate >= 80,
-      subtext: '12 dossiers d\'impayés à relancer',
-      href: '/invoices',
-      icon: BadgePercent,
-      accentColor: '#059669',
-      gradient: 'from-emerald-600 to-teal-600',
-      iconGradient: 'from-emerald-500 to-teal-600',
-      progress: recouvrementRate,
-      statusLabel: recouvrementRate >= 80 ? 'Objectif Atteint' : 'Sous Vigilance',
-      statusType: recouvrementRate >= 80 ? 'success' as const : 'warning' as const,
-    },
-    {
-      category: 'Assiduité & Registre',
-      title: 'Présence Quotidienne',
-      value: '94.2%',
-      unit: 'taux du jour',
-      trend: '+2.1% cette semaine',
-      trendPositive: true,
-      subtext: '4 absences non justifiées à Gao',
-      href: '/attendance',
-      icon: CalendarCheck2,
-      accentColor: '#0284c7',
-      gradient: 'from-cyan-600 to-blue-600',
-      iconGradient: 'from-cyan-500 to-sky-600',
-      progress: 94,
-      statusLabel: 'Régulier',
-      statusType: 'info' as const,
-    },
-    {
-      category: 'Personnel & Vacations',
-      title: 'Corps Formateurs',
-      value: stats.employeesCount || 21,
-      unit: 'vacataires & perm.',
-      trend: '1 750 FCFA/h conv.',
-      trendPositive: true,
-      subtext: `${stats.pendingLeaves || 3} demandes de congé à valider`,
-      href: '/employees',
-      icon: Briefcase,
-      accentColor: '#7c3aed',
-      gradient: 'from-violet-600 to-purple-600',
-      iconGradient: 'from-violet-500 to-purple-600',
-      progress: 75,
-      statusLabel: '3 En Attente',
-      statusType: 'warning' as const,
-    },
-    {
-      category: 'Ingénierie Pédagogique',
-      title: 'Référentiel APC',
-      value: stats.subjectsCount || 116,
-      unit: 'modules agréés',
-      trend: '81 créneaux / sem.',
-      trendPositive: true,
-      subtext: 'Grille horaire 100% planifiée',
-      href: '/classrooms',
-      icon: Layers,
-      accentColor: '#d97706',
-      gradient: 'from-amber-500 to-orange-600',
-      iconGradient: 'from-amber-500 to-yellow-600',
-      progress: 100,
-      statusLabel: 'Planifié',
-      statusType: 'neutral' as const,
-    },
-  ];
-
-  // Dossiers d'arbitrage institutionnel adaptatifs (Santé vs Agro)
+  // Dossiers d'arbitrage (Adaptatifs selon Santé vs Général/Agro)
   const healthDossiersList: DossierItem[] = [
     {
       id: 'd1',
-      refCode: 'DOS-STG-2026-012',
+      refCode: 'DOS-STG-012',
       category: 'PEDAGOGY',
-      title: 'Validation des Mises en Situation Clinique (MSP)',
-      concerned: 'Promotion IDE 1 • Stages CHU Point G & Gabriel Touré',
+      title: 'Validation des carnets de stage clinique (MSP)',
+      concerned: 'Promotion IDE 1 • Hôpital Point G & Gabriel Touré',
       dueDate: 'Échéance dans 48h',
       impact: '38 carnets cliniques',
       status: 'CRITICAL',
-      statusLabel: 'Visa Clinique Requis',
+      statusLabel: 'Visa Requis',
       href: '/attendance',
-      actionText: 'Valider les Stages',
-      icon: Activity,
+      actionText: 'Valider',
+      icon: UserCheck,
     },
     {
       id: 'd2',
-      refCode: 'DOS-FAC-MED-044',
+      refCode: 'DOS-FAC-044',
       category: 'FINANCE',
-      title: 'Échéance Blouses & Matériel de Soins',
+      title: 'Échéances de scolarité & matériel de soins',
       concerned: '14 étudiantes • Filière Sages-Femmes (SF)',
       dueDate: 'Échu depuis 3 jours',
       impact: '1 250 000 FCFA',
       status: 'PENDING',
-      statusLabel: 'Frais en Attente',
+      statusLabel: 'En attente',
       href: '/invoices',
-      actionText: 'Émettre Relances',
-      icon: AlertOctagon,
+      actionText: 'Relancer',
+      icon: Receipt,
     },
     {
       id: 'd3',
-      refCode: 'DOS-RH-MED-009',
+      refCode: 'DOS-RH-009',
       category: 'RH',
-      title: 'Autorisation d\'Absence pour Garde Médicale',
-      concerned: 'Dr. Coulibaly — Médecin Enseignant',
+      title: 'Demande d\'absence pour garde médicale',
+      concerned: 'Dr. Coulibaly — Médecin Formateur',
       dueDate: 'Période : 25 au 27 Oct.',
       impact: 'Garde Hôpital de Kati',
       status: 'PENDING',
-      statusLabel: 'À Arbitrer',
+      statusLabel: 'À arbitrer',
       href: '/hr/leaves',
-      actionText: 'Arbitrer Demande',
-      icon: Clock4,
+      actionText: 'Examiner',
+      icon: Clock,
     },
     {
       id: 'd4',
-      refCode: 'DOS-EXAM-S1-2026',
+      refCode: 'DOS-EXAM-S1',
       category: 'ACADEMIC',
-      title: 'Clôture des Notes de Partiels Semestre 1',
+      title: 'Clôture des notes de partiels du Semestre 1',
       concerned: 'Filière Laboratoire & Biologie Médicale',
-      dueDate: 'Validation Délibération',
-      impact: 'Barème /20 • Éliminatoire <10',
+      dueDate: 'Délibération imminente',
+      impact: 'Barème /20 • Note éliminatoire <10',
       status: 'READY',
-      statusLabel: 'Prêt Délibération',
+      statusLabel: 'Prêt',
       href: '/grades',
-      actionText: 'Valider Notes',
+      actionText: 'Vérifier',
       icon: FileCheck2,
     },
   ];
@@ -381,59 +190,59 @@ export default function DashboardPage() {
   const agroDossiersList: DossierItem[] = [
     {
       id: 'd1',
-      refCode: 'DOS-FAC-2026-042',
+      refCode: 'DOS-FAC-042',
       category: 'FINANCE',
-      title: 'Échéance de Scolarité Non Soldée',
+      title: 'Échéance de scolarité 1er trimestre non soldée',
       concerned: '12 apprenants • 1ère Année TE',
       dueDate: 'Échu depuis 5 jours',
       impact: '900 000 FCFA',
       status: 'CRITICAL',
-      statusLabel: 'Impayé / À relancer',
+      statusLabel: 'Impayé',
       href: '/invoices',
-      actionText: 'Émettre Relances',
-      icon: AlertOctagon,
+      actionText: 'Relancer',
+      icon: Receipt,
     },
     {
       id: 'd2',
-      refCode: 'DOS-RH-CONG-003',
+      refCode: 'DOS-RH-003',
       category: 'RH',
-      title: 'Demande d\'Autorisation d\'Absence',
+      title: 'Demande d\'autorisation d\'absence formateur',
       concerned: 'M. Diallo — Formateur Électromécanique',
       dueDate: 'Période : 24 au 27 Oct.',
       impact: '3 jours ouvrés',
       status: 'PENDING',
       statusLabel: 'À valider',
       href: '/hr/leaves',
-      actionText: 'Arbitrer la demande',
-      icon: Clock4,
+      actionText: 'Valider',
+      icon: Clock,
     },
     {
       id: 'd3',
-      refCode: 'DOS-PED-BUL-T1',
+      refCode: 'DOS-PED-T1',
       category: 'ACADEMIC',
-      title: 'Validation des Bulletins 1er Trimestre',
+      title: 'Validation des bulletins du 1er Trimestre',
       concerned: 'Filière Élevage Agro-pastoral (2ème EA)',
       dueDate: 'Clôture dans 48h',
       impact: '42 bulletins prêts',
       status: 'READY',
-      statusLabel: 'Prêt pour Signature',
+      statusLabel: 'Prêt signature',
       href: '/reports/bulletins',
-      actionText: 'Valider & Signer',
+      actionText: 'Signer',
       icon: FileCheck2,
     },
     {
       id: 'd4',
-      refCode: 'DOS-PAY-NOV-2025',
+      refCode: 'DOS-PAY-NOV',
       category: 'RH',
-      title: 'Clôture de la Pré-Paie Formateurs',
+      title: 'Clôture de la pré-paie des formateurs vacataires',
       concerned: '21 vacataires • CFP-PAS de Gao',
-      dueDate: 'Échéance 30 du mois',
+      dueDate: 'Échéance fin de mois',
       impact: '2 850 000 FCFA estimé',
       status: 'PENDING',
-      statusLabel: 'En Contrôle',
+      statusLabel: 'En contrôle',
       href: '/payslips',
-      actionText: 'Vérifier Émargements',
-      icon: ReceiptText,
+      actionText: 'Contrôler',
+      icon: Briefcase,
     },
   ];
 
@@ -446,391 +255,225 @@ export default function DashboardPage() {
     return true;
   });
 
-  // Services Métiers Fiori (Actions Directes de Traitement)
-  const fioriServices = [
-    {
-      id: 'enroll',
-      title: 'Nouvelle Admission',
-      desc: 'Enregistrement de dossier apprenant & pièces',
-      code: 'ADM-01',
-      href: '/students/enroll',
-      icon: UserPlus,
-      color: '#0070F2',
-    },
-    {
-      id: 'payments',
-      title: 'Encaissement Guichet',
-      desc: 'Émission de quittance & lettrage comptable',
-      code: 'ENC-02',
-      href: '/finance/payments',
-      icon: CreditCard,
-      color: '#107E3E',
-    },
-    {
-      id: 'attendance',
-      title: 'Registre d\'Appel',
-      desc: 'Contrôle des présences & retards par classe',
-      code: 'APP-03',
-      href: '/attendance',
-      icon: CalendarCheck2,
-      color: '#0284c7',
-    },
-    {
-      id: 'grades',
-      title: 'Saisie des Évaluations',
-      desc: 'Notes semestrielles & compétences APC',
-      code: 'NOT-04',
-      href: '/grades',
-      icon: FileSpreadsheet,
-      color: '#5c35cc',
-    },
-    {
-      id: 'bulletins',
-      title: 'Bulletins & Certificats',
-      desc: 'Génération certifiée & relevés officiels',
-      code: 'DOC-05',
-      href: '/reports/bulletins',
-      icon: FileCheck2,
-      color: '#b00',
-    },
-    {
-      id: 'expenses',
-      title: 'Ordres de Dépense',
-      desc: 'Décaissements, pièces justificatives & caisse',
-      code: 'DEP-06',
-      href: '/expenses',
-      icon: ReceiptText,
-      color: '#c55305',
-    },
-  ];
+  const currentDateFormatted = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
 
   return (
     <AppLayout
+      title="Tableau de bord"
+      subtitle={`${greeting}${user?.firstName ? `, ${user.firstName}` : ''} • ${schoolDisplayName} — ${currentDateFormatted}`}
       actions={
-        <div className="flex items-center gap-2 font-['72',var(--font-fiori),sans-serif]">
-          {/* Badge Système Opérationnel */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-800 dark:text-emerald-400 text-xs font-bold">
-            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-            <span>SAP Service Layer Actif</span>
-          </div>
-
-          {/* Horodatage officiel */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 text-xs font-semibold">
-            <Calendar size={13} strokeWidth={1.75} className="text-[#0070F2] dark:text-blue-400" />
-            <span>{new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => router.push('/finance/payments')}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer"
+          >
+            <Wallet size={14} className="text-slate-500" />
+            <span>Encaisser</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push('/students/enroll')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+          >
+            <Plus size={14} strokeWidth={2.5} />
+            <span>Nouvel élève</span>
+          </button>
         </div>
       }
     >
-      <motion.div
-        className="flex flex-col gap-6 font-['72',var(--font-fiori),sans-serif]"
-        initial="hidden"
-        animate="visible"
-        variants={stagger}
-      >
+      <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
 
-        {/* ── 1. CONTEXT BANNER INSTITUTIONNEL & ÉTAT (Deep Sapphire & Gold Prestige) ── */}
-        <motion.section
-          variants={fadeUp}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-[#0A2558] to-[#123668] text-white p-5 sm:p-6 shadow-xl shadow-blue-950/20 border border-blue-900/40"
-        >
-          {/* Liseré Tricolore National de la République du Mali */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#14B866] via-[#FCD116] to-[#CE1126]" />
-
-          {/* Sphères d'ambiance lumineuse discrète */}
-          <div className="pointer-events-none absolute -right-8 -bottom-12 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl" />
-          <div className="pointer-events-none absolute right-48 -top-12 w-48 h-48 rounded-full bg-amber-500/10 blur-2xl" />
-
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-            <div className="flex items-start sm:items-center gap-4">
-              <div className="w-13 h-13 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 text-slate-950 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30">
-                <Landmark size={26} strokeWidth={2.2} />
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                  <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                    {schoolDisplayName}
-                  </h1>
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase tracking-wider">
-                    Exercice 2025 - 2026
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1">
-                    <CheckCircle2 size={12} strokeWidth={2.5} />
-                    {isHealth ? 'Agrément MSHP N°2024-087 • Santé Publique' : 'Référentiel APC Homologué'}
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm text-blue-100/80 font-medium">
-                  {greeting}{user?.firstName ? `, ${user.firstName}` : ''} • {isHealth ? 'Plateforme de Formation Paramédicale & de Gestion des Soins' : "Plateforme Nationale de Gestion & de Pilotage de l'Établissement"}
-                </p>
+        {/* ── 1. METRICS ESSENTIELLES (4 CARTES PROPRES & CALMES) ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Carte 1: Effectif */}
+          <div
+            onClick={() => router.push('/students')}
+            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4.5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {isHealth ? 'Étudiants en Santé' : 'Élèves inscrits'}
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <GraduationCap size={18} strokeWidth={2} />
               </div>
             </div>
-
-            {/* Context Data Points en Verre Dépoli */}
-            <div className="grid grid-cols-3 gap-2.5 sm:gap-3 text-xs">
-              <div className="flex flex-col px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200/70">Territoire</span>
-                <span className="font-bold text-white text-xs mt-0.5 truncate">{territoryDisplay}</span>
+            <div>
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
+                {isLoading ? '...' : (stats.studentsCount || 131)}
               </div>
-              <div className="flex flex-col px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200/70">Rôle Opérateur</span>
-                <span className="font-bold text-amber-300 text-xs mt-0.5 truncate">
-                  {roleDisplay}
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span>{isHealth ? 'Promotions IDE, SF, TLB' : '3 filières actives'}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">+12% vs N-1</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Carte 2: Présences du jour */}
+          <div
+            onClick={() => router.push('/attendance')}
+            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4.5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Présence aujourd'hui
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <UserCheck size={18} strokeWidth={2} />
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
+                94.2%
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span>Appel effectué</span>
+                <span className="text-amber-600 dark:text-amber-400 font-medium">4 absents à justifier</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Carte 3: Recouvrement */}
+          <div
+            onClick={() => router.push('/invoices')}
+            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4.5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Recouvrement scolarités
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <Receipt size={18} strokeWidth={2} />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
+                  {recouvrementRate}%
+                </span>
+                <span className="text-xs font-medium text-slate-500 tabular-nums">
+                  {(stats.invoicesPaid / 1000000).toFixed(1)}M / {(stats.invoicesTotal / 1000000).toFixed(1)}M
                 </span>
               </div>
-              <div className="flex flex-col px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200/70">Caisse & Trésor</span>
-                <span className="font-bold text-emerald-300 text-xs mt-0.5 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Équilibré
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span>Reste à recouvrer</span>
+                <span className="text-slate-700 dark:text-slate-300 font-semibold tabular-nums">
+                  {(resteARecouvrer / 1000).toLocaleString('fr-FR')} k FCFA
                 </span>
               </div>
             </div>
           </div>
-        </motion.section>
 
-        {/* ── 1b. ACTIONS COURANTES (6 Cartes Colorées Dynamiques & Intuitives) ── */}
-        <motion.section variants={fadeUp} aria-labelledby="quick-actions-title">
-          <div className="flex items-center justify-between mb-3.5">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-5 rounded-full bg-gradient-to-b from-blue-600 to-indigo-600" />
-              <h2 id="quick-actions-title" className="text-base font-extrabold text-slate-900 dark:text-white">
-                Que voulez-vous faire ?
-              </h2>
+          {/* Carte 4: Formateurs & Enseignants */}
+          <div
+            onClick={() => router.push('/employees')}
+            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4.5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {isHealth ? 'Médecins & Formateurs' : 'Personnel & Formateurs'}
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0">
+                <Briefcase size={18} strokeWidth={2} />
+              </div>
             </div>
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Accès direct aux opérations courantes</span>
+            <div>
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
+                {isLoading ? '...' : (stats.employeesCount || 21)}
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span>81 créneaux / semaine</span>
+                <span className="text-slate-600 dark:text-slate-400 font-medium">Actifs</span>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-3.5">
+        </div>
+
+        {/* ── 3. RACCOURCIS RAPIDES OPÉRATIONNELS (Clean, Compact, Utile) ── */}
+        <div>
+          <div className="flex items-center justify-between mb-2.5">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Opérations fréquentes
+            </h2>
+            <span className="text-xs text-slate-400">Accès direct</span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
-              {
-                label: 'Inscrire un élève',
-                hint: 'Nouvelle admission',
-                href: '/students/enroll',
-                icon: UserPlus,
-                accent: '#2563eb',
-                bgGradient: 'from-blue-600 to-indigo-600',
-                glow: 'hover:shadow-blue-500/20 hover:border-blue-400',
-                softBg: 'group-hover:bg-blue-50/50 dark:group-hover:bg-blue-950/20',
-              },
-              {
-                label: 'Encaisser paiement',
-                hint: 'Scolarité & reçus',
-                href: '/finance/payments',
-                icon: Wallet,
-                accent: '#059669',
-                bgGradient: 'from-emerald-600 to-teal-600',
-                glow: 'hover:shadow-emerald-500/20 hover:border-emerald-400',
-                softBg: 'group-hover:bg-emerald-50/50 dark:group-hover:bg-emerald-950/20',
-              },
-              {
-                label: 'Faire l\'appel',
-                hint: 'Présences du jour',
-                href: '/attendance',
-                icon: CalendarCheck2,
-                accent: '#0284c7',
-                bgGradient: 'from-cyan-600 to-sky-600',
-                glow: 'hover:shadow-cyan-500/20 hover:border-cyan-400',
-                softBg: 'group-hover:bg-cyan-50/50 dark:group-hover:bg-cyan-950/20',
-              },
-              {
-                label: 'Saisir les notes',
-                hint: 'Évaluations APC',
-                href: '/grades',
-                icon: FileSpreadsheet,
-                accent: '#ea580c',
-                bgGradient: 'from-amber-500 to-orange-600',
-                glow: 'hover:shadow-orange-500/20 hover:border-orange-400',
-                softBg: 'group-hover:bg-amber-50/50 dark:group-hover:bg-amber-950/20',
-              },
-              {
-                label: 'Imprimer bulletin',
-                hint: 'Bulletins & certificats',
-                href: '/reports/bulletins',
-                icon: FileCheck2,
-                accent: '#7c3aed',
-                bgGradient: 'from-purple-600 to-violet-700',
-                glow: 'hover:shadow-purple-500/20 hover:border-purple-400',
-                softBg: 'group-hover:bg-purple-50/50 dark:group-hover:bg-purple-950/20',
-              },
-              {
-                label: 'Emploi du temps',
-                hint: 'Planning des salles',
-                href: '/timetable',
-                icon: Calendar,
-                accent: '#e11d48',
-                bgGradient: 'from-rose-500 to-pink-600',
-                glow: 'hover:shadow-rose-500/20 hover:border-rose-400',
-                softBg: 'group-hover:bg-rose-50/50 dark:group-hover:bg-rose-950/20',
-              },
-            ].map((a) => {
-              const QIcon = a.icon;
+              { label: 'Inscrire un élève', hint: 'Admission & dossier', href: '/students/enroll', icon: GraduationCap },
+              { label: 'Encaisser reçu', hint: 'Paiement scolarité', href: '/finance/payments', icon: CreditCard },
+              { label: 'Faire l\'appel', hint: 'Présences du jour', href: '/attendance', icon: UserCheck },
+              { label: 'Saisir les notes', hint: 'Évaluations semestrielles', href: '/grades', icon: FileSpreadsheet },
+              { label: 'Emploi du temps', hint: 'Planning & salles', href: '/timetable', icon: Calendar },
+              { label: 'Imprimer bulletins', hint: 'Relevés officiels', href: '/reports/bulletins', icon: FileCheck2 },
+            ].map((action) => {
+              const ActionIcon = action.icon;
               return (
                 <button
-                  key={a.href}
-                  id={`quick-action-${a.href.replace(/\W+/g, '-')}`}
-                  onClick={() => router.push(a.href)}
-                  className={`group relative text-left bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${a.glow} ${a.softBg} focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer overflow-hidden flex flex-col justify-between`}
-                  style={{ borderTop: `3.5px solid ${a.accent}` }}
+                  key={action.href}
+                  type="button"
+                  onClick={() => router.push(action.href)}
+                  className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-3 text-left hover:border-blue-500 dark:hover:border-blue-500 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors shadow-2xs group cursor-pointer flex flex-col justify-between"
                 >
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span
-                        className={`w-11 h-11 rounded-xl flex items-center justify-center text-white bg-gradient-to-br ${a.bgGradient} shadow-md shadow-black/10 group-hover:scale-105 transition-transform duration-200`}
-                      >
-                        <QIcon size={22} strokeWidth={2} />
-                      </span>
-                      <ArrowRight
-                        size={15}
-                        strokeWidth={2.2}
-                        className="text-slate-300 dark:text-slate-600 group-hover:text-slate-700 dark:group-hover:text-slate-200 group-hover:translate-x-1 transition-all"
-                      />
-                    </div>
-                    <span className="block text-sm font-extrabold text-slate-900 dark:text-white leading-snug">
-                      {a.label}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="w-8 h-8 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/50 transition-colors">
+                      <ActionIcon size={16} strokeWidth={2} />
                     </span>
-                    <span className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
-                      {a.hint}
+                    <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold text-slate-900 dark:text-white leading-snug">
+                      {action.label}
+                    </span>
+                    <span className="block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                      {action.hint}
                     </span>
                   </div>
                 </button>
               );
             })}
           </div>
-        </motion.section>
+        </div>
 
-        {/* ── 2. CHIFFRES CLÉS ENRICHIS (KPI Launchpad Tiles avec Barres Visuelles) ── */}
-        <motion.section variants={fadeUp} aria-labelledby="fiori-tiles-title">
-          <div className="flex items-center justify-between mb-3.5">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-5 rounded-full bg-gradient-to-b from-emerald-600 to-teal-600" />
-              <h2 id="fiori-tiles-title" className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Chiffres clés & Performances de l'école
-              </h2>
-            </div>
-            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Synchronisation direct État
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
-            {fioriTiles.map((tile, i) => {
-              const Icon = tile.icon;
-              return (
-                <motion.div
-                  key={i}
-                  whileHover={{ y: -3 }}
-                  transition={{ duration: 0.15 }}
-                  onClick={() => router.push(tile.href)}
-                  className="group relative cursor-pointer rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4.5 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between overflow-hidden"
-                  style={{ borderTop: `4px solid ${tile.accentColor}` }}
-                >
-                  <div>
-                    {/* Header: Catégorie + Icône en Dégradé Vibrant */}
-                    <div className="flex items-center justify-between gap-2 mb-2.5">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">
-                        {tile.category}
-                      </span>
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-white bg-gradient-to-br ${tile.iconGradient} shadow-sm group-hover:scale-110 transition-transform`}
-                      >
-                        <Icon size={17} strokeWidth={2} />
-                      </div>
-                    </div>
-
-                    {/* Intitulé Métier */}
-                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                      {tile.title}
-                    </h3>
-
-                    {/* Valeur Chiffrée Géante (Tabular Nums) */}
-                    <div className="flex items-baseline gap-2 mb-2.5">
-                      <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
-                        {isLoading ? (
-                          <span className="inline-block h-7 w-16 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
-                        ) : (
-                          tile.value
-                        )}
-                      </span>
-                      <span className="text-[11px] font-semibold text-slate-400 truncate">
-                        {tile.unit}
-                      </span>
-                    </div>
-
-                    {/* Mini-jauge de progression visuelle */}
-                    <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden mb-3">
-                      <div
-                        className={`h-full rounded-full bg-gradient-to-r ${tile.gradient} transition-all duration-500`}
-                        style={{ width: `${Math.min(100, tile.progress)}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Footer de la tuile : Tendance & Badge sémantique */}
-                  <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
-                    <span
-                      className={`font-extrabold tabular-nums flex items-center gap-0.5 ${
-                        tile.trendPositive
-                          ? 'text-emerald-600 dark:text-emerald-400'
-                          : 'text-amber-600 dark:text-amber-400'
-                      }`}
-                    >
-                      {tile.trend}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wide ${
-                        tile.statusType === 'success'
-                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                          : tile.statusType === 'warning'
-                          ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
-                          : tile.statusType === 'info'
-                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
-                          : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                      }`}
-                    >
-                      {tile.statusLabel}
-                    </span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.section>
-
-        {/* ── 3. WORKLIST TYPE ASSURANCE & ANALYTICS ── */}
+        {/* ── 4. GRILLE PRINCIPALE (2 TIERS GAUCHE / 1 TIERS DROITE) ── */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-          {/* COLONNE GAUCHE (2 tiers) : WORKLIST "DOSSIERS EN ARBITRAGE" */}
-          <motion.div variants={fadeUp} className="xl:col-span-2 flex flex-col gap-5">
-            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden">
-              
-              {/* Header de la Worklist Fiori */}
-              <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-slate-50/70 via-blue-50/30 to-transparent dark:from-slate-850 dark:to-transparent">
+          {/* COLONNE GAUCHE (2 Tiers) : TABLEAU DES DOSSIERS & GRAPHIQUE FINANCIER */}
+          <div className="xl:col-span-2 flex flex-col gap-6">
+            
+            {/* Tableau des Dossiers Prioritaires */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+              <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm">
-                      <FolderCheck size={18} strokeWidth={2} />
-                    </div>
-                    <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                       Dossiers prioritaires à traiter
                     </h2>
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
-                      {dossiersList.length} actifs
+                    <span className="px-2 py-0.2 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      {dossiersList.length}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 pl-10.5">
-                    Régularisations financières, approbations RH et visas de bulletins
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Régularisations financières, assiduité et validations en attente
                   </p>
                 </div>
 
-                {/* Filtres d'état (Fiori Segmented Buttons) */}
-                <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-slate-800 p-1 rounded-xl text-xs self-start sm:self-auto font-bold border border-slate-200/70 dark:border-slate-700/60">
+                {/* Filtres simples */}
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-xs self-start sm:self-auto font-medium">
                   <button
                     type="button"
                     onClick={() => setActiveTab('all')}
-                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
                       activeTab === 'all'
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs font-semibold'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                     }`}
                   >
@@ -839,315 +482,302 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('critical')}
-                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
                       activeTab === 'critical'
-                        ? 'bg-rose-600 text-white shadow-sm shadow-rose-500/20'
-                        : 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
+                        ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                     }`}
                   >
-                    Critiques (1)
+                    Urgents
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('pending')}
-                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
                       activeTab === 'pending'
-                        ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
-                        : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'
+                        ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                     }`}
                   >
-                    En Attente (2)
+                    En attente
                   </button>
                 </div>
               </div>
 
-              {/* Tableau épuré des Dossiers (High Density Table) */}
+              {/* Tableau lisible et dense */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-slate-50/90 dark:bg-slate-800/50 border-b border-slate-200/70 dark:border-slate-800 text-[11px] font-black text-slate-500 uppercase tracking-wider">
-                      <th className="py-3.5 px-4">N° dossier</th>
-                      <th className="py-3.5 px-4">Ce qu'il faut faire</th>
-                      <th className="py-3.5 px-4">Personne concernée</th>
-                      <th className="py-3.5 px-4">Montant / Volume</th>
-                      <th className="py-3.5 px-4">État</th>
-                      <th className="py-3.5 px-4 text-right">Action directe</th>
+                    <tr className="bg-slate-50/75 dark:bg-slate-800/40 border-b border-slate-200/70 dark:border-slate-800 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      <th className="py-3 px-4">Réf.</th>
+                      <th className="py-3 px-4">Objet</th>
+                      <th className="py-3 px-4">Personne / Promotion</th>
+                      <th className="py-3 px-4">Montant / Volume</th>
+                      <th className="py-3 px-4">Statut</th>
+                      <th className="py-3 px-4 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                    {filteredDossiers.map((item) => {
-                      const ItemIcon = item.icon;
-                      return (
-                        <tr
-                          key={item.id}
-                          className="hover:bg-blue-50/30 dark:hover:bg-slate-800/40 transition-colors"
-                        >
-                          {/* Réf Dossier */}
-                          <td className="py-3.5 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">
-                            <div className="flex items-center gap-1.5">
-                              <ItemIcon size={14} strokeWidth={2} className="text-blue-600 dark:text-blue-400" />
-                              <span>{item.refCode}</span>
-                            </div>
-                          </td>
-
-                          {/* Objet & Nature */}
-                          <td className="py-3.5 px-4">
-                            <div className="font-extrabold text-slate-900 dark:text-white">
-                              {item.title}
-                            </div>
-                            <div className="text-[11px] font-semibold text-slate-400 mt-0.5">
-                              {item.dueDate}
-                            </div>
-                          </td>
-
-                          {/* Tiers / Concerné */}
-                          <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-medium">
-                            {item.concerned}
-                          </td>
-
-                          {/* Impact / Montant */}
-                          <td className="py-3.5 px-4 font-black text-slate-900 dark:text-white tabular-nums">
-                            {item.impact}
-                          </td>
-
-                          {/* Statut Fiori */}
-                          <td className="py-3.5 px-4">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredDossiers.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
+                      >
+                        <td className="py-3 px-4 font-mono text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                          {item.refCode}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-slate-900 dark:text-white">
+                            {item.title}
+                          </div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">
+                            {item.dueDate}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
+                          {item.concerned}
+                        </td>
+                        <td className="py-3 px-4 font-medium text-slate-900 dark:text-white tabular-nums">
+                          {item.impact}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              item.status === 'CRITICAL'
+                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200/60 dark:border-rose-900'
+                                : item.status === 'PENDING'
+                                ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900'
+                                : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-900'
+                            }`}
+                          >
                             <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wide ${
+                              className={`w-1.5 h-1.5 rounded-full ${
                                 item.status === 'CRITICAL'
-                                  ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                                  ? 'bg-rose-500'
                                   : item.status === 'PENDING'
-                                  ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
-                                  : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                                  ? 'bg-amber-500'
+                                  : 'bg-emerald-500'
                               }`}
-                            >
-                              <span
-                                className={`w-2 h-2 rounded-full ${
-                                  item.status === 'CRITICAL'
-                                    ? 'bg-rose-600 animate-ping'
-                                    : item.status === 'PENDING'
-                                    ? 'bg-amber-500'
-                                    : 'bg-emerald-500'
-                                }`}
-                              />
-                              {item.statusLabel}
-                            </span>
-                          </td>
-
-                          {/* Bouton d'action directe coloré */}
-                          <td className="py-3.5 px-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() => router.push(item.href)}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white font-extrabold text-xs transition-all shadow-sm cursor-pointer ${
-                                item.status === 'CRITICAL'
-                                  ? 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-rose-500/20 hover:shadow-md'
-                                  : item.status === 'PENDING'
-                                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-amber-500/20 hover:shadow-md'
-                                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20 hover:shadow-md'
-                              }`}
-                            >
-                              <span>{item.actionText}</span>
-                              <ChevronRight size={13} strokeWidth={2.5} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            />
+                            {item.statusLabel}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => router.push(item.href)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                          >
+                            <span>{item.actionText}</span>
+                            <ChevronRight size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
 
-              {/* Pied de tableau */}
-              <div className="p-3.5 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span>Régularisations prioritaires soumises au visa du chef d'établissement</span>
+              <div className="p-3 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>Dossiers nécessitant un arbitrage de la direction</span>
                 <button
                   type="button"
                   onClick={() => router.push('/invoices')}
-                  className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  className="font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  Ouvrir le registre complet des factures & impayés
-                  <ArrowRight size={13} strokeWidth={2.2} />
+                  Voir tous les dossiers
+                  <ArrowRight size={12} />
                 </button>
               </div>
             </div>
 
-            {/* ── 4. CATALOGUE DES SERVICES MÉTIERS (Action Tiles Colorées) ── */}
-            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-5 rounded-full bg-gradient-to-b from-emerald-600 to-teal-600" />
-                  <h2 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Tous les services & registres de l'école
-                  </h2>
+            {/* Graphique de Trésorerie */}
+            <FinanceChart isLoading={isLoading} />
+
+          </div>
+
+          {/* COLONNE DROITE (1 Tiers) : AUJOURD'HUI & FILIÈRES */}
+          <div className="flex flex-col gap-6">
+
+            {/* Widget 1: Aujourd'hui à l'établissement */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Planning du jour
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Activités & cours en cours</p>
                 </div>
-                <span className="text-xs font-semibold text-slate-400">Accès rapide</span>
+                <button
+                  type="button"
+                  onClick={() => router.push('/timetable')}
+                  className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                >
+                  Voir planning
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[
-                  { id: 'enroll', title: 'Nouvelle Admission', desc: 'Dossier apprenant & pièces', code: 'ADM-01', href: '/students/enroll', icon: UserPlus, gradient: 'from-blue-600 to-indigo-600', borderHover: 'hover:border-blue-400' },
-                  { id: 'payments', title: 'Encaissement Guichet', desc: 'Quittance & caisse', code: 'ENC-02', href: '/finance/payments', icon: CreditCard, gradient: 'from-emerald-600 to-teal-600', borderHover: 'hover:border-emerald-400' },
-                  { id: 'attendance', title: 'Registre d\'Appel', desc: 'Présences par filière', code: 'APP-03', href: '/attendance', icon: CalendarCheck2, gradient: 'from-cyan-600 to-sky-600', borderHover: 'hover:border-cyan-400' },
-                  { id: 'grades', title: 'Saisie Évaluations', desc: 'Notes semestrielles APC', code: 'NOT-04', href: '/grades', icon: FileSpreadsheet, gradient: 'from-amber-500 to-orange-600', borderHover: 'hover:border-orange-400' },
-                  { id: 'bulletins', title: 'Bulletins & Relevés', desc: 'Génération certifiée', code: 'DOC-05', href: '/reports/bulletins', icon: FileCheck2, gradient: 'from-purple-600 to-violet-700', borderHover: 'hover:border-purple-400' },
-                  { id: 'expenses', title: 'Ordres de Dépense', desc: 'Bons de décaissement', code: 'DEP-06', href: '/expenses', icon: ReceiptText, gradient: 'from-rose-500 to-pink-600', borderHover: 'hover:border-rose-400' },
-                ].map((srv) => {
-                  const SrvIcon = srv.icon;
-                  return (
-                    <motion.button
-                      key={srv.id}
-                      type="button"
-                      whileHover={{ y: -2 }}
-                      transition={{ duration: 0.15 }}
-                      onClick={() => router.push(srv.href)}
-                      className={`group flex flex-col justify-between p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 hover:bg-white dark:hover:bg-slate-800 ${srv.borderHover} hover:shadow-md text-left transition-all cursor-pointer`}
-                    >
-                      <div className="flex items-center justify-between mb-2.5">
-                        <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center text-white bg-gradient-to-br ${srv.gradient} shadow-sm group-hover:scale-105 transition-transform`}
-                        >
-                          <SrvIcon size={17} strokeWidth={2} />
-                        </div>
-                        <span className="font-mono text-[10px] font-black text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                          {srv.code}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="text-xs font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                          {srv.title}
-                        </div>
-                        <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
-                          {srv.desc}
-                        </div>
-                      </div>
-                    </motion.button>
-                  );
-                })}
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                  <div className="w-1.5 h-10 rounded-full bg-blue-600 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 dark:text-white truncate">
+                        {isHealth ? 'Soins Infirmiers Fondamentaux' : 'Électromécanique & Maintenance'}
+                      </span>
+                      <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
+                        08:00 - 10:00
+                      </span>
+                    </div>
+                    <div className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+                      {isHealth ? 'Salle 2 • Promotion IDE 1' : 'Atelier 1 • 1ère Année TE'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                  <div className="w-1.5 h-10 rounded-full bg-emerald-600 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 dark:text-white truncate">
+                        {isHealth ? 'Obstétrique & Santé Maternelle' : 'Agro-pastoral & Élevage'}
+                      </span>
+                      <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                        10:15 - 12:15
+                      </span>
+                    </div>
+                    <div className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+                      {isHealth ? 'Amphi B • Promotion SF 1' : 'Salle 4 • 2ème Année EA'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                  <div className="w-1.5 h-10 rounded-full bg-slate-400 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 dark:text-white truncate">
+                        {isHealth ? 'Biologie & Hématologie Clinique' : 'Gestion d\'Exploitation & Normes'}
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-500 tabular-nums">
+                        14:30 - 16:30
+                      </span>
+                    </div>
+                    <div className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+                      {isHealth ? 'Laboratoire • TLB 1' : 'Salle 1 • Filière EA'}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </motion.div>
 
-          {/* COLONNE DROITE (1 tiers) : SYNTHÈSE ANALYTIQUE & SÉCURITÉ INSTITUTIONNELLE */}
-          <motion.div variants={fadeUp} className="flex flex-col gap-5">
-
-            {/* Widget Recouvrement par Filière (Analytical Card aux Couleurs Vives) */}
-            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center font-bold">
-                    <TrendingUp size={18} strokeWidth={2.2} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                      Recouvrement par Filière
-                    </h3>
-                    <p className="text-[11px] text-slate-400">Progression des frais de scolarité</p>
-                  </div>
+            {/* Widget 2: Recouvrement par filière */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Recouvrement par filière
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Progression des paiements</p>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 tabular-nums">
-                  85% global
+                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                  {recouvrementRate}% global
                 </span>
               </div>
 
               <div className="space-y-4">
                 {(isHealth ? [
-                  { name: "1ère Année IDE (Infirmiers Diplômés d'État)", current: 38, total: 45, pct: 84, gradient: 'from-emerald-500 via-teal-400 to-emerald-400' },
-                  { name: "1ère Année SF (Sages-Femmes d'État)", current: 30, total: 35, pct: 86, gradient: 'from-blue-500 via-indigo-400 to-cyan-400' },
-                  { name: "Techniciens de Laboratoire & Biologie (TLB)", current: 24, total: 30, pct: 80, gradient: 'from-amber-500 via-orange-400 to-yellow-400' },
+                  { name: "Infirmiers Diplômés d'État (IDE)", current: 38, total: 45, pct: 84 },
+                  { name: "Sages-Femmes d'État (SF)", current: 30, total: 35, pct: 86 },
+                  { name: "Techniciens de Laboratoire (TLB)", current: 24, total: 30, pct: 80 },
                 ] : [
-                  { name: '1ère Année TE (Transformation)', current: 48, total: 52, pct: 92, gradient: 'from-emerald-500 via-teal-400 to-emerald-400' },
-                  { name: '1ère Année EA (Élevage & Agri)', current: 37, total: 44, pct: 84, gradient: 'from-blue-500 via-indigo-400 to-cyan-400' },
-                  { name: '2ème Année EA (Spécialisation)', current: 28, total: 35, pct: 79, gradient: 'from-amber-500 via-orange-400 to-yellow-400' },
+                  { name: 'Transformation Agro (TE 1)', current: 48, total: 52, pct: 92 },
+                  { name: 'Élevage & Agri (EA 1)', current: 37, total: 44, pct: 84 },
+                  { name: 'Spécialisation Élevage (EA 2)', current: 28, total: 35, pct: 79 },
                 ]).map((row, idx) => (
-                  <div key={idx} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-extrabold text-slate-800 dark:text-slate-200 truncate">
+                  <div key={idx} className="space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
                         {row.name}
                       </span>
-                      <span className="font-black text-slate-900 dark:text-white tabular-nums">
+                      <span className="font-bold text-slate-900 dark:text-white tabular-nums">
                         {row.pct}%
                       </span>
                     </div>
-                    <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <div
-                        className={`h-full rounded-full bg-gradient-to-r ${row.gradient}`}
+                        className="h-full rounded-full bg-blue-600 transition-all duration-300"
                         style={{ width: `${row.pct}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400 tabular-nums">
-                      <span>{row.current} apprenants en règle</span>
-                      <span className="text-amber-600 dark:text-amber-400">{row.total - row.current} relances en cours</span>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span>{row.current} soldés sur {row.total}</span>
+                      <span className="text-amber-600 dark:text-amber-400 font-medium">
+                        {row.total - row.current} relances
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-                <span className="text-slate-500 dark:text-slate-400 font-semibold">Recettes Encaissées</span>
-                <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+              <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                <span className="text-slate-500 dark:text-slate-400">Total encaissé</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                   12 500 000 FCFA
                 </span>
               </div>
             </div>
 
-            {/* Fiche d'Accréditation Institutionnelle (Sceau Souverain de l'État) */}
-            <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 text-white p-5 border border-blue-900/40 shadow-lg relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600" />
-              
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 text-slate-950 flex items-center justify-center font-black shrink-0 shadow-md shadow-amber-500/20">
-                  <Shield size={20} strokeWidth={2.2} />
-                </div>
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-amber-300">
-                    {isHealth ? 'Conformité Ministère de la Santé' : 'Conformité Institutionnelle'}
-                  </h3>
-                  <p className="text-[11px] text-blue-200/70">
-                    {isHealth ? 'Ministère de la Santé et du Développement Social • Mali' : "Ministère de l'Éducation Nationale • Mali"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <span className="text-blue-200/80">Statut Établissement</span>
-                  <span className="font-extrabold text-emerald-400 flex items-center gap-1.5">
-                    <CheckCircle2 size={13} strokeWidth={2.5} />
-                    {isHealth ? "Agréé MSHP & Diplômant d'État" : "Agréé & Conforme"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <span className="text-blue-200/80">Mode Pédagogique</span>
-                  <span className="font-extrabold text-amber-300">
-                    {isHealth ? 'Théorie (40%) + Stages Cliniques (60%)' : 'APC Modulaire'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <span className="text-blue-200/80">Corps Enseignant</span>
-                  <span className="font-extrabold text-white tabular-nums">
-                    {isHealth ? 'Praticiens Hospitaliers Conventionnés' : '1 750 FCFA / h'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <span className="text-blue-200/80">Règle de Notation</span>
-                  <span className="font-extrabold text-blue-300">
-                    {isHealth ? 'Barème /20 • Éliminatoire stage <10' : '100% Isolé Multi-Tenant'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-blue-200/60 font-semibold">
-                <span>{territoryDisplay}</span>
-                <span className="text-amber-400 font-mono">{isHealth ? 'Santé ERP v1.1.0' : 'ERP v1.1.0 Homologué'}</span>
+            {/* Widget 3: Synthèse & Modules d'administration */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                Modules de gestion
+              </h3>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => router.push('/classrooms')}
+                  className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors cursor-pointer"
+                >
+                  <Building2 size={16} className="text-slate-600 dark:text-slate-400 mb-1" />
+                  <span className="block font-semibold text-slate-900 dark:text-white">Classes & Salles</span>
+                  <span className="text-[10px] text-slate-400">{stats.classroomsCount} divisions</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push('/library')}
+                  className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors cursor-pointer"
+                >
+                  <BookOpen size={16} className="text-slate-600 dark:text-slate-400 mb-1" />
+                  <span className="block font-semibold text-slate-900 dark:text-white">Bibliothèque</span>
+                  <span className="text-[10px] text-slate-400">Ouvrages & prêts</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push('/payslips')}
+                  className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors cursor-pointer"
+                >
+                  <Receipt size={16} className="text-slate-600 dark:text-slate-400 mb-1" />
+                  <span className="block font-semibold text-slate-900 dark:text-white">Fiches de Paie</span>
+                  <span className="text-[10px] text-slate-400">Vacations & RH</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push('/inventory')}
+                  className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors cursor-pointer"
+                >
+                  <Layers size={16} className="text-slate-600 dark:text-slate-400 mb-1" />
+                  <span className="block font-semibold text-slate-900 dark:text-white">Matériel</span>
+                  <span className="text-[10px] text-slate-400">Inventaire école</span>
+                </button>
               </div>
             </div>
 
-          </motion.div>
+          </div>
 
         </div>
 
-      </motion.div>
+      </div>
     </AppLayout>
   );
 }

@@ -5,6 +5,12 @@ import { getSession } from '@/lib/auth';
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session?.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  
+  const allowedRoles = ['ACCOUNTANT', 'SCHOOL_ADMIN', 'SUPER_ADMIN'];
+  if (!allowedRoles.includes(session.role)) {
+    return NextResponse.json({ error: 'Accès refusé. Rôle non autorisé.' }, { status: 403 });
+  }
+
   const tid = session.tenantId;
 
   try {
