@@ -7,6 +7,7 @@ import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { getGradingPolicyBySchoolType } from '@/lib/gradingPolicy';
 
 export default function SettingsPage() {
   const toast = useToast();
@@ -101,15 +102,29 @@ export default function SettingsPage() {
                     <Input required value={school?.name || ''} onChange={e => setSchool({...school, name: e.target.value})} placeholder="Ex: Groupe Scolaire Les Castors" className="h-12 rounded-xl focus-visible:ring-blue-500" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Type d'Établissement *</label>
-                    <select value={school?.type || 'LYCEE'} onChange={e => setSchool({...school, type: e.target.value})} className="w-full h-12 px-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="PRIMAIRE">Primaire</option>
-                      <option value="FONDAMENTAL">Fondamental</option>
-                      <option value="LYCEE">Lycée</option>
-                      <option value="TECHNIQUE">Technique / Professionnel</option>
-                      <option value="SANTE">Santé</option>
-                      <option value="AGRO">Agro-Pastorale</option>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Type d'Établissement & Régime Pédagogique *</label>
+                    <select
+                      value={school?.type || 'LYCEE'}
+                      onChange={e => {
+                        const newType = e.target.value;
+                        const policy = getGradingPolicyBySchoolType(newType);
+                        setSchool({ ...school, type: newType, gradingScale: policy.defaultScale });
+                      }}
+                      className="w-full h-12 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="PRIMAIRE">Primaire (Barème /20 • 50/50)</option>
+                      <option value="FONDAMENTAL">Fondamental DEF (Barème /20 • 50/50)</option>
+                      <option value="LYCEE">Lycée Général (Barème /20 • Coef 1/3 - 2/3)</option>
+                      <option value="TECHNIQUE">Technique / Professionnel BT-CAP (Barème /100 • APC)</option>
+                      <option value="AGRO">Agro-Pastoral CFP-PAS (Barème /100 • APC)</option>
+                      <option value="SANTE">Institut de Santé (Barème /20 • Semestriel LMD 40/60)</option>
+                      <option value="UNIVERSITE">Université / Supérieur (Barème /20 • LMD 40/60)</option>
                     </select>
+                    {school?.type && (
+                      <p className="text-[11px] text-blue-600 dark:text-blue-400 font-medium pt-1">
+                        Formule appliquée : {getGradingPolicyBySchoolType(school.type, school.gradingScale).formulaLabel}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">

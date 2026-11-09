@@ -9,6 +9,7 @@ import { exportToExcel } from '@/lib/excelExport';
 import * as XLSX from 'xlsx';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { getGradingPolicyBySchoolType, GradingPolicy } from '@/lib/gradingPolicy';
 
 export default function GradesPage() {
   const router = useRouter();
@@ -28,9 +29,11 @@ export default function GradesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving]   = useState(false);
 
-  // Détection du type d'école
+  // Détection du type d'école et de sa politique de notation
   const [schoolType, setSchoolType] = useState<string | null>(null);
-  const isAgro = schoolType === 'AGRO';
+  const [customScale, setCustomScale] = useState<number | null>(null);
+  const policy: GradingPolicy = getGradingPolicyBySchoolType(schoolType, customScale);
+  const isAgro = policy.profileKey === 'AGRO_TECHNIQUE';
 
   useEffect(() => {
     Promise.all([
@@ -45,12 +48,13 @@ export default function GradesPage() {
         const active = yData.find((y: any) => y.isActive);
         if (active) setForm(f => ({ ...f, academicYearId: active.id }));
       }
-      // Adapter le barème de notation selon l'école (multi-tenant)
-      if (settings?.gradingScale) {
-        setForm(f => ({ ...f, maxScore: String(settings.gradingScale) }));
+      const detectedType = settings?.schoolType || config?.type || null;
+      if (detectedType) {
+        setSchoolType(detectedType);
       }
-      if (config?.type) {
-        setSchoolType(config.type);
+      if (settings?.gradingScale) {
+        setCustomScale(Number(settings.gradingScale));
+        setForm(f => ({ ...f, maxScore: String(settings.gradingScale) }));
       }
     }).catch(() => toast.error('Erreur lors du chargement des paramètres.'));
   }, [toast]);
@@ -210,6 +214,15 @@ export default function GradesPage() {
       breadcrumbs={[{ label: 'Accueil', href: '/dashboard' }, { label: 'Saisie des Notes' }]}
     >
       <div className="card shadow-sm" style={{ padding: '24px', marginBottom: '8px' }}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-border/40 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge tone="info" dot>{policy.shortLabel}</StatusBadge>
+            <span className="font-semibold text-text">{policy.badgeText}</span>
+          </div>
+          <span className="text-text-muted font-medium">
+            Formule : <strong className="text-text">{policy.formulaLabel}</strong>
+          </span>
+        </div>
         <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px' }}>
           <div className="form-group">
             <label htmlFor="grade-academic-year">Année académique</label>
@@ -226,26 +239,35 @@ export default function GradesPage() {
             </select>
           </div>
           <div className="form-group">
-            <label htmlFor="grade-subject">{isAgro ? 'Module de formation' : 'Matière'}</label>
+            <label htmlFor="grade-subject">{policy.terms.subject}</label>
             <select id="grade-subject" value={form.subjectId} onChange={e => setForm({...form, subjectId: e.target.value})} className="form-input">
-              <option value="">{isAgro ? '-- Sélectionnez un module --' : '-- Matière --'}</option>
+              <option value="">{`-- Sélectionnez (${policy.terms.subject}) --`}</option>
               {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
             </select>
           </div>
           <div className="form-group">
-            <label htmlFor="grade-term">Période / trimestre</label>
+            <label htmlFor="grade-term">Période ({policy.periodLabelSingular})</label>
             <select id="grade-term" value={form.trimestre} onChange={e => setForm({...form, trimestre: e.target.value})} className="form-input">
-              <option value="1">1er Trimestre</option>
-              <option value="2">2ème Trimestre</option>
-              <option value="3">3ème Trimestre</option>
+              {policy.periodType === 'SEMESTRE' ? (
+                <>
+                  <option value="1">1er Semestre (S1)</option>
+                  <option value="2">2ème Semestre (S2)</option>
+                </>
+              ) : (
+                <>
+                  <option value="1">1er Trimestre</option>
+                  <option value="2">2ème Trimestre</option>
+                  <option value="3">3ème Trimestre</option>
+                </>
+              )}
             </select>
           </div>
           <div className="form-group">
             <label htmlFor="grade-assessment-type">Type d&apos;évaluation</label>
             <select id="grade-assessment-type" value={form.examType} onChange={e => setForm({...form, examType: e.target.value})} className="form-input">
-              <option value="CONTINUOUS">Note de Classe / Interro</option>
-              <option value="MIDTERM">Devoir Surveillé / Compo</option>
-              <option value="FINAL">Examen de Trimestre</option>
+              <option value="CONTINUOUS">{policy.terms.continuousLabel}</option>
+              <option value="MIDTERM">{policy.terms.midtermLabel}</option>
+              <option value="FINAL">{policy.terms.finalLabel}</option>
             </select>
           </div>
           <div className="form-group">

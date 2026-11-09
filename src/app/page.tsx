@@ -5,8 +5,58 @@ import { useRouter } from 'next/navigation';
 import {
   GraduationCap, Mail, Lock, Eye, EyeOff, Loader2,
   ArrowRight, ShieldCheck, CheckCircle2, AlertCircle,
-  HelpCircle, Sprout, Stethoscope, Calculator, BookOpen
+  HelpCircle, Sprout, Stethoscope, Calculator, BookOpen,
+  Scale, Layers, Sparkles
 } from 'lucide-react';
+import {
+  GRADING_POLICIES,
+  InstitutionalProfileKey,
+  GradingPolicy
+} from '@/lib/gradingPolicy';
+
+const PROFILE_TABS: Array<{
+  key: InstitutionalProfileKey;
+  label: string;
+  shortBadge: string;
+  icon: React.ElementType;
+  accentClass: string;
+}> = [
+  {
+    key: 'ALL',
+    label: 'Tous',
+    shortBadge: 'Multi-barèmes',
+    icon: Layers,
+    accentClass: 'text-slate-700 dark:text-slate-200',
+  },
+  {
+    key: 'AGRO_TECHNIQUE',
+    label: 'Agro-Pastoral & CFP',
+    shortBadge: '/100 • APC',
+    icon: Sprout,
+    accentClass: 'text-emerald-600 dark:text-emerald-400',
+  },
+  {
+    key: 'LYCEE_GENERAL',
+    label: 'Lycée & Général',
+    shortBadge: '/20 • Coef 1/2',
+    icon: GraduationCap,
+    accentClass: 'text-indigo-600 dark:text-indigo-400',
+  },
+  {
+    key: 'SANTE_SUPERIEUR',
+    label: 'Santé & Supérieur',
+    shortBadge: '/20 • LMD 40/60',
+    icon: Stethoscope,
+    accentClass: 'text-blue-600 dark:text-blue-400',
+  },
+  {
+    key: 'FONDAMENTAL',
+    label: 'Fondamental',
+    shortBadge: '/20 • 50/50',
+    icon: BookOpen,
+    accentClass: 'text-amber-600 dark:text-amber-400',
+  },
+];
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -15,6 +65,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<InstitutionalProfileKey>('ALL');
   const router = useRouter();
 
   useEffect(() => {
@@ -25,6 +76,9 @@ export default function LoginPage() {
       router.replace('/dashboard');
     }
   }, [router]);
+
+  const activePolicy: GradingPolicy | null =
+    selectedProfile === 'ALL' ? null : GRADING_POLICIES[selectedProfile];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +93,11 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          preferredProfile: selectedProfile !== 'ALL' ? selectedProfile : undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -48,6 +106,9 @@ export default function LoginPage() {
 
       localStorage.setItem('auth_token', data.accessToken);
       localStorage.setItem('auth_user', JSON.stringify(data.user));
+      if (data.user?.gradingPolicy) {
+        localStorage.setItem('school_grading_policy', JSON.stringify(data.user.gradingPolicy));
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue lors de la connexion.');
@@ -56,9 +117,16 @@ export default function LoginPage() {
     }
   };
 
-  const handleSelectQuickAccount = (accEmail: string, accPwd: string) => {
+  const handleSelectQuickAccount = (
+    accEmail: string,
+    accPwd: string,
+    profileKey?: Exclude<InstitutionalProfileKey, 'ALL'>
+  ) => {
     setEmail(accEmail);
     setPassword(accPwd);
+    if (profileKey) {
+      setSelectedProfile(profileKey);
+    }
     setError('');
   };
 
@@ -103,20 +171,102 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* ── MAIN CONTENT: LOGIN CARD ── */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
-        <div className="w-full max-w-md">
+      {/* ── MAIN CONTENT: LOGIN CARD + CLASSIFICATION ── */}
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-4">
+        <div className="w-full max-w-lg">
           
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs p-6 sm:p-8">
             
             {/* Card Header */}
-            <div className="mb-6">
+            <div className="mb-5">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 Connexion à votre espace
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                Accédez à votre établissement, vos dossiers scolaires et votre suivi de scolarité.
+                Sélectionnez la filière de votre établissement ou connectez-vous directement : le barème et la formule de calcul des notes s&apos;adaptent automatiquement.
               </p>
+            </div>
+
+            {/* ── SCHOOL TYPE CLASSIFICATION SELECTOR ── */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <Scale size={12} className="text-blue-600 dark:text-blue-400" />
+                  Type d&apos;établissement & Système d&apos;évaluation
+                </span>
+                {activePolicy && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/50">
+                    Barème /{activePolicy.defaultScale}
+                  </span>
+                )}
+              </div>
+
+              <div
+                role="tablist"
+                aria-label="Classification du type d'établissement"
+                className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/70"
+              >
+                {PROFILE_TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  const isSelected = selectedProfile === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      role="tab"
+                      id={`tab-profile-${tab.key.toLowerCase()}`}
+                      aria-selected={isSelected}
+                      onClick={() => setSelectedProfile(tab.key)}
+                      className={`px-2 py-1.5 rounded-md text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs border border-slate-200/80 dark:border-slate-700'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 font-semibold text-[11px] truncate">
+                        <Icon size={12} className={isSelected ? tab.accentClass : 'text-slate-400'} />
+                        <span className="truncate">{tab.label}</span>
+                      </div>
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                        {tab.shortBadge}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active Grading Policy Rule Banner */}
+              {activePolicy ? (
+                <div
+                  id="active-grading-policy-banner"
+                  className="mt-2.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/90 dark:border-slate-700/80 text-xs space-y-1.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <Sparkles size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                      {activePolicy.label}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-300 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span>
+                      <strong>Calcul :</strong> {activePolicy.formulaLabel}
+                    </span>
+                    <span>•</span>
+                    <span>
+                      <strong>Découpage :</strong> {activePolicy.periodCount} {activePolicy.periodLabelPlural}
+                    </span>
+                    <span>•</span>
+                    <span>
+                      <strong>Lexique :</strong> {activePolicy.terms.student} / {activePolicy.terms.subject}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-2 px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                  <span>Détection automatique du barème (/20 ou /100) selon votre identifiant école.</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">Auto-détection</span>
+                </div>
+              )}
             </div>
 
             {/* Error Alert */}
@@ -141,7 +291,13 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="directeur@etablissement.ml"
+                    placeholder={
+                      selectedProfile === 'AGRO_TECHNIQUE'
+                        ? 'admin@cfppas-gao.ml'
+                        : selectedProfile === 'SANTE_SUPERIEUR'
+                        ? 'admin@esbk-bamako.ml'
+                        : 'directeur@etablissement.ml'
+                    }
                     required
                     autoComplete="email"
                     className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
@@ -199,7 +355,11 @@ export default function LoginPage() {
                     </>
                   ) : (
                     <>
-                      <span>Se connecter</span>
+                      <span>
+                        {activePolicy
+                          ? `Se connecter (${activePolicy.shortLabel})`
+                          : 'Se connecter'}
+                      </span>
                       <ArrowRight size={16} />
                     </>
                   )}
@@ -210,60 +370,109 @@ export default function LoginPage() {
 
             {/* Quick Demo Accounts Pill Selector */}
             <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2.5">
-                Accès direct (Comptes configurés) :
-              </span>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Accès direct (Comptes configurés) :
+                </span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                  Cliquez pour pré-remplir
+                </span>
+              </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button
                   type="button"
                   id="btn-quick-cfppas"
-                  onClick={() => handleSelectQuickAccount('admin@cfppas-gao.ml', 'CfpPasGao2026!')}
-                  className="p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 text-left hover:bg-emerald-100/70 dark:hover:bg-emerald-900/50 transition-colors flex flex-col cursor-pointer"
+                  onClick={() =>
+                    handleSelectQuickAccount('admin@cfppas-gao.ml', 'CfpPasGao2026!', 'AGRO_TECHNIQUE')
+                  }
+                  className={`p-2.5 rounded-lg border text-left transition-colors flex flex-col cursor-pointer ${
+                    selectedProfile === 'AGRO_TECHNIQUE'
+                      ? 'border-emerald-500 dark:border-emerald-500 bg-emerald-100/80 dark:bg-emerald-950/60 ring-1 ring-emerald-500/30'
+                      : 'border-emerald-200 dark:border-emerald-900 bg-emerald-50/60 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/50'
+                  } text-emerald-800 dark:text-emerald-300`}
                 >
-                  <div className="flex items-center gap-1.5 font-semibold text-[11px]">
-                    <Sprout size={13} className="text-emerald-600 shrink-0" />
-                    <span>CFP-PAS Gao</span>
+                  <div className="flex items-center justify-between gap-1 font-semibold text-[11px]">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <Sprout size={13} className="text-emerald-600 shrink-0" />
+                      <span>CFP-PAS Gao</span>
+                    </span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-200/70 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200">
+                      /100
+                    </span>
                   </div>
-                  <span className="text-[10px] text-emerald-700/80 dark:text-emerald-400/80 truncate">Directeur O. Maïga</span>
+                  <span className="text-[10px] text-emerald-700/80 dark:text-emerald-400/80 truncate mt-0.5">
+                    Directeur O. Maïga • Agro-Pastoral
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   id="btn-quick-esbk"
-                  onClick={() => handleSelectQuickAccount('admin@esbk-bamako.ml', 'admin123')}
-                  className="p-2.5 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 text-left hover:bg-blue-100/70 dark:hover:bg-blue-900/50 transition-colors flex flex-col cursor-pointer"
+                  onClick={() =>
+                    handleSelectQuickAccount('admin@esbk-bamako.ml', 'admin123', 'SANTE_SUPERIEUR')
+                  }
+                  className={`p-2.5 rounded-lg border text-left transition-colors flex flex-col cursor-pointer ${
+                    selectedProfile === 'SANTE_SUPERIEUR'
+                      ? 'border-blue-500 dark:border-blue-500 bg-blue-100/80 dark:bg-blue-950/60 ring-1 ring-blue-500/30'
+                      : 'border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/30 hover:bg-blue-100/70 dark:hover:bg-blue-900/50'
+                  } text-blue-800 dark:text-blue-300`}
                 >
-                  <div className="flex items-center gap-1.5 font-semibold text-[11px]">
-                    <Stethoscope size={13} className="text-blue-600 shrink-0" />
-                    <span>ESBK Bamako</span>
+                  <div className="flex items-center justify-between gap-1 font-semibold text-[11px]">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <Stethoscope size={13} className="text-blue-600 shrink-0" />
+                      <span>ESBK Bamako</span>
+                    </span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-200/70 dark:bg-blue-900 text-blue-900 dark:text-blue-200">
+                      /20 LMD
+                    </span>
                   </div>
-                  <span className="text-[10px] text-blue-700/80 dark:text-blue-400/80 truncate">Dr. I. Traoré</span>
+                  <span className="text-[10px] text-blue-700/80 dark:text-blue-400/80 truncate mt-0.5">
+                    Dr. I. Traoré • Institut Santé
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   id="btn-quick-compta"
-                  onClick={() => handleSelectQuickAccount('compta@cfppas-gao.ml', 'admin123')}
+                  onClick={() =>
+                    handleSelectQuickAccount('compta@cfppas-gao.ml', 'admin123', 'AGRO_TECHNIQUE')
+                  }
                   className="p-2.5 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50/60 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-left hover:bg-amber-100/70 dark:hover:bg-amber-900/50 transition-colors flex flex-col cursor-pointer"
                 >
-                  <div className="flex items-center gap-1.5 font-semibold text-[11px]">
-                    <Calculator size={13} className="text-amber-600 shrink-0" />
-                    <span>Comptabilité</span>
+                  <div className="flex items-center justify-between gap-1 font-semibold text-[11px]">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <Calculator size={13} className="text-amber-600 shrink-0" />
+                      <span>Comptabilité</span>
+                    </span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-200/70 dark:bg-amber-900 text-amber-900 dark:text-amber-200">
+                      SYSCOHADA
+                    </span>
                   </div>
-                  <span className="text-[10px] text-amber-700/80 dark:text-amber-400/80 truncate">Caisse & Frais</span>
+                  <span className="text-[10px] text-amber-700/80 dark:text-amber-400/80 truncate mt-0.5">
+                    Caisse, Scolarité & Vacataires
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   id="btn-quick-prof"
-                  onClick={() => handleSelectQuickAccount('prof@cfppas-gao.ml', 'admin123')}
+                  onClick={() =>
+                    handleSelectQuickAccount('prof@cfppas-gao.ml', 'admin123', 'AGRO_TECHNIQUE')
+                  }
                   className="p-2.5 rounded-lg border border-purple-200 dark:border-purple-900 bg-purple-50/60 dark:bg-purple-950/30 text-purple-800 dark:text-purple-300 text-left hover:bg-purple-100/70 dark:hover:bg-purple-900/50 transition-colors flex flex-col cursor-pointer"
                 >
-                  <div className="flex items-center gap-1.5 font-semibold text-[11px]">
-                    <BookOpen size={13} className="text-purple-600 shrink-0" />
-                    <span>Formateur</span>
+                  <div className="flex items-center justify-between gap-1 font-semibold text-[11px]">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <BookOpen size={13} className="text-purple-600 shrink-0" />
+                      <span>Formateur</span>
+                    </span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-200/70 dark:bg-purple-900 text-purple-900 dark:text-purple-200">
+                      Modules
+                    </span>
                   </div>
-                  <span className="text-[10px] text-purple-700/80 dark:text-purple-400/80 truncate">M. Diarra</span>
+                  <span className="text-[10px] text-purple-700/80 dark:text-purple-400/80 truncate mt-0.5">
+                    M. Diarra • Saisie & Appel
+                  </span>
                 </button>
               </div>
             </div>
@@ -279,7 +488,7 @@ export default function LoginPage() {
             <span>•</span>
             <span className="inline-flex items-center gap-1">
               <CheckCircle2 size={13} className="text-slate-400" />
-              Cloisonnement multi-établissements
+              Cloisonnement multi-établissements & barèmes dédiés
             </span>
           </div>
 

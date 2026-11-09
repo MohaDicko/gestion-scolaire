@@ -73,7 +73,14 @@ export async function POST(request: Request) {
       }
     }
 
-    const examTypeMap: Record<number, string> = { 1: 'MIDTERM', 2: 'FINAL', 3: 'CONTINUOUS' };
+    const examTypeMap: Record<string | number, string> = {
+      1: 'MIDTERM',
+      2: 'FINAL',
+      3: 'CONTINUOUS',
+      CONTINUOUS: 'CONTINUOUS',
+      MIDTERM: 'MIDTERM',
+      FINAL: 'FINAL',
+    };
     const resolvedExamType = examTypeMap[examType] || 'CONTINUOUS';
 
     const results = await Promise.all(grades.map(async (grade: any) => {

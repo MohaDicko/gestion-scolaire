@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { getGradingPolicyBySchoolType } from '@/lib/gradingPolicy';
 
 export async function GET() {
   const session = await getSession();
@@ -26,11 +27,15 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+    const policy = getGradingPolicyBySchoolType(body.type);
+    const resolvedScale = body.gradingScale ? Number(body.gradingScale) : policy.defaultScale;
+
     const updated = await prisma.school.update({
       where: { id: session.tenantId },
       data: {
         name: body.name,
         type: body.type,
+        gradingScale: resolvedScale,
         drenCode: body.drenCode,
         nationalRNE: body.nationalRNE,
         address: body.address,

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { getGradingPolicyBySchoolType } from '@/lib/gradingPolicy';
 
 /**
  * GET /api/school/settings
@@ -17,6 +18,7 @@ export async function GET() {
     const school = await prisma.school.findUnique({
       where: { id: session.tenantId },
       select: {
+        type: true,
         gradingScale: true,
         defaultPaymentMethod: true,
         defaultTuition: true,
@@ -29,8 +31,12 @@ export async function GET() {
       return NextResponse.json({ error: 'École introuvable' }, { status: 404 });
     }
 
+    const gradingPolicy = getGradingPolicyBySchoolType(school.type, school.gradingScale);
+
     return NextResponse.json({
-      gradingScale: school.gradingScale ?? 20,
+      schoolType: school.type,
+      gradingScale: gradingPolicy.defaultScale,
+      gradingPolicy,
       defaultPaymentMethod: school.defaultPaymentMethod ?? 'ESPECES',
       defaultTuition: school.defaultTuition ?? 0,
       primaryColor: school.primaryColor ?? '#4f8ef7',

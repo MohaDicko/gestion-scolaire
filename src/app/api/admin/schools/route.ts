@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { getGradingPolicyBySchoolType } from '@/lib/gradingPolicy';
 import * as bcrypt from 'bcryptjs';
 
 export async function GET() {
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    const defaultPolicy = getGradingPolicyBySchoolType(type);
 
     const result = await prisma.$transaction(async (tx) => {
       const school = await tx.school.create({
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
           name,
           code,
           type,
+          gradingScale: defaultPolicy.defaultScale,
           email: email || '',
           phoneNumber: phoneNumber || '',
           address: address || '',

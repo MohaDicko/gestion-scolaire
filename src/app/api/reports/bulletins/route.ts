@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { resolveSubjectLabel } from '@/lib/subjectLabels';
+import { getGradingPolicyBySchoolType, computeSubjectAverage, computeMention } from '@/lib/gradingPolicy';
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -67,39 +68,29 @@ export async function GET(request: Request) {
       ])
     : [[], [], [], []];
 
-  // CFPPAS ou autre école : utiliser le barème configuré dans la DB
-  const scale = school?.gradingScale ?? 20;
+  // Politique pédagogique de l'école (Lycée /20, CFPPAS Agro /100, Santé LMD /20, Fondamental /20)
+  const policy = getGradingPolicyBySchoolType(school?.type, school?.gradingScale);
+  const scale = policy.defaultScale;
 
-  // Calcul moyennes pondérées par coefficient, ramenées sur l'échelle de l'école
+  // Calcul moyennes pondérées par coefficient selon la formule officielle du type d'école
   const subjectResults = timetableSubjectsData.map(subject => {
     const officialSubject = resolveSubjectLabel(subject, officialSubjects, employees);
     const subjectGrades = grades.filter((grade) => grade.subjectId === subject.id);
-    const continuousGrades = subjectGrades.filter((grade) => grade.examType === 'CONTINUOUS');
-    const compositionGrades = subjectGrades.filter((grade) => grade.examType !== 'CONTINUOUS');
-    const normalize = (grade: (typeof grades)[number]) => (grade.score / grade.maxScore) * scale;
-    const classAverage = continuousGrades.length > 0
-      ? continuousGrades.reduce((sum, grade) => sum + normalize(grade), 0) / continuousGrades.length
-      : 0;
-    const compositionAverage = compositionGrades.length > 0
-      ? compositionGrades.reduce((sum, grade) => sum + normalize(grade), 0) / compositionGrades.length
-      : classAverage;
-    const avg = classAverage > 0
-      ? (classAverage + 2 * compositionAverage) / 3
-      : compositionAverage;
+    const { classAverage, compositionAverage, finalAverage: avg, mention } = computeSubjectAverage(
+      subjectGrades,
+      policy,
+      scale
+    );
     const lastGrade = subjectGrades[subjectGrades.length - 1];
-    let mention = '';
-    if (avg >= scale * 0.80) mention = 'Très Bien';
-    else if (avg >= scale * 0.70) mention = 'Bien';
-    else if (avg >= scale * 0.60) mention = 'Assez Bien';
-    else if (avg >= scale * 0.50) mention = 'Passable';
-    else mention = 'Insuffisant';
     return {
       subjectName: officialSubject.name,
       subjectCode: officialSubject.code,
       coefficient: subject.coefficient,
-      score: Math.round(avg * 100) / 100,
+      classAverage,
+      compositionAverage,
+      score: avg,
       maxScore: scale,
-      average: Math.round(avg * 100) / 100,
+      average: avg,
       weighted: Math.round(avg * subject.coefficient * 100) / 100,
       mention,
       comment: lastGrade?.comment,
@@ -135,16 +126,25 @@ export async function GET(request: Request) {
       include: { subject: true }
     });
 
-    // Group by student and calculate averages
+    // Group by student and calculate averages using the exact same school grading policy
     const classmateAverages = classmates.map(c => {
       const sGrades = classmateGrades.filter(g => g.studentId === c.studentId);
-      const sResults = sGrades.map(g => {
-        // Utiliser le barème de l'école (multi-tenant)
-        const avg = (g.score / g.maxScore) * scale;
-        return { average: avg, coeff: g.subject.coefficient };
-      });
-      const sTotalCoeff = sResults.reduce((s, r) => s + r.coeff, 0);
-      const sTotalWeighted = sResults.reduce((s, r) => s + (r.average * r.coeff), 0);
+      const subjectMap = new Map<string, { coeff: number; grades: typeof sGrades }>();
+      for (const g of sGrades) {
+        if (!subjectMap.has(g.subjectId)) {
+          subjectMap.set(g.subjectId, { coeff: g.subject.coefficient, grades: [] });
+        }
+        subjectMap.get(g.subjectId)!.grades.push(g);
+      }
+
+      let sTotalCoeff = 0;
+      let sTotalWeighted = 0;
+      for (const [, entry] of Array.from(subjectMap.entries())) {
+        const { finalAverage } = computeSubjectAverage(entry.grades, policy, scale);
+        sTotalCoeff += entry.coeff;
+        sTotalWeighted += finalAverage * entry.coeff;
+      }
+
       return { 
         studentId: c.studentId, 
         avg: sTotalCoeff > 0 ? sTotalWeighted / sTotalCoeff : 0 
@@ -161,15 +161,24 @@ export async function GET(request: Request) {
   // ---------------------------
 
   // Mentions selon le barème de l'école
-  let generalMention = '';
-  if (generalAverage >= scale * 0.80) generalMention = 'Très Bien';
-  else if (generalAverage >= scale * 0.70) generalMention = 'Bien';
-  else if (generalAverage >= scale * 0.60) generalMention = 'Assez Bien';
-  else if (generalAverage >= scale * 0.50) generalMention = 'Passable';
-  else generalMention = 'Insuffisant';
+  const generalMention = computeMention(generalAverage, scale);
 
   return NextResponse.json({
-    school: { name: school?.name || '', motto: school?.motto || '', logoUrl: school?.logoUrl },
+    school: {
+      name: school?.name || '',
+      motto: school?.motto || '',
+      logoUrl: school?.logoUrl,
+      type: school?.type || 'LYCEE',
+      gradingScale: scale,
+      gradingPolicy: {
+        profileKey: policy.profileKey,
+        shortLabel: policy.shortLabel,
+        badgeText: policy.badgeText,
+        formulaLabel: policy.formulaLabel,
+        reportTitle: policy.terms.reportTitle,
+        periodLabelSingular: policy.periodLabelSingular,
+      },
+    },
     student: {
       id: student.id,
       studentNumber: student.studentNumber,

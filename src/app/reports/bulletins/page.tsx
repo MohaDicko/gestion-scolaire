@@ -8,7 +8,22 @@ import { motion } from 'framer-motion';
 import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
 
 interface BulletinData {
-  school: { name: string; motto: string; logoUrl?: string; city?: string };
+  school: {
+    name: string;
+    motto: string;
+    logoUrl?: string;
+    city?: string;
+    type?: string;
+    gradingScale?: number;
+    gradingPolicy?: {
+      profileKey: string;
+      shortLabel: string;
+      badgeText: string;
+      formulaLabel: string;
+      reportTitle: string;
+      periodLabelSingular: string;
+    };
+  };
   student: { id: string; studentNumber: string; firstName: string; lastName: string; dateOfBirth: string; gender: string; campus: string };
   enrollment: { classroom: string; level: string; academicYear: string };
   trimestre: number;
@@ -136,11 +151,14 @@ export default function BulletinsPage() {
     }
 
     // Titre du Bulletin
+    const scale = school?.gradingScale || 20;
+    const passThreshold = scale * 0.5;
+    const periodSingular = (school?.gradingPolicy?.periodLabelSingular || 'TRIMESTRE').toUpperCase();
     doc.setFillColor(241, 245, 249); // slate-100
-    doc.roundedRect(pageW / 2 - 35, 38, 70, 8, 2, 2, 'F');
+    doc.roundedRect(pageW / 2 - 42, 38, 84, 8, 2, 2, 'F');
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-    doc.text(`BULLETIN DU ${t}${t === 1 ? 'ER' : 'ÈME'} TRIMESTRE`, pageW / 2, 43.5, { align: 'center' });
+    doc.text(`BULLETIN DU ${t}${t === 1 ? 'ER' : 'ÈME'} ${periodSingular}`, pageW / 2, 43.5, { align: 'center' });
 
     let y = 54;
 
@@ -185,7 +203,7 @@ export default function BulletinsPage() {
     y += 32;
 
     // ── Tableau des notes ───────────────────────────────────────────
-    const headers = ['MATIÈRE', 'COEFF', 'NOTE', 'SUR', 'MOY/20', 'MENTION', 'POINTS'];
+    const headers = ['MATIÈRE / MODULE', 'COEFF', 'NOTE', 'SUR', `MOY/${scale}`, 'MENTION', 'POINTS'];
     const colX = [margin, margin + 65, margin + 83, margin + 101, margin + 119, margin + 139, margin + 165];
 
     // Header tableau
@@ -220,7 +238,7 @@ export default function BulletinsPage() {
       doc.line(margin, y, margin, y + 7);
       doc.line(pageW - margin, y, pageW - margin, y + 7);
 
-      const isPass = (r.average || 0) >= 10;
+      const isPass = (r.average || 0) >= passThreshold;
       doc.setTextColor(15, 23, 42); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
       doc.text(r.subjectName || '', colX[0] + 2, y + 4.8);
       
@@ -231,7 +249,7 @@ export default function BulletinsPage() {
       doc.text((r.score ?? 0).toString(), colX[2] + 2, y + 4.8);
       
       doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
-      doc.text((r.maxScore ?? 20).toString(), colX[3] + 2, y + 4.8);
+      doc.text((r.maxScore ?? scale).toString(), colX[3] + 2, y + 4.8);
       
       doc.setFont('helvetica', 'bold'); doc.setTextColor(isPass ? 15 : 185, isPass ? 23 : 28, isPass ? 42 : 28);
       doc.text((r.average ?? 0).toFixed(2), colX[4] + 2, y + 4.8);
@@ -257,20 +275,20 @@ export default function BulletinsPage() {
     doc.roundedRect(margin, y, pageW - 2 * margin, 20, 2, 2, 'S');
 
     const genAvg = summary?.generalAverage ?? 0;
-    const isGenPass = genAvg >= 10;
+    const isGenPass = genAvg >= passThreshold;
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(12); doc.setFont('helvetica', 'bold');
     doc.text('MOYENNE GÉNÉRALE :', margin + 6, y + 8);
     
     doc.setFontSize(14); doc.setTextColor(isGenPass ? 15 : 185, isGenPass ? 23 : 28, isGenPass ? 42 : 28);
-    doc.text(`${genAvg.toFixed(2)} / 20`, margin + 55, y + 8);
+    doc.text(`${genAvg.toFixed(2)} / ${scale}`, margin + 55, y + 8);
     
     doc.setTextColor(15, 23, 42); doc.setFontSize(9);
     doc.text(`MENTION : ${(summary?.generalMention || '').toUpperCase()}`, margin + 6, y + 15);
     
     const totCoeff = summary?.totalCoeff || 0;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100, 116, 139);
-    doc.text(`Total points : ${(totCoeff > 0 ? (genAvg * totCoeff).toFixed(2) : '0')} / ${(totCoeff * 20).toFixed(0)}`, pageW - margin - 6, y + 8, { align: 'right' });
+    doc.text(`Total points : ${(totCoeff > 0 ? (genAvg * totCoeff).toFixed(2) : '0')} / ${(totCoeff * scale).toFixed(0)}`, pageW - margin - 6, y + 8, { align: 'right' });
     doc.text(`Total coefficients : ${totCoeff}`, pageW - margin - 6, y + 14, { align: 'right' });
 
     // ── Signatures ───────────────────────────────────────────────────
@@ -407,7 +425,9 @@ export default function BulletinsPage() {
     }
   };
 
-  const isPassing = bulletin ? bulletin.summary.generalAverage >= 10 : true;
+  const activeScale = bulletin?.school?.gradingScale || 20;
+  const activePassThreshold = activeScale * 0.5;
+  const isPassing = bulletin ? bulletin.summary.generalAverage >= activePassThreshold : true;
 
   return (
     <AppLayout
@@ -562,7 +582,7 @@ export default function BulletinsPage() {
                     <div className={`text-3xl sm:text-4xl font-black ${isPassing ? 'text-emerald-400' : 'text-red-400'} tracking-tighter leading-none mb-1`}>
                       {bulletin.summary.generalAverage.toFixed(2)}
                     </div>
-                    <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-2">Moyenne / 20</div>
+                    <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-2">Moyenne / {activeScale}</div>
                     <MentionBadge mention={bulletin.summary.generalMention} />
                   </div>
 
@@ -644,10 +664,10 @@ export default function BulletinsPage() {
               <table className="w-full text-sm text-left">
                 <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
                   <tr>
-                    <th className="px-6 py-4 border-b border-slate-200">Matière</th>
+                    <th className="px-6 py-4 border-b border-slate-200">Matière / Module</th>
                     <th className="px-4 py-4 border-b border-slate-200 text-center">Coeff</th>
                     <th className="px-4 py-4 border-b border-slate-200 text-right">Note</th>
-                    <th className="px-4 py-4 border-b border-slate-200 text-center">Moy/20</th>
+                    <th className="px-4 py-4 border-b border-slate-200 text-center">Moy/{activeScale}</th>
                     <th className="px-4 py-4 border-b border-slate-200">Mention</th>
                     <th className="px-6 py-4 border-b border-slate-200">Appréciation</th>
                   </tr>
@@ -661,7 +681,7 @@ export default function BulletinsPage() {
                         <span className="font-bold text-slate-900">{r.score}</span>
                         <span className="text-xs text-slate-400 ml-1">/{r.maxScore}</span>
                       </td>
-                      <td className={`px-4 py-4 text-center font-black ${r.average >= 10 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      <td className={`px-4 py-4 text-center font-black ${r.average >= activePassThreshold ? 'text-emerald-600' : 'text-red-600'}`}>
                         {r.average.toFixed(2)}
                       </td>
                       <td className="px-4 py-4">

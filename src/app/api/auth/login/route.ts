@@ -4,6 +4,7 @@ import { encrypt } from '@/lib/auth';
 import * as bcrypt from 'bcryptjs';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { logAudit } from '@/lib/audit';
+import { getGradingPolicyBySchoolType } from '@/lib/gradingPolicy';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -101,11 +102,23 @@ async function handleLogin(user: any) {
   // refreshToken long-lived (7d) stored in httpOnly cookie only
   const refreshToken = await encrypt(sessionPayload, '7d'); // includes full payload for getSession()
 
-  let schoolName = undefined;
+  let schoolName: string | undefined = undefined;
+  let schoolType: string | undefined = undefined;
+  let gradingScale: number = 20;
+
   if (user.tenantId) {
-    const school = await prisma.school.findUnique({ where: { id: user.tenantId }, select: { name: true } });
-    if (school) schoolName = school.name;
+    const school = await prisma.school.findUnique({
+      where: { id: user.tenantId },
+      select: { name: true, type: true, gradingScale: true }
+    });
+    if (school) {
+      schoolName = school.name;
+      schoolType = school.type;
+      gradingScale = school.gradingScale ?? 20;
+    }
   }
+
+  const gradingPolicy = getGradingPolicyBySchoolType(schoolType, gradingScale);
 
   const response = NextResponse.json({
     accessToken,
@@ -116,7 +129,17 @@ async function handleLogin(user: any) {
       lastName: user.lastName,
       role: user.role,
       tenantId: user.tenantId,
-      schoolName: schoolName,
+      schoolName,
+      schoolType,
+      gradingScale: gradingPolicy.defaultScale,
+      gradingPolicy: {
+        profileKey: gradingPolicy.profileKey,
+        shortLabel: gradingPolicy.shortLabel,
+        badgeText: gradingPolicy.badgeText,
+        formulaLabel: gradingPolicy.formulaLabel,
+        defaultScale: gradingPolicy.defaultScale,
+        periodType: gradingPolicy.periodType,
+      }
     }
   });
 
