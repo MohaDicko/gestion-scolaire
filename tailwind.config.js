@@ -53,6 +53,16 @@ module.exports = {
         md: 'var(--radius-sm)',
         sm: 'var(--radius-xs)'
       },
+      boxShadow: {
+        '2xs': '0 1px 2px 0 rgba(15, 23, 42, 0.04)',
+        'xs': '0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04)',
+      },
+      backdropBlur: {
+        'xs': '4px',
+      },
+      spacing: {
+        '4.5': '1.125rem',
+      },
       keyframes: {
         'accordion-down': {
           from: { height: '0' },

@@ -7,11 +7,12 @@ import {
   ArrowRight, Search, Plus, CreditCard, FileSpreadsheet,
   FileCheck2, CheckCircle2, AlertCircle, Clock, ChevronRight,
   TrendingUp, Users, Building2, BookOpen, Layers,
-  Wallet, ShieldCheck, ArrowUpRight, ArrowDownRight, type LucideIcon
+  Wallet, ShieldCheck, ArrowUpRight, ArrowDownRight, Scale, Sparkles, type LucideIcon
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useToast } from '@/components/Toast';
+import { getGradingPolicyBySchoolType } from '@/lib/gradingPolicy';
 
 const FinanceChart = dynamic(
   () => import('@/components/dashboard/FinanceChart').then((mod) => mod.FinanceChart),
@@ -120,6 +121,7 @@ export default function DashboardPage() {
 
   const isHealth = school?.type === 'SANTE' || (user?.schoolName && /sant|kouchner|esbk/i.test(user.schoolName));
   const schoolDisplayName = school?.name || user?.schoolName || (isHealth ? 'École de Santé Bernard Kouchner (ESBK)' : 'CFP-PAS de Gao');
+  const activePolicy = getGradingPolicyBySchoolType(school?.type || (isHealth ? 'SANTE' : 'AGRO'), school?.gradingScale);
 
   // Recouvrement
   const recouvrementRate = stats.invoicesTotal > 0
@@ -289,29 +291,71 @@ export default function DashboardPage() {
     >
       <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
 
-        {/* ── 1. METRICS ESSENTIELLES (4 CARTES PROPRES & CALMES) ── */}
+        {/* ── 0. BANDEAU EXÉCUTIF DU PROFIL D'ÉTABLISSEMENT & BARÈME ── */}
+        <div className="bg-slate-900 dark:bg-slate-900 text-white rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center shrink-0">
+              <Scale size={20} />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-blue-300">
+                  {activePolicy.shortLabel}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Barème /{activePolicy.defaultScale}
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1">
+                Règle de calcul active : <strong className="text-white font-mono">{activePolicy.formulaLabel}</strong> • Découpage en {activePolicy.periodCount} {activePolicy.periodLabelPlural}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start md:self-auto">
+            <button
+              type="button"
+              onClick={() => router.push('/grades')}
+              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-semibold text-white transition-colors cursor-pointer"
+            >
+              Grille des notes (/{activePolicy.defaultScale})
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/settings')}
+              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition-colors cursor-pointer"
+            >
+              Configurer barème
+            </button>
+          </div>
+        </div>
+
+        {/* ── 1. METRICS ESSENTIELLES (4 CARTES EXÉCUTIVES HAUTE PRÉCISION) ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Carte 1: Effectif */}
           <div
             onClick={() => router.push('/students')}
-            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4.5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer flex flex-col justify-between"
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:shadow-md hover:border-blue-500/40 dark:hover:border-blue-500/40 transition-all cursor-pointer flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between gap-2 mb-3">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                {isHealth ? 'Étudiants en Santé' : 'Élèves inscrits'}
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                Élèves inscrits
               </span>
-              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                <GraduationCap size={18} strokeWidth={2} />
+              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <GraduationCap size={18} strokeWidth={2.1} />
               </div>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight tabular-nums">
                 {isLoading ? '...' : (stats.studentsCount || 131)}
               </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <span>{isHealth ? 'Promotions IDE, SF, TLB' : '3 filières actives'}</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">+12% vs N-1</span>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                <span>{isHealth ? 'Promotions IDE, SF, TLB' : `${stats.classroomsCount || 3} filières actives`}</span>
+                <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                  <ArrowUpRight size={12} />
+                  +12%
+                </span>
               </div>
             </div>
           </div>
@@ -319,23 +363,23 @@ export default function DashboardPage() {
           {/* Carte 2: Présences du jour */}
           <div
             onClick={() => router.push('/attendance')}
-            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4.5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer flex flex-col justify-between"
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:shadow-md hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all cursor-pointer flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between gap-2 mb-3">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                 Présence aujourd'hui
               </span>
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                <UserCheck size={18} strokeWidth={2} />
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <UserCheck size={18} strokeWidth={2.1} />
               </div>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight tabular-nums">
                 94.2%
               </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <span>Appel effectué</span>
-                <span className="text-amber-600 dark:text-amber-400 font-medium">4 absents à justifier</span>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                <span>Appel quotidien validé</span>
+                <span className="text-amber-600 dark:text-amber-400 font-semibold">4 absents à justifier</span>
               </div>
             </div>
           </div>
@@ -343,28 +387,28 @@ export default function DashboardPage() {
           {/* Carte 3: Recouvrement */}
           <div
             onClick={() => router.push('/invoices')}
-            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4.5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer flex flex-col justify-between"
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:shadow-md hover:border-indigo-500/40 dark:hover:border-indigo-500/40 transition-all cursor-pointer flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between gap-2 mb-3">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                 Recouvrement scolarités
               </span>
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                <Receipt size={18} strokeWidth={2} />
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Receipt size={18} strokeWidth={2.1} />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
+                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight tabular-nums">
                   {recouvrementRate}%
                 </span>
-                <span className="text-xs font-medium text-slate-500 tabular-nums">
+                <span className="text-xs font-semibold text-slate-500 tabular-nums">
                   {(stats.invoicesPaid / 1000000).toFixed(1)}M / {(stats.invoicesTotal / 1000000).toFixed(1)}M
                 </span>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                 <span>Reste à recouvrer</span>
-                <span className="text-slate-700 dark:text-slate-300 font-semibold tabular-nums">
+                <span className="text-slate-800 dark:text-slate-200 font-bold tabular-nums">
                   {(resteARecouvrer / 1000).toLocaleString('fr-FR')} k FCFA
                 </span>
               </div>
@@ -374,23 +418,23 @@ export default function DashboardPage() {
           {/* Carte 4: Formateurs & Enseignants */}
           <div
             onClick={() => router.push('/employees')}
-            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4.5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer flex flex-col justify-between"
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:shadow-md hover:border-slate-400 dark:hover:border-slate-600 transition-all cursor-pointer flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between gap-2 mb-3">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                 {isHealth ? 'Médecins & Formateurs' : 'Personnel & Formateurs'}
               </span>
-              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0">
-                <Briefcase size={18} strokeWidth={2} />
+              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Briefcase size={18} strokeWidth={2.1} />
               </div>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight tabular-nums">
                 {isLoading ? '...' : (stats.employeesCount || 21)}
               </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <span>81 créneaux / semaine</span>
-                <span className="text-slate-600 dark:text-slate-400 font-medium">Actifs</span>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                <span>{stats.timetableCount || 81} créneaux / semaine</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">Actifs</span>
               </div>
             </div>
           </div>
