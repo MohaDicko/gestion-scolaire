@@ -25,6 +25,7 @@ export default function GradesPage() {
 
   const [students, setStudents] = useState<any[]>([]);
   const [grades, setGrades]     = useState<Record<string, { score: string; comment: string }>>({});
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving]   = useState(false);
@@ -94,7 +95,22 @@ export default function GradesPage() {
         data.forEach(e => {
           initG[e.studentId] = { score: '', comment: '' };
         });
-        setGrades(initG);
+
+        // Vérifier si un brouillon local existe pour cette sélection
+        const draftKey = `draft_grades_${form.classroomId}_${form.subjectId}_${form.trimestre}_${form.examType}`;
+        const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null;
+        if (savedDraft) {
+          try {
+            const parsedDraft = JSON.parse(savedDraft);
+            setGrades({ ...initG, ...parsedDraft });
+            setHasRestoredDraft(true);
+          } catch {
+            setGrades(initG);
+          }
+        } else {
+          setGrades(initG);
+          setHasRestoredDraft(false);
+        }
       }
     } catch {
       toast.error('Erreur lors du chargement des élèves.');
@@ -107,10 +123,20 @@ export default function GradesPage() {
   useEffect(() => { loadStudents(); }, [loadStudents]);
 
   const handleGradeChange = (studentId: string, field: 'score' | 'comment', value: string) => {
-    setGrades(prev => ({
-      ...prev,
-      [studentId]: { ...prev[studentId], [field]: value }
-    }));
+    setGrades(prev => {
+      const updated = {
+        ...prev,
+        [studentId]: { ...prev[studentId], [field]: value }
+      };
+      // Sauvegarde instantanée en cache local pour éviter toute perte sur réseau instable
+      if (typeof window !== 'undefined' && form.classroomId && form.subjectId) {
+        const draftKey = `draft_grades_${form.classroomId}_${form.subjectId}_${form.trimestre}_${form.examType}`;
+        try {
+          localStorage.setItem(draftKey, JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
   };
 
   const handleSave = async () => {
@@ -146,6 +172,14 @@ export default function GradesPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur d\'enregistrement');
+      
+      // Suppression du brouillon local après validation serveur réussie
+      if (typeof window !== 'undefined') {
+        const draftKey = `draft_grades_${form.classroomId}_${form.subjectId}_${form.trimestre}_${form.examType}`;
+        localStorage.removeItem(draftKey);
+        setHasRestoredDraft(false);
+      }
+
       toast.success(`${data.count} notes enregistrées avec succès.`);
     } catch (e: any) {
       toast.error(e.message);
@@ -297,6 +331,11 @@ export default function GradesPage() {
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <StatusBadge tone="success" dot>{enteredGrades} saisie{enteredGrades > 1 ? 's' : ''}</StatusBadge>
                 <StatusBadge tone={missingGrades > 0 ? 'warning' : 'success'} dot>{missingGrades} restante{missingGrades > 1 ? 's' : ''}</StatusBadge>
+                {hasRestoredDraft && (
+                  <span className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
+                    💾 Brouillon local restauré
+                  </span>
+                )}
                 <span className="text-[11px] text-slate-500 font-medium ml-1 hidden sm:inline-flex items-center gap-1">
                   ⌨️ Touche Entrée ou ↑/↓ pour passer rapidement d'un apprenant à l'autre
                 </span>

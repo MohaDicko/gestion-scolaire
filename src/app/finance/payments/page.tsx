@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Search, Wallet, CreditCard, DollarSign, 
     CheckCircle2, AlertCircle, Loader2, ArrowRight,
-    Printer, History, User, Landmark, FileText
+    Printer, History, User, Landmark, FileText, Share2, Send
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { DIRECTOR_STAMP_BASE64 } from '@/lib/directorStampData';
@@ -203,6 +203,41 @@ export default function FinancePaymentsPage() {
         doc.save(`Recu_${student.lastName}_${payment.id.substring(0,4)}.pdf`);
     };
 
+    const shareReceiptWhatsApp = (payment: any, invoice: any, student: any) => {
+        const rawPhone = student?.parentPhone || '';
+        // Nettoyage pour indicatif international
+        let phone = rawPhone.replace(/[^0-9+]/g, '');
+        if (phone.startsWith('00')) phone = phone.replace(/^00/, '+');
+        if (!phone.startsWith('+') && phone.length === 8) {
+            phone = '+223' + phone; // Indicatif Mali par défaut
+        }
+
+        const amount = payment.amount ? Math.round(payment.amount).toLocaleString('fr-FR') : '0';
+        const receiptRef = `RCP-${(payment.id || '').substring(0, 8).toUpperCase()}`;
+        const dateStr = new Date(payment.paymentDate || Date.now()).toLocaleDateString('fr-FR');
+
+        const message = 
+            `*REÇU OFFICIEL DE PAIEMENT*\n\n` +
+            `🏛️ *Centre de Formation Professionnelle (CFP-PAS)*\n` +
+            `🧾 *Reçu N° :* ${receiptRef}\n` +
+            `👤 *Apprenant :* ${student.firstName} ${student.lastName}\n` +
+            `🎓 *Matricule :* ${student.studentNumber}\n` +
+            `📄 *Objet :* ${invoice.title || 'Frais de scolarité'}\n` +
+            `💰 *Montant encaissé :* *${amount} FCFA*\n` +
+            `💳 *Mode :* ${payment.method || 'ESPECES'}\n` +
+            `📅 *Date :* ${dateStr}\n\n` +
+            `✅ Ce message certifie la bonne réception du règlement.\n` +
+            `_CFP-PAS Gao — Excellence Agro-Pastorale_`;
+
+        const encoded = encodeURIComponent(message);
+        const url = phone.length >= 8 
+            ? `https://wa.me/${phone.replace('+', '')}?text=${encoded}`
+            : `https://api.whatsapp.com/send?text=${encoded}`;
+
+        window.open(url, '_blank');
+        toast.success('Ouverture de WhatsApp avec la quittance officielle...');
+    };
+
     const selectStudent = async (student: any) => {
         setSelectedStudent(student);
         setIsLoading(true);
@@ -397,19 +432,34 @@ export default function FinancePaymentsPage() {
                                                                      </button>
                                                                  )}
                                                                  {invoice.status !== 'UNPAID' && (
-                                                                     <button 
-                                                                         onClick={async () => {
-                                                                             const res = await fetch(`/api/finance/payments?invoiceId=${invoice.id}`);
-                                                                             const payments = await res.json();
-                                                                             if (payments.length > 0) {
-                                                                                 generateReceipt(payments[0], invoice, selectedStudent);
-                                                                             }
-                                                                         }}
-                                                                         className="text-slate-500 hover:text-slate-800 font-bold text-xs flex items-center gap-1"
-                                                                     >
-                                                                         <Printer size={14} /> Reçu
-                                                                     </button>
-                                                                 )}
+                                                                      <div className="flex items-center gap-1.5">
+                                                                          <button 
+                                                                              onClick={async () => {
+                                                                                  const res = await fetch(`/api/finance/payments?invoiceId=${invoice.id}`);
+                                                                                  const payments = await res.json();
+                                                                                  if (payments.length > 0) {
+                                                                                      generateReceipt(payments[0], invoice, selectedStudent);
+                                                                                  }
+                                                                              }}
+                                                                              className="text-slate-600 hover:text-slate-900 font-bold text-xs flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors"
+                                                                          >
+                                                                              <Printer size={13} /> Reçu
+                                                                          </button>
+                                                                          <button 
+                                                                              onClick={async () => {
+                                                                                  const res = await fetch(`/api/finance/payments?invoiceId=${invoice.id}`);
+                                                                                  const payments = await res.json();
+                                                                                  if (payments.length > 0) {
+                                                                                      shareReceiptWhatsApp(payments[0], invoice, selectedStudent);
+                                                                                  }
+                                                                              }}
+                                                                              className="text-emerald-700 hover:text-emerald-800 font-bold text-xs flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded-lg transition-colors"
+                                                                              title="Partager la quittance officielle sur WhatsApp"
+                                                                          >
+                                                                              <Share2 size={13} /> WhatsApp
+                                                                          </button>
+                                                                      </div>
+                                                                  )}
                                                             </div>
                                                         </td>
                                                     </tr>

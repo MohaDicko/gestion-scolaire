@@ -12,52 +12,83 @@ export async function GET(request: Request) {
   }
 
   const tid = session.tenantId;
+  const url = new URL(request.url);
+  const limit = parseInt(url.searchParams.get('limit') || '500', 10);
+  const wantSummary = url.searchParams.get('summary') === 'true';
 
   try {
-    // We want to fetch all financial movements:
-    // 1. Payments (Revenue)
-    // 2. Expenses (Cost)
-    // 3. Payslips (Cost - Salary)
+    // 1. Calcul des totaux globaux exacts via agrégations SQL directes (_sum)
+    const [sumPayments, sumExpenses, sumPayslips] = await Promise.all([
+      prisma.payment.aggregate({
+        where: { tenantId: tid },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      prisma.expense.aggregate({
+        where: { tenantId: tid },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      prisma.payslip.aggregate({
+        where: { tenantId: tid, status: 'FINALIZED' },
+        _sum: { netSalary: true },
+        _count: { id: true },
+      }),
+    ]);
 
+    const totalRevenue = sumPayments._sum.amount || 0;
+    const totalExpensesDirect = sumExpenses._sum.amount || 0;
+    const totalSalaries = sumPayslips._sum.netSalary || 0;
+    const totalExpense = totalExpensesDirect + totalSalaries;
+    const netBalance = totalRevenue - totalExpense;
+
+    // 2. Récupération des mouvements comptables
     const [payments, expenses, payslips] = await Promise.all([
       prisma.payment.findMany({
         where: { tenantId: tid },
-        include: { invoice: { select: { student: { select: { firstName: true, lastName: true } } } } },
+        include: {
+          invoice: {
+            select: {
+              invoiceNumber: true,
+              student: { select: { firstName: true, lastName: true, studentNumber: true } }
+            }
+          }
+        },
         orderBy: { paymentDate: 'desc' },
-        take: 50
+        take: limit
       }),
       prisma.expense.findMany({
         where: { tenantId: tid },
         orderBy: { date: 'desc' },
-        take: 50
+        take: limit
       }),
       prisma.payslip.findMany({
         where: { tenantId: tid, status: 'FINALIZED' },
-        include: { employee: { select: { firstName: true, lastName: true } } },
+        include: { employee: { select: { firstName: true, lastName: true, employeeNumber: true } } },
         orderBy: { updatedAt: 'desc' },
-        take: 50
+        take: limit
       })
     ]);
 
-    // Consolidate into a unified ledger format
+    // 3. Consolidation unifiée au format SYSCOHADA
     const ledger = [
       ...payments.map(p => ({
         id: p.id,
         date: p.paymentDate,
         type: 'REVENUE',
-        category: 'Scolarité',
-        description: `Paiement Reçu - ${p.invoice.student.firstName} ${p.invoice.student.lastName}`,
-        amount: p.amount,
-        method: p.method,
-        reference: p.reference
+        category: 'Scolarité (Cpt 706)',
+        description: `Règlement Scolarité - ${p.invoice?.student?.firstName || ''} ${p.invoice?.student?.lastName || ''} (${p.invoice?.student?.studentNumber || ''})`,
+        amount: Math.round(p.amount),
+        method: p.method || 'ESPECES',
+        reference: p.reference || p.invoice?.invoiceNumber || null
       })),
       ...expenses.map(e => ({
         id: e.id,
         date: e.date,
         type: 'EXPENSE',
-        category: e.category,
+        category: e.category || 'Charges Générales',
         description: e.description,
-        amount: -e.amount,
+        amount: -Math.round(e.amount),
         method: 'DIVERS',
         reference: null
       })),
@@ -65,17 +96,32 @@ export async function GET(request: Request) {
         id: p.id,
         date: p.updatedAt,
         type: 'EXPENSE',
-        category: 'Salaires',
-        description: `Salaire Net - ${p.employee.firstName} ${p.employee.lastName}`,
-        amount: -p.netSalary,
+        category: 'Rémunérations (Cpt 641/66)',
+        description: `Honoraires / Salaire Net - ${p.employee?.firstName || ''} ${p.employee?.lastName || ''} (${p.employee?.employeeNumber || ''})`,
+        amount: -Math.round(p.netSalary),
         method: 'VIREMENT',
         reference: null
       }))
     ];
 
-    // Sort by date descending
+    // Tri par date décroissante
     ledger.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+    if (wantSummary) {
+      return NextResponse.json({
+        summary: {
+          totalRevenue,
+          totalExpense,
+          netBalance,
+          countPayments: sumPayments._count.id,
+          countExpenses: sumExpenses._count.id,
+          countPayslips: sumPayslips._count.id,
+        },
+        items: ledger,
+      });
+    }
+
+    // Réponse directe en Array pour rétrocompatibilité totale
     return NextResponse.json(ledger);
   } catch (error) {
     console.error('[LEDGER GET]', error);
