@@ -27,6 +27,8 @@ function Run-Check {
   )
   Write-Step $Name
   $start = Get-Date
+  $prevEA = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
   try {
     & $Block
     $elapsed = [math]::Round(((Get-Date) - $start).TotalSeconds, 1)
@@ -41,6 +43,8 @@ function Run-Check {
       Write-Banner "PUSH BLOQUE - Corrigez les erreurs ci-dessus avant de pusher"
       exit 1
     }
+  } finally {
+    $ErrorActionPreference = $prevEA
   }
 }
 
@@ -62,15 +66,8 @@ Run-Check "ESLint - Qualite du code" {
 
 # -- 3. Tests unitaires Vitest --------------------------------
 Run-Check "Vitest - Tests unitaires et integration" {
-  $previousErrorActionPreference = $ErrorActionPreference
-  $ErrorActionPreference = "Continue"
-  try {
-    $out = npm run test 2>&1
-    $exitCode = $LASTEXITCODE
-  } finally {
-    $ErrorActionPreference = $previousErrorActionPreference
-  }
-  if ($exitCode -ne 0) { throw ($out -join [Environment]::NewLine) }
+  $out = npm run test 2>&1
+  if ($LASTEXITCODE -ne 0) { throw ($out -join [Environment]::NewLine) }
 } -Required $true
 
 # -- 4. Prisma generate ---------------------------------------
@@ -84,7 +81,7 @@ Run-Check "Securite - Secrets exposes dans le code" {
   $patterns = @('sk_live_', 'PRIVATE_KEY\s*=\s*[^$]')
   $srcFiles = Get-ChildItem "$rootDir/src" -Recurse -Include "*.ts","*.tsx" | Where-Object { $_.Name -notmatch "\.test\." }
   foreach ($file in $srcFiles) {
-    $content = Get-Content $file.FullName -Raw
+    $content = [System.IO.File]::ReadAllText($file.FullName)
     foreach ($pat in $patterns) {
       if ($content -match $pat) {
         Write-Warn "Possible secret dans : $($file.Name)"
