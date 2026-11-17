@@ -17,6 +17,7 @@ import {
 import { CommandPalette } from './ui/CommandPalette';
 import { TourGuide } from './ui/TourGuide';
 import { getGradingPolicyBySchoolType } from '@/lib/gradingPolicy';
+import PWAInstallPrompt from './PWAInstallPrompt';
 
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -178,6 +179,11 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             for (const k of keys) caches.delete(k);
           }).catch(() => {});
         }
+      } else {
+        // Enregistrement automatique du Service Worker en production
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.warn('[PWA] Service worker registration failed:', err);
+        });
       }
     }
 
@@ -368,6 +374,9 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           </div>
         ))}
       </nav>
+
+      {/* PWA Install Promotion */}
+      <PWAInstallPrompt variant="sidebar" />
 
       {/* User Footer */}
       <div className="p-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90">

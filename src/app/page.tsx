@@ -8,6 +8,7 @@ import {
   ArrowRight, ShieldCheck, CheckCircle2, AlertCircle,
   HelpCircle, Landmark, Building2, Phone, Sparkles
 } from 'lucide-react';
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -108,16 +109,19 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-4 text-xs text-slate-300">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              Système Opérationnel
-            </span>
-            <span className="text-slate-600">•</span>
-            <span className="text-slate-400 flex items-center gap-1">
-              <ShieldCheck size={14} className="text-blue-400" />
-              Connexion Sécurisée TLS 1.3
-            </span>
+          <div className="flex items-center gap-3">
+            <PWAInstallPrompt variant="pill" />
+            <div className="hidden sm:flex items-center gap-4 text-xs text-slate-300">
+              <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Système Opérationnel
+              </span>
+              <span className="text-slate-600">•</span>
+              <span className="text-slate-400 flex items-center gap-1">
+                <ShieldCheck size={14} className="text-blue-400" />
+                Connexion Sécurisée TLS 1.3
+              </span>
+            </div>
           </div>
         </div>
       </header>
