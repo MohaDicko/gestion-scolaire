@@ -14,7 +14,7 @@ const buttonVariants = cva(
         ghost:       "hover:bg-muted hover:text-foreground active:scale-95",
         destructive: "bg-destructive/10 text-destructive hover:bg-destructive/20 hover:shadow-md shadow-destructive/10 active:scale-95",
         link:        "text-primary underline-offset-4 hover:underline",
-        safir:       "bg-sky-500 hover:bg-sky-400 text-white shadow-lg shadow-sky-500/20 active:scale-95",
+        safir:       "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 active:scale-95",
       },
       size: {
         default:   "h-8 px-3 py-1.5",

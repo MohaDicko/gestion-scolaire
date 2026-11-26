@@ -311,7 +311,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
       {/* School Identity Header CFP-PAS Gao */}
       <div className="p-4 border-b border-slate-200/80 dark:border-[#1E3352] bg-white dark:bg-[#0D1829]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0C8EE9] to-[#0259A1] text-white flex items-center justify-center font-bold shrink-0 shadow-md shadow-sky-500/20">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center font-bold shrink-0 shadow-md shadow-emerald-600/20">
             <Sprout size={20} strokeWidth={2.2} />
           </div>
           <div className="min-w-0 flex-1">
@@ -325,7 +325,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50">
                 Gao • Mali
               </span>
-              <span className="text-[9px] font-bold text-sky-600 dark:text-sky-400">
+              <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
                 /20
               </span>
             </div>
@@ -350,16 +350,16 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                     onClick={() => setSidebarOpen(false)}
                     className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                       active
-                        ? 'bg-sky-500/10 text-[#0C8EE9] dark:bg-sky-500/15 dark:text-sky-300 font-bold border-l-2 border-[#0C8EE9] shadow-xs'
+                        ? 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 font-bold border-l-2 border-emerald-600 shadow-xs'
                         : 'text-[#5A7088] dark:text-slate-400 hover:text-[#051638] dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-[#132238]/60'
                     }`}
                   >
-                    <span className={`shrink-0 ${active ? 'text-[#0C8EE9] dark:text-sky-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                    <span className={`shrink-0 ${active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
                       {item.icon}
                     </span>
                     <span className="flex-1 truncate">{item.label}</span>
                     {item.badge && (
-                      <span className="bg-[#0C8EE9] text-white rounded-full text-[10px] font-bold px-1.5 py-0.2">
+                      <span className="bg-emerald-600 text-white rounded-full text-[10px] font-bold px-1.5 py-0.2">
                         {item.badge}
                       </span>
                     )}
@@ -690,7 +690,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           href="/dashboard"
           className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold transition-colors ${
             isActive('/dashboard')
-              ? 'text-[#0C8EE9] dark:text-sky-400'
+              ? 'text-emerald-600 dark:text-emerald-400'
               : 'text-[#5A7088] dark:text-slate-400 hover:text-[#051638]'
           }`}
         >
@@ -702,7 +702,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           href="/grades"
           className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold transition-colors ${
             isActive('/grades')
-              ? 'text-[#0C8EE9] dark:text-sky-400'
+              ? 'text-emerald-600 dark:text-emerald-400'
               : 'text-[#5A7088] dark:text-slate-400 hover:text-[#051638]'
           }`}
         >
@@ -714,7 +714,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           href="/timetable"
           className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold transition-colors ${
             isActive('/timetable')
-              ? 'text-[#0C8EE9] dark:text-sky-400'
+              ? 'text-emerald-600 dark:text-emerald-400'
               : 'text-[#5A7088] dark:text-slate-400 hover:text-[#051638]'
           }`}
         >
@@ -726,7 +726,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
           href="/finance/payments"
           className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold transition-colors ${
             isActive('/finance/payments')
-              ? 'text-[#0C8EE9] dark:text-sky-400'
+              ? 'text-emerald-600 dark:text-emerald-400'
               : 'text-[#5A7088] dark:text-slate-400 hover:text-[#051638]'
           }`}
         >

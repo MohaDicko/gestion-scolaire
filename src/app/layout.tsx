@@ -3,7 +3,7 @@ import { ToastProvider } from "@/components/Toast";
 import { Metadata, Viewport } from "next";
 
 export const viewport: Viewport = {
-  themeColor: "#070F1E",
+  themeColor: "#047857",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -47,7 +47,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased font-sans text-[#051638] bg-[#F4F7FB] dark:bg-[#070F1E] dark:text-[#F1F5F9] selection:bg-sky-500 selection:text-white" suppressHydrationWarning>
+      <body className="antialiased font-sans text-[#051638] bg-[#F4F7FB] dark:bg-[#070F1E] dark:text-[#F1F5F9] selection:bg-emerald-600 selection:text-white" suppressHydrationWarning>
         <ToastProvider>
           {children}
         </ToastProvider>

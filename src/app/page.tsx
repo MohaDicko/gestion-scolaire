@@ -67,9 +67,9 @@ export default function LoginPage() {
   if (!mounted) return null;
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col justify-between selection:bg-sky-500 selection:text-white font-sans overflow-x-hidden bg-[#F4F7FB] dark:bg-[#070F1E]">
+    <div className="relative min-h-screen w-full flex flex-col justify-between selection:bg-emerald-600 selection:text-white font-sans overflow-x-hidden bg-[#F4F7FB] dark:bg-[#070F1E]">
       
-      {/* ── IMAGE D'ARRIÈRE-PLAN CAMPUS CFP-PAS + OVERLAY TANDEM SOMBRE ── */}
+      {/* ── IMAGE D'ARRIÈRE-PLAN CAMPUS CFP-PAS + OVERLAY VERT SAHEL SOMBRE ── */}
       <div 
         aria-hidden="true" 
         className="absolute inset-0 z-0 bg-[#070F1E]"
@@ -80,16 +80,16 @@ export default function LoginPage() {
             backgroundImage: `url('/images/school-campus.jpg')`,
           }}
         />
-        {/* Voile dégradé Tandem Sapphire / Obsidian */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#070F1E] via-[#070F1E]/90 to-[#0B1E38]/85 backdrop-blur-xs" />
-        <div className="absolute inset-0 bg-[radial-gradient(#1e3352_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
+        {/* Voile dégradé Tandem Émeraude / Forêt Agro-Pastorale */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#070F1E] via-[#070F1E]/90 to-[#062c1e]/85 backdrop-blur-xs" />
+        <div className="absolute inset-0 bg-[radial-gradient(#064e3b_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
       </div>
 
       {/* ── BANDEAU SUPÉRIEUR INSTITUTIONNEL ── */}
       <header className="relative z-10 w-full border-b border-white/10 bg-[#070F1E]/80 backdrop-blur-md px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0C8EE9] to-[#0259A1] text-white flex items-center justify-center shadow-lg shadow-sky-500/20 font-bold shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20 font-bold shrink-0">
               <Sprout size={22} strokeWidth={2.2} />
             </div>
             <div>
@@ -112,7 +112,7 @@ export default function LoginPage() {
               </span>
               <span className="text-slate-600">•</span>
               <span className="text-slate-300 flex items-center gap-1">
-                <ShieldCheck size={14} className="text-sky-400" />
+                <ShieldCheck size={14} className="text-emerald-400" />
                 Sécurisé TLS 1.3
               </span>
             </div>
@@ -195,7 +195,7 @@ export default function LoginPage() {
               
               {/* En-tête formulaire */}
               <div className="mb-6 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-sky-50 dark:bg-sky-950/60 text-[#0C8EE9] dark:text-sky-300 text-[11px] font-bold uppercase tracking-wider mb-2 border border-sky-200/60 dark:border-sky-800/50">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold uppercase tracking-wider mb-2 border border-emerald-200/60 dark:border-emerald-800/50">
                   Direction du CFP-PAS
                 </div>
                 <h2 className="text-xl font-black text-[#051638] dark:text-white tracking-tight">
@@ -231,7 +231,7 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="nom@cfppas-gao.ml"
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#132238] border border-slate-200 dark:border-[#1E3352] rounded-xl text-sm text-[#051638] dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0C8EE9] focus:border-transparent transition"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#132238] border border-slate-200 dark:border-[#1E3352] rounded-xl text-sm text-[#051638] dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent transition"
                     />
                   </div>
                 </div>
@@ -242,7 +242,7 @@ export default function LoginPage() {
                     <label htmlFor="login-password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                       Mot de Passe
                     </label>
-                    <a href="mailto:support@cfppas-gao.ml" className="text-[11px] text-[#0C8EE9] hover:underline transition">
+                    <a href="mailto:support@cfppas-gao.ml" className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline transition">
                       Aide connexion ?
                     </a>
                   </div>
@@ -256,7 +256,7 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full pl-10 pr-11 py-2.5 bg-slate-50 dark:bg-[#132238] border border-slate-200 dark:border-[#1E3352] rounded-xl text-sm text-[#051638] dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0C8EE9] focus:border-transparent transition"
+                      className="w-full pl-10 pr-11 py-2.5 bg-slate-50 dark:bg-[#132238] border border-slate-200 dark:border-[#1E3352] rounded-xl text-sm text-[#051638] dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent transition"
                     />
                     <button
                       type="button"
@@ -276,7 +276,7 @@ export default function LoginPage() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded bg-slate-100 dark:bg-[#132238] border-slate-300 dark:border-slate-700 text-[#0C8EE9] focus:ring-[#0C8EE9]"
+                    className="w-4 h-4 rounded bg-slate-100 dark:bg-[#132238] border-slate-300 dark:border-slate-700 text-emerald-600 focus:ring-emerald-600"
                   />
                   <label htmlFor="remember-me" className="text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
                     Mémoriser la session sur cet appareil
@@ -287,7 +287,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 px-4 bg-[#0C8EE9] hover:bg-[#0170C7] active:scale-98 text-white rounded-xl font-bold text-sm shadow-md shadow-sky-500/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl font-bold text-sm shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -315,7 +315,7 @@ export default function LoginPage() {
                     className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-[#132238] dark:hover:bg-[#1E3352] border border-slate-200 dark:border-[#1E3352] rounded-lg text-[#051638] dark:text-slate-200 text-left transition flex items-center justify-between group"
                   >
                     <span className="font-medium">Directeur</span>
-                    <span className="text-[10px] text-sky-500 group-hover:translate-x-0.5 transition-transform">→</span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">→</span>
                   </button>
                   <button
                     type="button"
@@ -323,7 +323,7 @@ export default function LoginPage() {
                     className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-[#132238] dark:hover:bg-[#1E3352] border border-slate-200 dark:border-[#1E3352] rounded-lg text-[#051638] dark:text-slate-200 text-left transition flex items-center justify-between group"
                   >
                     <span className="font-medium">Comptabilité</span>
-                    <span className="text-[10px] text-sky-500 group-hover:translate-x-0.5 transition-transform">→</span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">→</span>
                   </button>
                   <button
                     type="button"
@@ -331,7 +331,7 @@ export default function LoginPage() {
                     className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-[#132238] dark:hover:bg-[#1E3352] border border-slate-200 dark:border-[#1E3352] rounded-lg text-[#051638] dark:text-slate-200 text-left transition flex items-center justify-between group"
                   >
                     <span className="font-medium">Formateur</span>
-                    <span className="text-[10px] text-sky-500 group-hover:translate-x-0.5 transition-transform">→</span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">→</span>
                   </button>
                   <button
                     type="button"
@@ -339,7 +339,7 @@ export default function LoginPage() {
                     className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-[#132238] dark:hover:bg-[#1E3352] border border-slate-200 dark:border-[#1E3352] rounded-lg text-[#051638] dark:text-slate-200 text-left transition flex items-center justify-between group"
                   >
                     <span className="font-medium">Super Admin</span>
-                    <span className="text-[10px] text-sky-500 group-hover:translate-x-0.5 transition-transform">→</span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">→</span>
                   </button>
                 </div>
               </div>
@@ -359,7 +359,7 @@ export default function LoginPage() {
           <div className="flex items-center gap-4 text-slate-400">
             <span>Quartier Château, Route de Bourem</span>
             <span>•</span>
-            <span className="flex items-center gap-1 text-sky-400">
+            <span className="flex items-center gap-1 text-emerald-400">
               <Phone size={12} />
               +223 21 82 07 62
             </span>

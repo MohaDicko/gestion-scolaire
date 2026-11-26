@@ -111,9 +111,9 @@ export default function PWAInstallPrompt({ variant = 'sidebar', className = '' }
   if (variant === 'sidebar') {
     return (
       <>
-        <div className={`p-2.5 mx-2 my-2 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50/50 dark:from-slate-800/80 dark:to-slate-800/40 border border-blue-200/60 dark:border-blue-900/40 ${className}`}>
+        <div className={`p-2.5 mx-2 my-2 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50/50 dark:from-emerald-950/40 dark:to-slate-800/40 border border-emerald-200/60 dark:border-emerald-900/40 ${className}`}>
           <div className="flex items-start gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
               <Download size={16} strokeWidth={2.2} />
             </div>
             <div className="flex-1 min-w-0">
@@ -126,7 +126,7 @@ export default function PWAInstallPrompt({ variant = 'sidebar', className = '' }
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="mt-2 w-full py-1.5 px-2 rounded-lg text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-98 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                className="mt-2 w-full py-1.5 px-2 rounded-lg text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-98 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Smartphone size={13} />
                 <span>Installer sur l'appareil</span>
@@ -147,7 +147,7 @@ export default function PWAInstallPrompt({ variant = 'sidebar', className = '' }
     <>
       <div className={`fixed bottom-4 left-4 right-4 z-40 p-3 rounded-2xl bg-slate-900/95 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 ${className}`}>
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/30">
             <Smartphone size={18} />
           </div>
           <div className="min-w-0">
@@ -159,7 +159,7 @@ export default function PWAInstallPrompt({ variant = 'sidebar', className = '' }
           <button
             type="button"
             onClick={handleInstallClick}
-            className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition-all shadow-xs"
+            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white transition-all shadow-xs"
           >
             Installer
           </button>
@@ -186,7 +186,7 @@ function IOSInstallModal({ onClose }: { onClose: () => void }) {
       >
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center">
               <Smartphone size={16} />
             </div>
             <span className="text-xs font-bold">Installer sur iPhone / iPad</span>
@@ -201,16 +201,16 @@ function IOSInstallModal({ onClose }: { onClose: () => void }) {
 
         <div className="py-4 space-y-3 text-xs text-slate-600 dark:text-slate-300">
           <div className="flex items-start gap-2.5">
-            <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+            <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
               1
             </div>
             <div>
-              Dans Safari, appuyez sur le bouton <strong>Partager</strong> <Share size={12} className="inline mx-1 text-blue-500" /> en bas de votre écran.
+              Dans Safari, appuyez sur le bouton <strong>Partager</strong> <Share size={12} className="inline mx-1 text-emerald-600" /> en bas de votre écran.
             </div>
           </div>
 
           <div className="flex items-start gap-2.5">
-            <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+            <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
               2
             </div>
             <div>
@@ -219,7 +219,7 @@ function IOSInstallModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="flex items-start gap-2.5">
-            <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+            <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
               3
             </div>
             <div>
@@ -230,7 +230,7 @@ function IOSInstallModal({ onClose }: { onClose: () => void }) {
 
         <button
           onClick={onClose}
-          className="w-full py-2 rounded-xl bg-slate-900 dark:bg-blue-600 text-white font-bold text-xs hover:bg-slate-800 transition-colors"
+          className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors"
         >
           J'ai compris
         </button>
