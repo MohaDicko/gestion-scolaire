@@ -103,13 +103,13 @@ export default function FinancePaymentsPage() {
 
         // --- Infos de l'École ---
         doc.setTextColor(15, 23, 42);
-        doc.setFontSize(12);
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text('SCHOOLERP PRO ACADEMY', margin, 40);
+        doc.text('CENTRE DE FORMATION PROFESSIONNELLE AGRO-PASTORALE (CFP-PAS)', margin, 40);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 116, 139);
-        doc.text('Bamako, Mali | Tel: +223 00 00 00 00 | NIF: 000000', margin, 45);
+        doc.text('Quartier Château, Route de Bourem, Gao (Mali) | Tel: +223 21 82 07 62 | B.P. 226', margin, 45);
 
         // --- Infos de l'Élève (Encadré discret) ---
         let y = 55;
@@ -198,7 +198,7 @@ export default function FinancePaymentsPage() {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(148, 163, 184);
         doc.text('Ce reçu est une preuve de paiement. Conservez-le précieusement.', width / 2, 190, { align: 'center' });
-        doc.text(`Document généré électroniquement — ${new Date().toLocaleString('fr-FR')} — SchoolERP`, width / 2, 195, { align: 'center' });
+        doc.text(`Document certifié CFP-PAS Gao — ${new Date().toLocaleString('fr-FR')}`, width / 2, 195, { align: 'center' });
 
         doc.save(`Recu_${student.lastName}_${payment.id.substring(0,4)}.pdf`);
     };

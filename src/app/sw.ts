@@ -13,8 +13,8 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-// Configuration du Background Sync pour les données saisies hors-ligne
-const bgSyncPlugin = new BackgroundSyncPlugin('schoolerp-offline-queue', {
+// Configuration du Background Sync pour les données saisies hors-ligne au CFP-PAS de Gao
+const bgSyncPlugin = new BackgroundSyncPlugin('cfppas-offline-queue', {
   maxRetentionTime: 24 * 60, // 24 heures pour réessayer
 });
 

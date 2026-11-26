@@ -296,7 +296,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                 {
                   title: 'Super Administration',
                   items: [
-                    { label: 'Gestion Écoles', href: '/admin/schools', icon: <Landmark size={16} /> },
+                    { label: 'Configuration CFP-PAS', href: '/settings', icon: <Building2 size={16} /> },
                     { label: 'Santé Système', href: '/admin/system-health', icon: <Activity size={16} /> },
                     { label: 'Stress Test', href: '/admin/stress-test', icon: <Zap size={16} /> },
                   ],
@@ -305,32 +305,28 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             : []),
         ];
 
-  const SchoolBrandIcon =
-    activePolicy.profileKey === 'AGRO_TECHNIQUE'
-      ? Sprout
-      : activePolicy.profileKey === 'SANTE_SUPERIEUR'
-      ? Stethoscope
-      : GraduationCap;
-
   /* ── SIDEBAR CONTENT ── */
   const SidebarContent = () => (
-    <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800/90">
-      {/* School Identity Header */}
-      <div className="p-4 border-b border-slate-200/80 dark:border-slate-800/80">
+    <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-[#0D1829] border-r border-slate-200/80 dark:border-[#1E3352]">
+      {/* School Identity Header CFP-PAS Gao */}
+      <div className="p-4 border-b border-slate-200/80 dark:border-[#1E3352] bg-white dark:bg-[#0D1829]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
-            <SchoolBrandIcon size={19} strokeWidth={2.1} />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0C8EE9] to-[#0259A1] text-white flex items-center justify-center font-bold shrink-0 shadow-md shadow-sky-500/20">
+            <Sprout size={20} strokeWidth={2.2} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-extrabold text-slate-900 dark:text-white truncate leading-tight">
-              {branding?.name || user?.schoolName || 'CFP-PAS de Gao'}
+            <div className="text-xs font-black text-[#051638] dark:text-white truncate tracking-tight uppercase">
+              CFP-PAS de Gao
+            </div>
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate font-medium">
+              Agro-Pastorale & Élevage
             </div>
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/50">
-                /{activePolicy.defaultScale}
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50">
+                Gao • Mali
               </span>
-              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                {activePolicy.shortLabel}
+              <span className="text-[9px] font-bold text-sky-600 dark:text-sky-400">
+                /20
               </span>
             </div>
           </div>
@@ -352,18 +348,18 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                     key={item.href}
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium transition-all ${
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                       active
-                        ? 'bg-slate-900 text-white dark:bg-blue-600 dark:text-white font-semibold shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+                        ? 'bg-sky-500/10 text-[#0C8EE9] dark:bg-sky-500/15 dark:text-sky-300 font-bold border-l-2 border-[#0C8EE9] shadow-xs'
+                        : 'text-[#5A7088] dark:text-slate-400 hover:text-[#051638] dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-[#132238]/60'
                     }`}
                   >
-                    <span className={`shrink-0 ${active ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`}>
+                    <span className={`shrink-0 ${active ? 'text-[#0C8EE9] dark:text-sky-400' : 'text-slate-400 dark:text-slate-500'}`}>
                       {item.icon}
                     </span>
                     <span className="flex-1 truncate">{item.label}</span>
                     {item.badge && (
-                      <span className="bg-blue-600 text-white rounded-full text-[10px] font-bold px-1.5 py-0.2">
+                      <span className="bg-[#0C8EE9] text-white rounded-full text-[10px] font-bold px-1.5 py-0.2">
                         {item.badge}
                       </span>
                     )}
@@ -429,7 +425,7 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-              className="w-72 max-w-[82%] h-full bg-white dark:bg-slate-900 shadow-2xl"
+              className="w-72 max-w-[82%] h-full bg-white dark:bg-[#0D1829] border-r border-slate-200/80 dark:border-[#1E3352] shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
               <SidebarContent />
@@ -450,15 +446,15 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
         )}
 
         {/* ── TOP HEADER BAR ── */}
-        <header className="h-14 px-4 sm:px-6 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-3 shrink-0 z-30">
+        <header className="h-14 px-4 sm:px-6 bg-white/90 dark:bg-[#0D1829]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-[#1E3352] flex items-center justify-between gap-3 shrink-0 z-30">
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-1.5 rounded-lg text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="lg:hidden p-2 rounded-lg text-[#051638] dark:text-slate-200 border border-slate-200 dark:border-[#1E3352] hover:bg-slate-100 dark:hover:bg-[#132238] cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
               aria-label="Ouvrir le menu de navigation"
               title="Ouvrir le menu"
             >
-              <Menu size={18} strokeWidth={1.9} />
+              <Menu size={18} strokeWidth={2.1} />
             </button>
 
             <div className="hidden sm:flex items-center gap-2 min-w-0">
@@ -486,12 +482,12 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
                 </span>
               ) : null}
 
-              <div className="hidden xl:flex items-center gap-2 ml-3 pl-3 border-l border-slate-200 dark:border-slate-800">
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <div className="hidden xl:flex items-center gap-2 ml-3 pl-3 border-l border-slate-200 dark:border-[#1E3352]">
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-[#051638] dark:bg-[#132238] dark:text-slate-300">
                   2025-2026
                 </span>
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/40">
-                  {activePolicy.badgeText}
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40">
+                  CFP-PAS Gao
                 </span>
               </div>
             </div>
@@ -661,8 +657,8 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             </div>
           )}
 
-          {/* Main Page Children */}
-          <div className="p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-180px)]">
+          {/* Main Page Children (avec padding bas mobile pour ne pas être masqué par la barre d'accès rapide) */}
+          <div className="p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 min-h-[calc(100vh-180px)]">
             <motion.div
               key={pathname}
               initial={{ opacity: 0, y: 4 }}
@@ -673,17 +669,80 @@ export default function AppLayout({ children, title, subtitle, actions, breadcru
             </motion.div>
           </div>
 
-          {/* Workspace Footer */}
-          <footer className="px-6 py-4 border-t border-slate-200/70 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/50 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+          {/* Workspace Footer Officiel CFP-PAS */}
+          <footer className="px-6 py-4 border-t border-slate-200/70 dark:border-[#1E3352] bg-white/50 dark:bg-[#070F1E]/50 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 mb-16 lg:mb-0">
             <p className="font-medium">
-              © {new Date().getFullYear()} {branding?.name || 'CFP-PAS de Gao'} — EduGestion ERP
+              © {new Date().getFullYear()} Centre de Formation Professionnelle Agro-Pastorale (CFP-PAS) • Gao, Mali
             </p>
             <span className="font-semibold text-slate-400">
-              {activePolicy.badgeText} • v2.5
+              Portail Officiel • Agro-Pastorale & Élevage
             </span>
           </footer>
         </div>
       </main>
+
+      {/* ── BARRE DE NAVIGATION MOBILE RAPIDE (Style Application Native Tandem / PWA) ── */}
+      <nav 
+        aria-label="Navigation mobile rapide"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0D1829]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-[#1E3352] px-2 py-1.5 flex items-center justify-around shadow-lg"
+      >
+        <Link
+          href="/dashboard"
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold transition-colors ${
+            isActive('/dashboard')
+              ? 'text-[#0C8EE9] dark:text-sky-400'
+              : 'text-[#5A7088] dark:text-slate-400 hover:text-[#051638]'
+          }`}
+        >
+          <LayoutDashboard size={18} strokeWidth={isActive('/dashboard') ? 2.3 : 1.9} />
+          <span>Accueil</span>
+        </Link>
+
+        <Link
+          href="/grades"
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold transition-colors ${
+            isActive('/grades')
+              ? 'text-[#0C8EE9] dark:text-sky-400'
+              : 'text-[#5A7088] dark:text-slate-400 hover:text-[#051638]'
+          }`}
+        >
+          <FileSpreadsheet size={18} strokeWidth={isActive('/grades') ? 2.3 : 1.9} />
+          <span>Notes</span>
+        </Link>
+
+        <Link
+          href="/timetable"
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold transition-colors ${
+            isActive('/timetable')
+              ? 'text-[#0C8EE9] dark:text-sky-400'
+              : 'text-[#5A7088] dark:text-slate-400 hover:text-[#051638]'
+          }`}
+        >
+          <CalendarDays size={18} strokeWidth={isActive('/timetable') ? 2.3 : 1.9} />
+          <span>Horaires</span>
+        </Link>
+
+        <Link
+          href="/finance/payments"
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold transition-colors ${
+            isActive('/finance/payments')
+              ? 'text-[#0C8EE9] dark:text-sky-400'
+              : 'text-[#5A7088] dark:text-slate-400 hover:text-[#051638]'
+          }`}
+        >
+          <ReceiptText size={18} strokeWidth={isActive('/finance/payments') ? 2.3 : 1.9} />
+          <span>Caisse</span>
+        </Link>
+
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold text-[#5A7088] dark:text-slate-400 hover:text-[#051638] cursor-pointer"
+        >
+          <Menu size={18} strokeWidth={1.9} />
+          <span>Menu</span>
+        </button>
+      </nav>
 
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
       <TourGuide />

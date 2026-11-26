@@ -155,15 +155,15 @@ export default function PortalPage() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                 <div style={{ display: 'flex', gap: '12px' }}>
                                     <MapPin size={16} color="#7a91b8" />
-                                    <div style={{ fontSize: '13px' }}>Bamako, Mali<br/><span style={{ color: '#4a5b7a' }}>Quartier du Fleuve</span></div>
+                                    <div style={{ fontSize: '13px' }}>Gao, Mali<br/><span style={{ color: '#4a5b7a' }}>Quartier Château, Route de Bourem</span></div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '12px' }}>
                                     <Phone size={16} color="#7a91b8" />
-                                    <div style={{ fontSize: '13px' }}>+223 00 00 00 00</div>
+                                    <div style={{ fontSize: '13px' }}>+223 21 82 07 62</div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '12px' }}>
                                     <Mail size={16} color="#7a91b8" />
-                                    <div style={{ fontSize: '13px' }}>contact@schoolerp.pro</div>
+                                    <div style={{ fontSize: '13px' }}>direction@cfppas-gao.ml</div>
                                 </div>
                             </div>
                             <button style={{ 

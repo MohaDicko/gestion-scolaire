@@ -10,8 +10,24 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-jakarta)', 'var(--font-inter)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        fiori: ['var(--font-jakarta)', 'var(--font-inter)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "sans-serif"
+        ],
+        fiori: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "sans-serif"
+        ],
       },
       colors: {
         border: 'var(--border)',
@@ -46,7 +62,21 @@ module.exports = {
         card: {
           DEFAULT: 'var(--bg-2)',
           foreground: 'var(--text)'
-        }
+        },
+        // Palette Safir / Tandem pour cohérence UI/UX
+        safir: {
+          50: "#f0f7ff",
+          100: "#e0effe",
+          200: "#bae0fd",
+          300: "#7cc7fc",
+          400: "#36abf7",
+          500: "#0c8ee9",
+          600: "#0170c7",
+          700: "#0259a1",
+          800: "#064b85",
+          900: "#0b3f6f",
+          950: "#07284a",
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -71,34 +101,13 @@ module.exports = {
         'accordion-up': {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' }
-        },
-        blob: {
-          "0%": {
-            transform: "translate(0px, 0px) scale(1)",
-          },
-          "33%": {
-            transform: "translate(30px, -50px) scale(1.1)",
-          },
-          "66%": {
-            transform: "translate(-20px, 20px) scale(0.9)",
-          },
-          "100%": {
-            transform: "translate(0px, 0px) scale(1)",
-          },
-        },
-        shimmer: {
-          "100%": {
-            transform: "translateX(100%)",
-          },
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-        blob: "blob 7s infinite",
-        shimmer: "shimmer 1.5s infinite",
+        'accordion-up': 'accordion-up 0.2s ease-out'
       }
     }
   },
-  plugins: [require("tailwindcss-animate")],
-};
+  plugins: [require("tailwindcss-animate")]
+}

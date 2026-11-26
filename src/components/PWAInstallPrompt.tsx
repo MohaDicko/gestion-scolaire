@@ -151,8 +151,8 @@ export default function PWAInstallPrompt({ variant = 'sidebar', className = '' }
             <Smartphone size={18} />
           </div>
           <div className="min-w-0">
-            <div className="text-xs font-bold truncate">Installer SchoolERP Pro</div>
-            <div className="text-[10px] text-slate-400 truncate">Rapide, fluide et disponible hors-ligne</div>
+            <div className="text-xs font-bold truncate">Installer CFP-PAS Gao</div>
+            <div className="text-[10px] text-slate-400 truncate">Application officielle • Mode hors-ligne</div>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">

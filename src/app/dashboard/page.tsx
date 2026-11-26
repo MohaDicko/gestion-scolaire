@@ -119,9 +119,9 @@ export default function DashboardPage() {
     fetchStats();
   }, [fetchStats, router]);
 
-  const isHealth = school?.type === 'SANTE' || (user?.schoolName && /sant|kouchner|esbk/i.test(user.schoolName));
-  const schoolDisplayName = school?.name || user?.schoolName || (isHealth ? 'École de Santé Bernard Kouchner (ESBK)' : 'CFP-PAS de Gao');
-  const activePolicy = getGradingPolicyBySchoolType(school?.type || (isHealth ? 'SANTE' : 'AGRO'), school?.gradingScale);
+  const isHealth = false;
+  const schoolDisplayName = 'Centre de Formation Professionnelle Agro-Pastorale (CFP-PAS) de Gao';
+  const activePolicy = getGradingPolicyBySchoolType('AGRO', 20);
 
   // Recouvrement
   const recouvrementRate = stats.invoicesTotal > 0
@@ -248,7 +248,7 @@ export default function DashboardPage() {
     },
   ];
 
-  const dossiersList = isHealth ? healthDossiersList : agroDossiersList;
+  const dossiersList = agroDossiersList;
 
   const filteredDossiers = dossiersList.filter((item) => {
     if (activeTab === 'critical') return item.status === 'CRITICAL';

@@ -1,39 +1,23 @@
-import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import { Metadata, Viewport } from "next";
-import { cn } from "@/lib/utils";
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: '--font-jakarta',
-  display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: '--font-inter',
-  display: 'swap',
-  weight: ['400', '500', '600', '700'],
-});
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#070F1E",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
 };
 
 export const metadata: Metadata = {
-  title: "SchoolERP Pro | Excellence en Gestion Scolaire",
-  description: "Plateforme ERP premium pour la gestion des établissements scolaires : Académique, Finance, RH et Stock.",
-  keywords: ["ERP scolaire", "gestion école", "logiciel éducation", "portail parent", "paie mali"],
-  authors: [{ name: "SchoolERP Team" }],
+  title: "CFP-PAS Gao • Portail Numérique Officiel",
+  description: "Portail officiel de gestion académique, pédagogique, financière et administrative du Centre de Formation Professionnelle Agro-Pastorale (CFP-PAS) de Gao (Mali).",
+  keywords: ["CFP-PAS", "Gao", "Agro-Pastorale", "Élevage", "Agriculture", "Formation Professionnelle", "Mali"],
+  authors: [{ name: "Direction Générale CFP-PAS Gao" }],
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "SchoolERP Pro",
+    title: "CFP-PAS Gao",
   },
   icons: {
     icon: "/icon-192x192.png",
@@ -47,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={cn("font-sans", plusJakartaSans.variable, inter.variable)} suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -63,7 +47,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased font-sans" suppressHydrationWarning>
+      <body className="antialiased font-sans text-[#051638] bg-[#F4F7FB] dark:bg-[#070F1E] dark:text-[#F1F5F9] selection:bg-sky-500 selection:text-white" suppressHydrationWarning>
         <ToastProvider>
           {children}
         </ToastProvider>

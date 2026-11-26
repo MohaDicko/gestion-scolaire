@@ -5,7 +5,7 @@ const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 // Email par défaut pour l'expéditeur
-const DEFAULT_FROM = 'SchoolERP <notifications@schoolerp.com>'; // À configurer avec un domaine vérifié sur Resend
+const DEFAULT_FROM = 'CFP-PAS Gao <notifications@cfppas-gao.ml>'; // À configurer avec un domaine vérifié sur Resend
 
 export const sendEmail = async ({
   to,
@@ -53,8 +53,8 @@ export const sendInvoiceNotification = async (parentEmail: string, studentName: 
         <p style="margin: 5px 0 0 0;"><strong>Date limite :</strong> ${dueDate}</p>
       </div>
       <p>Vous pouvez consulter et régler cette facture directement depuis votre Espace Famille.</p>
-      <a href="https://gestion-scolaire-livid.vercel.app/login" style="display: inline-block; background-color: #4f8ef7; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin-top: 10px;">Accéder à mon Espace</a>
-      <p style="margin-top: 30px; font-size: 12px; color: #64748b;">L'équipe SchoolERP Pro</p>
+      <a href="https://gestion-scolaire-livid.vercel.app/login" style="display: inline-block; background-color: #0c8ee9; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin-top: 10px;">Accéder au Portail CFP-PAS</a>
+      <p style="margin-top: 30px; font-size: 12px; color: #64748b;">Direction Administrative • CFP-PAS Gao</p>
     </div>
   `;
   
@@ -69,8 +69,8 @@ export const sendAbsenceAlert = async (parentEmail: string, studentName: string,
       <p>Bonjour,</p>
       <p>Nous vous informons de l'absence de <strong>${studentName}</strong> en date du <strong>${date}</strong>.</p>
       <p>Merci de contacter la vie scolaire pour justifier cette absence dans les plus brefs délais.</p>
-      <a href="https://gestion-scolaire-livid.vercel.app/login" style="display: inline-block; background-color: #1e293b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin-top: 10px;">Voir les détails</a>
-      <p style="margin-top: 30px; font-size: 12px; color: #64748b;">Direction des Études - SchoolERP Pro</p>
+      <a href="https://gestion-scolaire-livid.vercel.app/login" style="display: inline-block; background-color: #070f1e; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin-top: 10px;">Voir les détails</a>
+      <p style="margin-top: 30px; font-size: 12px; color: #64748b;">Surveillance Générale • CFP-PAS de Gao</p>
     </div>
   `;
   
@@ -108,8 +108,8 @@ export const sendReportCardEmail = async (parentEmail: string, studentName: stri
         </div>
       </div>
       <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
-        Ce message est une notification automatique. Merci de ne pas y répondre directement.<br>
-        <strong>© 2025 SchoolERP Pro — Modernisation de l'Éducation</strong>
+        Ce message est une notification officielle. Merci de ne pas y répondre directement.<br>
+        <strong>© 2026 Centre de Formation Professionnelle Agro-Pastorale (CFP-PAS) • Gao, Mali</strong>
       </div>
     </div>
   `;

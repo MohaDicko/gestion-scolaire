@@ -1,22 +1,33 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   SAHELEDU.COM — DESIGN SYSTEM v5.0 NATIONAL GRADE
-   Plateforme Nationale de Gestion Scolaire — République du Mali
-   Typographie: Manrope | Couleurs: Mali Gold × Deep Navy × Emerald
+   CFP-PAS GAO — SYSTÈME OFFICIEL DE GESTION NUMÉRIQUE
+   Centre de Formation Professionnelle Agro-Pastorale de Gao — République du Mali
+   UI/UX Enterprise Tandem Grade • Typographie Haute Résolution
    ══════════════════════════════════════════════════════════════════════════ */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ─── GLOBAL MODERN SCHOOL & GOVERNMENT TYPOGRAPHY (PLUS JAKARTA SANS & INTER) ─── */
+/* ─── TYPOGRAPHIE SYSTEME ENTERPRISE TANDEM (-apple-system / Segoe UI / Roboto) ─── */
 html, body, button, input, select, textarea, table, th, td, div, span, p, h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-jakarta), var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+body {
+  background-color: #f4f7fb;
+  color: #051638;
+  min-height: 100vh;
+}
+
+::selection {
+  background-color: #0ea5e9;
+  color: #ffffff;
+}
+
 .tabular-nums, table, th, td, [data-tabular] {
-  font-family: var(--font-inter), var(--font-jakarta), sans-serif !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
@@ -28,36 +39,36 @@ html, body, button, input, select, textarea, table, th, td, div, span, p, h1, h2
 /* ─── LIGHT MODE TOKENS ─────────────────────────────────────────────────── */
 :root {
   /* Font & Theme Tokens */
-  --font-fiori: var(--font-jakarta), var(--font-inter), sans-serif;
-  --fiori-blue: #0070f2;
-  --fiori-blue-hover: #0056b3;
-  --fiori-blue-dim: rgba(0, 112, 242, 0.08);
-  --fiori-navy: #0a3b7b;
-  --fiori-green: #107e3e;
-  --fiori-green-dim: rgba(16, 126, 62, 0.08);
+  --font-fiori: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --fiori-blue: #0c8ee9;
+  --fiori-blue-hover: #0170c7;
+  --fiori-blue-dim: rgba(12, 142, 233, 0.08);
+  --fiori-navy: #07284a;
+  --fiori-green: #0f766e;
+  --fiori-green-dim: rgba(15, 118, 110, 0.08);
   --fiori-amber: #c55305;
   --fiori-amber-dim: rgba(197, 83, 5, 0.08);
   --fiori-critical: #bb0000;
   --fiori-critical-dim: rgba(187, 0, 0, 0.08);
-  --fiori-neutral: #556b82;
+  --fiori-neutral: #5a7088;
 
-  /* Base Backgrounds */
-  --bg:           #f4f6fb;
+  /* Base Backgrounds Tandem */
+  --bg:           #f4f7fb;
   --bg-2:         #ffffff;
   --bg-3:         #ffffff;
-  --bg-4:         #eef0f7;
-  --bg-5:         #e8ebf4;
-  --bg-glass:     rgba(255, 255, 255, 0.82);
+  --bg-4:         #eef2f8;
+  --bg-5:         #e2e8f0;
+  --bg-glass:     rgba(255, 255, 255, 0.88);
 
   /* Borders */
   --border:       rgba(30, 41, 99, 0.08);
   --border-md:    rgba(30, 41, 99, 0.15);
-  --border-light: rgba(59, 75, 200, 0.2);
+  --border-light: rgba(12, 142, 233, 0.2);
 
-  /* Text */
-  --text:       #0f1523;
-  --text-soft:  #2d3561;
-  --text-muted: #6b7280;
+  /* Text Ink Tandem */
+  --text:       #051638;
+  --text-soft:  #1e293b;
+  --text-muted: #5a7088;
   --text-dim:   #9ca3af;
 
   /* ── MALI NATIONAL BRAND PALETTE ── */
@@ -124,23 +135,23 @@ html, body, button, input, select, textarea, table, th, td, div, span, p, h1, h2
   --t-slow:    0.4s var(--ease);
 }
 
-/* ─── DARK MODE TOKENS ──────────────────────────────────────────────────── */
+/* ─── DARK MODE TOKENS TANDEM ──────────────────────────────────────────── */
 .dark {
-  --bg:           #080c18;
-  --bg-2:         #0d1224;
-  --bg-3:         #111829;
-  --bg-4:         #1a2340;
-  --bg-5:         #1e2847;
-  --bg-glass:     rgba(13, 18, 36, 0.82);
+  --bg:           #070f1e;
+  --bg-2:         #0d1829;
+  --bg-3:         #132238;
+  --bg-4:         #1e3352;
+  --bg-5:         #243d63;
+  --bg-glass:     rgba(13, 24, 41, 0.88);
 
-  --border:       rgba(255, 255, 255, 0.06);
-  --border-md:    rgba(255, 255, 255, 0.10);
-  --border-light: rgba(99, 130, 255, 0.2);
+  --border:       #1e3352;
+  --border-md:    rgba(30, 51, 82, 0.8);
+  --border-light: rgba(56, 171, 247, 0.25);
 
-  --text:       #f0f4ff;
-  --text-soft:  #c0ccef;
-  --text-muted: #8090b5;
-  --text-dim:   #4a5580;
+  --text:       #f1f5f9;
+  --text-soft:  #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-dim:   #64748b;
 
   --primary:        #4f75ff;
   --primary-2:      #7c9dff;

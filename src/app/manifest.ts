@@ -2,13 +2,13 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'SchoolERP Pro',
-    short_name: 'SchoolERP',
-    description: 'Système ERP complet pour la gestion scolaire.',
+    name: 'CFP-PAS Gao - Portail Officiel',
+    short_name: 'CFP-PAS',
+    description: 'Portail numérique officiel du Centre de Formation Professionnelle Agro-Pastorale (CFP-PAS) de Gao (Mali).',
     start_url: '/',
     display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#4f8ef7',
+    background_color: '#070F1E',
+    theme_color: '#0C8EE9',
     icons: [
       {
         src: '/icon-192x192.png',

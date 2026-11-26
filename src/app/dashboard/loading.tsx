@@ -10,8 +10,8 @@ export default function Loading() {
              <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
           </div>
         </div>
-        <p className="text-sm font-black uppercase tracking-[0.2em] text-slate-500 animate-pulse">
-          SchoolERP Pro
+        <p className="text-sm font-black uppercase tracking-[0.2em] text-[#0C8EE9] animate-pulse">
+          CFP-PAS de Gao
         </p>
       </div>
     </div>

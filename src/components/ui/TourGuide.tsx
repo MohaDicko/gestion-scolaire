@@ -20,8 +20,8 @@ export function TourGuide() {
       steps: [
         {
           popover: {
-            title: '👋 Bienvenue sur SchoolERP Pro',
-            description: 'Cette visite guidée va vous montrer comment maîtriser votre nouvel outil en 2 minutes chrono. Prêt ?'
+            title: '👋 Bienvenue sur le Portail CFP-PAS',
+            description: 'Cette visite guidée va vous présenter les fonctionnalités essentielles du Centre de Formation Professionnelle Agro-Pastorale de Gao.'
           }
         },
         {
