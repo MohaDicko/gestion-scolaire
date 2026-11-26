@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import AppLayout from "@/components/AppLayout";
 import { FileText, Download, Search, Loader2, Award, CheckCircle2, XCircle } from "lucide-react";
 import jsPDF from "jspdf";
@@ -92,7 +92,7 @@ export default function ReleveCompetencesPage() {
     } finally { setLoadingPreview(false); }
   };
 
-  const loadPreview = async () => {
+  const loadPreview = useCallback(async () => {
     if (!selectedStudent || !selectedYearId) return;
     setLoadingPreview(true);
     setPreview(null);
@@ -101,11 +101,11 @@ export default function ReleveCompetencesPage() {
       if (r.ok) setPreview(await r.json());
       else toast.error("Impossible de charger les donnees.");
     } finally { setLoadingPreview(false); }
-  };
+  }, [selectedStudent, selectedYearId, toast]);
 
   useEffect(() => {
     if (selectedStudent && selectedYearId) loadPreview();
-  }, [selectedYearId]);
+  }, [selectedStudent, selectedYearId, loadPreview]);
 
   const generatePDF = async () => {
     if (!preview) return;

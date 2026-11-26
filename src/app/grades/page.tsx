@@ -118,7 +118,7 @@ export default function GradesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [form.classroomId, form.academicYearId, router, toast]);
+  }, [form.classroomId, form.academicYearId, form.subjectId, form.trimestre, form.examType, router, toast]);
 
   useEffect(() => { loadStudents(); }, [loadStudents]);
 

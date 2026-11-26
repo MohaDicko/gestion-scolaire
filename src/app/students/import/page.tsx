@@ -9,6 +9,22 @@ import { Badge } from '@/components/ui/badge';
 import { UploadCloud, FileSpreadsheet, CheckCircle2, AlertTriangle, Loader2, ArrowRight, XCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
+const normalizeHeader = (header: string) => {
+  if (!header) return '';
+  const h = header.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  if (h.includes('prenom')) return 'Prenom';
+  if (h === 'noms' || h === 'nom') return 'Nom';
+  if (h === 'sexe' || h === 'genre') return 'Genre';
+  if (h.includes('matricule')) return 'Matricule';
+  if (h.includes('naissance')) return 'DateNaissance';
+  if (h.includes('cni') || h.includes('nina')) return 'CNI';
+  if (h.includes('classe') || h.includes('niveau')) return 'Classe';
+  if (h.includes('parent') || h.includes('tuteur')) return 'Parent';
+  if (h.includes('tel') || h.includes('phone') || h.includes('contact')) return 'Telephone';
+  if (h.includes('relation') || h.includes('lien')) return 'Relation';
+  return header.trim();
+};
+
 export default function ImportStudentsPage() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -42,23 +58,7 @@ export default function ImportStudentsPage() {
     if (selectedFile) processFile(selectedFile);
   };
 
-  const normalizeHeader = (header: string) => {
-    if (!header) return '';
-    let h = header.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-    if (h.includes('prenom')) return 'Prenom';
-    if (h === 'noms' || h === 'nom') return 'Nom';
-    if (h === 'sexe' || h === 'genre') return 'Genre';
-    if (h.includes('matricule')) return 'Matricule';
-    if (h.includes('naissance')) return 'DateNaissance';
-    if (h.includes('cni') || h.includes('nina')) return 'CNI';
-    if (h.includes('classe') || h.includes('niveau')) return 'Classe';
-    if (h.includes('parent') || h.includes('tuteur')) return 'Parent';
-    if (h.includes('tel') || h.includes('phone') || h.includes('contact')) return 'Telephone';
-    if (h.includes('relation') || h.includes('lien')) return 'Relation';
-    return header.trim();
-  };
-
-  const processFile = (selectedFile: File) => {
+  const processFile = useCallback((selectedFile: File) => {
     setFile(selectedFile);
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -118,7 +118,7 @@ export default function ImportStudentsPage() {
       }
     };
     reader.readAsBinaryString(selectedFile);
-  };
+  }, []);
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -136,7 +136,7 @@ export default function ImportStudentsPage() {
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       processFile(e.dataTransfer.files[0]);
     }
-  }, []);
+  }, [processFile]);
 
   const startImport = async () => {
     if (previewData.length === 0) return;

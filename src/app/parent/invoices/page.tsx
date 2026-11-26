@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ function InvoicesContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = useCallback(async () => {
     try {
       // Pour faire simple, on rappelle l'API dashboard parent et on filtre sur l'enfant ciblé
       const res = await fetch('/api/parent/dashboard');
@@ -49,11 +49,11 @@ function InvoicesContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [studentId]);
 
   useEffect(() => {
     fetchInvoices();
-  }, [studentId]);
+  }, [fetchInvoices]);
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { DIRECTOR_STAMP_URL } from '@/lib/directorStampData';
 
